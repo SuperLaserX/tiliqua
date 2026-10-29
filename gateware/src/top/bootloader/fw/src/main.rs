@@ -37,7 +37,12 @@ use tiliqua_lib::color::HI8;
 
 use tiliqua_fw::options::*;
 use hal::pca9635::Pca9635Driver;
-use hal::tusb322::{TUSB322Driver, TUSB322Mode};
+use hal::tusb322::{TUSB322Driver, TUSB322Mode, AttachedState, AccessoryType};
+use guh_dma::DmaBuf;
+use guh_usb_msc::fat_stream::{FatStream, StreamConfig};
+use guh_usb_msc::partition::find_first_fat32_lba;
+use guh_usb_msc::usb_msc::{UsbMsc, PartitionView, BLOCK_BYTES};
+use guh_usb_msc::usb_msc_fatfs::UsbMscBlockDevice;
 use hal::dma_framebuffer::{Rotate, DVIModeline};
 
 pub const TIMER0_ISR_PERIOD_MS: u32 = 10;
@@ -46,6 +51,12 @@ pub const TIMER0_ISR_PERIOD_MS: u32 = 10;
 // But we keep it this low for compatibility with low res modes.
 pub const PIXEL_CLK_MIN_KHZ: u32 = 24_000u32;
 pub const PIXEL_CLK_MAX_KHZ: u32 = CLOCK_DVI_HZ / 1000u32;
+pub const SPREAD_SPECTRUM_MAX: f32 = 0.0025;
+
+// Address of the RP2040's software i2c target.
+// This is used for bitstream reconfigurations on rp2040/apfbug
+// firmware versions > beta5
+pub const RP2040_APFBUG_ADDR: u8 = 0x17;
 
 #[derive(Clone, Copy, PartialEq, EnumIter, IntoStaticStr)]
 #[strum(serialize_all = "SCREAMING-KEBAB-CASE")]
@@ -56,6 +67,12 @@ pub enum BitstreamError {
     PllBadConfigError,
     PllI2cError,
     BootloaderStaticModeline,
+    UsbBadAlign,
+    UsbNoDevice,
+    UsbMountError,
+    UsbFileError,
+    UsbTooLarge,
+    UsbStreamError,
 }
 
 struct App {
@@ -235,7 +252,7 @@ where
     }
     Text::with_alignment(
         &startup_report,
-        Point::new((h_active/2) as i32, (v_active/2+130) as i32 + ot),
+        Point::new((h_active/2) as i32, (v_active/2-20) as i32 + ot),
         norm,
         Alignment::Center,
     )
@@ -252,6 +269,14 @@ where
 fn configure_external_pll(pll_config: &ExternalPLLConfig, pll: &mut Si5351Device<I2c0>)
     -> Result<(), tiliqua_hal::si5351::Error> {
     pll.init_adafruit_module()?;
+    let spread = pll_config.spread_spectrum.map(|s| {
+        if s > SPREAD_SPECTRUM_MAX {
+            warn!("si5351/pll: spread_spectrum {} exceeds max {}, clamping", s, SPREAD_SPECTRUM_MAX);
+            SPREAD_SPECTRUM_MAX
+        } else {
+            s
+        }
+    });
     match pll_config.clk1_hz {
         Some(clk1_hz) => {
             info!("si5351/pll: configure for clk0={}Hz, clk1={}Hz", pll_config.clk0_hz, clk1_hz);
@@ -265,7 +290,7 @@ fn configure_external_pll(pll_config: &ExternalPLLConfig, pll: &mut Si5351Device
                     pll_config.clk0_hz,
                     clk1_hz,
                 ],
-                pll_config.spread_spectrum)
+                spread)
         }
         _ => {
             info!("si5351/pll: configure for clk0={}Hz, clk1=disabled", pll_config.clk0_hz);
@@ -277,7 +302,7 @@ fn configure_external_pll(pll_config: &ExternalPLLConfig, pll: &mut Si5351Device
                 &[
                     pll_config.clk0_hz,
                 ],
-                pll_config.spread_spectrum)
+                spread)
         }
     }
 }
@@ -357,6 +382,150 @@ fn validate_and_copy_spiflash_region(region: &MemoryRegion) -> Result<(), Bitstr
 }
 
 
+/// Copy `region.filename` off a USB drive to `region.psram_dst`.
+///
+/// However fragmented the file might be on disk, it gets flattened out and
+/// copied to the destination PSRAM window, with length rounded up to the next
+/// FAT chunk. If the file is larger than `region.size`, we bail as that field
+/// is designed to tell the bootloader how much of a window to reserve for the
+/// file - otherwise an arbitrarily large file could stomp on bits of PSRAM
+/// the bootloader is still using, and do some damage :)
+///
+/// TODO: maybe it would be cleaner to check for a thumbdrive on boot,
+/// instead of here (only if a bitstream expects one). this would let us
+/// remove a lot of the blocking logic / waits. But we do fail out if
+/// no device is present and show an error on the screen, so some diagnosis
+/// is still possible without looking at the detailed serial logs...
+///
+fn load_usb_region(region: &MemoryRegion) -> Result<(), BitstreamError> {
+    const CHUNK_BYTES: u32 = USB_MSC_MAX_BLOCKS_PER_READ * BLOCK_BYTES as u32;
+
+    let psram_dst = region.psram_dst.ok_or(BitstreamError::InvalidManifest)?;
+    if psram_dst % BLOCK_BYTES as u32 != 0 {
+        warn!("UsbLoad region '{}' psram_dst {:#x} is not block-aligned",
+              region.filename, psram_dst);
+        return Err(BitstreamError::UsbBadAlign);
+    }
+
+    // top.py gave us a little window of PSRAM to use for scratch buffers
+    // whilst copying things over USB - this is at the top of PSRAM just
+    // under where the manifest is stored. TODO/HACK: switch this to dynamic allocs?
+    let scratch = (PSRAM_BASE + USB_SCRATCH_PSRAM_OFFSET as usize) as *mut u8;
+    let stage = unsafe { [
+        DmaBuf::from_raw_parts(scratch, CHUNK_BYTES as usize),
+        DmaBuf::from_raw_parts(scratch.add(CHUNK_BYTES as usize), CHUNK_BYTES as usize),
+    ] };
+    let fat_cache = unsafe {
+        DmaBuf::from_raw_parts(scratch.add(2*CHUNK_BYTES as usize), CHUNK_BYTES as usize) };
+
+    // Put CC control chip in host mode
+    let vbus = unsafe { pac::USB_VBUS::steal() };
+    let mut tusb322 = TUSB322Driver::new(I2c0::new(unsafe { pac::I2C0::steal() }));
+    tusb322.soft_reset().ok();
+    tusb322.set_mode(TUSB322Mode::Dfp).ok();
+
+    let result = (|| {
+        // Only source VBUS once the CC controller says something is really there.
+        // `DebugDfp` is accepted for the same reason polysyn accepts it: some
+        // adapter combinations show up as an accessory rather than Attached.SRC.
+        let mut waited = 0u32;
+        loop {
+            if let (Ok(ctrl), Ok(conn)) = (tusb322.read_connection_status_control(),
+                                           tusb322.read_connection_status()) {
+                if ctrl.attached_state == AttachedState::AttachedSrc ||
+                   (ctrl.attached_state == AttachedState::AttachedAccessory &&
+                    conn.accessory == AccessoryType::DebugDfp) {
+                    info!("USB CC attached: {:?} | {:?}", ctrl, conn);
+                    break;
+                }
+            }
+            riscv::asm::delay(1_000_000);
+            waited += 1;
+            if waited > 64 {
+                warn!("No USB device attached (TUSB322I)");
+                // bail, leaving vbus off
+                return Err(BitstreamError::UsbNoDevice);
+            }
+        }
+
+        // A device is present, power it up
+        vbus.flags().write(|w| w.en().bit(true));
+
+        // Wait for it to enumerate
+        let mut usb_msc = unsafe { UsbMsc0::new(pac::USB_MSC::steal(), PSRAM_BASE as u32) };
+        let mut waited = 0u32;
+        while !usb_msc.is_ready() {
+            riscv::asm::delay(1_000_000);
+            waited += 1;
+            if waited > 350 { // 5sec or so, some drives might need longer?
+                warn!("USB MSC device did not enumerate");
+                return Err(BitstreamError::UsbNoDevice);
+            }
+        }
+        if usb_msc.block_size() != BLOCK_BYTES as u32 {
+            warn!("USB MSC device has unsupported block size {}", usb_msc.block_size());
+            return Err(BitstreamError::UsbMountError);
+        }
+        info!("USB ready: {} blocks", usb_msc.capacity());
+
+        let part_lba = find_first_fat32_lba(&mut usb_msc, stage[0]);
+        info!("FAT32 partition at LBA {}", part_lba);
+        let mut view = PartitionView::new(usb_msc, part_lba);
+
+        // Turn the file to a FatStream, and do a pure-DMA copy into PSRAM
+        let mut stream = {
+            let bd = UsbMscBlockDevice::new(&mut view, stage)
+                .map_err(|_| BitstreamError::UsbMountError)?;
+            let fs = fatfs::FileSystem::new(bd, fatfs::FsOptions::new())
+                .map_err(|_| BitstreamError::UsbMountError)?;
+            let file = fs.root_dir().open_file(&region.filename)
+                .map_err(|_| BitstreamError::UsbFileError)?;
+            let size = file.size().ok_or(BitstreamError::UsbFileError)?;
+            if size == 0 {
+                return Err(BitstreamError::UsbFileError);
+            }
+            let ring_len = size.div_ceil(CHUNK_BYTES) * CHUNK_BYTES;
+            if ring_len > region.size {
+                warn!("'{}' rounds up to {} bytes, region only reserves {}",
+                      region.filename, ring_len, region.size);
+                return Err(BitstreamError::UsbTooLarge);
+            }
+            info!("Copying '{}' ({} bytes) to {:#x} (psram) ...",
+                  region.filename, size, PSRAM_BASE + psram_dst as usize);
+            // Create one big DmaBuf from the region psram target
+            let dst = unsafe { DmaBuf::from_raw_parts(
+                (PSRAM_BASE + psram_dst as usize) as *mut u8, ring_len as usize) };
+            // shouldn't be needed as we won't have touched the destination DmaBuf,
+            // but just in case we have some cache lines from it, don't let them
+            // accidentally get written back after our copy!
+            dst.invalidate();
+            FatStream::open(&file, &StreamConfig {
+                max_chunk_blocks: USB_MSC_MAX_BLOCKS_PER_READ,
+                ring: dst,
+                fat_cache,
+            }).map_err(|_| BitstreamError::UsbStreamError)?
+        };
+
+        // one prefill is the whole copy. no ticks needed
+        stream.prefill(&mut view).map_err(|_| BitstreamError::UsbStreamError)?;
+        info!("Copy completed ({} KiB)", stream.bytes_submitted() / 1024);
+
+        // TODO: optional CRC? it will be super slow, but maybe we could write
+        // a hardware CRC checker for the PSRAM to speed it up...
+        //
+        Ok(())
+    })();
+
+    // Leave VBUS off and the CC controller back in device mode.
+    // Some bitstreams don't touch the TUSB322I and expect it to be in device mode.
+    // (like usb_audio).
+    vbus.flags().write(|w| w.en().bit(false));
+    tusb322.soft_reset().ok();
+    tusb322.set_mode(TUSB322Mode::Ufp).ok();
+
+    result
+}
+
 fn timer0_handler(app: &Mutex<RefCell<App>>) {
 
     critical_section::with(|cs| {
@@ -413,7 +582,11 @@ fn timer0_handler(app: &Mutex<RefCell<App>>) {
                             modeline: app.modeline.clone(),
                         };
                         for region in &manifest.regions {
-                            validate_and_copy_spiflash_region(region)?;
+                            if region.region_type == RegionType::UsbLoad {
+                                load_usb_region(region)?;
+                            } else {
+                                validate_and_copy_spiflash_region(region)?;
+                            }
                         }
 
                         // Save this bitstream as the last_boot_slot for future autoboot.
@@ -487,8 +660,18 @@ fn timer0_handler(app: &Mutex<RefCell<App>>) {
                     // from arbitrary addresses, but this requires reverse engineering the
                     // bitstream structure a bit more than I have time for at the moment.
                     //
-                    // TODO: use a longer codeword for this with less chance of collision?
-                    info!("BITSTREAM{}\n\r", n);
+                    //
+                    // RP2040 apfbug versions > beta5 accept reconfiguration requests over I2C,
+                    // which should be more robust. We trigger both I2C and UART
+                    // reconfigurations to retain backwards compatibility with old RP2040 firmware.
+                    let mut i2cdev0 = unsafe { I2c0::summon() };
+                    let i2c_reconfig_result = i2cdev0.transaction(
+                        RP2040_APFBUG_ADDR, &mut [Operation::Write(&[0u8, 0x5A, n as u8])]);
+                    if i2c_reconfig_result.is_err() {
+                        warn!("apfbug/rp2040: i2c reconfig request NAK (apfbug <= beta5?)");
+                    }
+                    // Older apfbug/rp2040: issue UART reconfig request
+                    info!("Enter BITSTREAM{}\n\r", n);
                     loop {}
                 }
             }
@@ -776,7 +959,7 @@ fn main() -> ! {
             clk0_hz: CLOCK_AUDIO_HZ,
             clk1_hz: Some((modeline.pixel_clk_mhz*1e6) as u32),
             clk1_inherit: false,
-            spread_spectrum: Some(0.01),
+            spread_spectrum: Some(SPREAD_SPECTRUM_MAX),
         }, &mut si5351drv).unwrap();
         Some(si5351drv)
     } else {
@@ -842,6 +1025,8 @@ fn main() -> ! {
         BLIT_MEM_BASE,
     );
 
+    timer.delay_ms(50);
+
     handler!(timer0 = || timer0_handler(&app));
 
     irq::scope(|s| {
@@ -849,7 +1034,7 @@ fn main() -> ! {
         let mut logo_coord_ix = 0u32;
         let mut rng = fastrand::Rng::with_seed(0);
 
-        persist.set_persist(256);
+        persist.set_persistence(64);
 
         let stroke = PrimitiveStyleBuilder::new()
             .stroke_color(HI8::new(0, 10))
@@ -906,7 +1091,7 @@ fn main() -> ! {
                                 clk0_hz: CLOCK_AUDIO_HZ,
                                 clk1_hz: Some((new_modeline.pixel_clk_mhz*1e6) as u32),
                                 clk1_inherit: false,
-                                spread_spectrum: Some(0.01),
+                                spread_spectrum: Some(SPREAD_SPECTRUM_MAX),
                             }, external_pll).unwrap();
                             reprogrammed_pll = true;
                         }

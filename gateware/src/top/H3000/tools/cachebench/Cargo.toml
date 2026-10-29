@@ -1,0 +1,19 @@
+[package]
+name = "cachebench"
+version = "0.1.0"
+edition = "2021"
+description = "The 6809 emulator as RISC-V code, for cachesim.py"
+
+[dependencies]
+h3000-emu = { path = "../../emu" }
+
+# As the firmware (fw/Cargo.toml).
+[profile.release]
+codegen-units = 1
+debug = true
+debug-assertions = false
+incremental = false
+lto = true
+opt-level = 3
+overflow-checks = false
+panic = "abort"

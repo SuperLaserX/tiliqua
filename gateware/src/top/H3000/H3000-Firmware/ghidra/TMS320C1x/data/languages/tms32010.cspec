@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="prog"/>
+    <range space="data"/>
+    <range space="io"/>
+  </global>
+  <stackpointer register="SP" space="hwstack" growth="positive"/>
+  <default_proto>
+    <prototype name="__asm" extrapop="-2" stackshift="-2">
+      <input>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="ACC"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

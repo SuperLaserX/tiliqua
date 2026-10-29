@@ -1,0 +1,49 @@
+# Inline-argument helpers in the H3000 v1.53 kernel (see ghidra/scripts/H3000Disasm.java)
+# where       kind        spec
+# --- $FC00 API table ---
+slot:FC0A     fixed       W                  # far call: inline module/function id
+slot:FC12     fixed       WW
+slot:FC16     fixed       BBBBBBBBWWWFFWWW   # parameter page: 8 bytes (b7 of 8th = module-relative), max, min, ?, display fn, adjust fn, 3 words
+slot:FC38     dispstr                        # LCD text with control codes
+slot:FC48     fixed       BCCCCCCCC          # position + 8 chars
+slot:FC60     fixed       W                  # module self-relocation: base = retaddr - word -> $600D
+slot:FC62     fixed       P                  # store D + module base into [ptr]
+slot:FC8A     fixed       FCCCCCCCCCC        # soft key B: handler + 10-char label "(  Name  )"
+slot:FCFE     fixed       P                  # init ring buffer descriptor
+slot:FD00     fixed       P                  # ring buffer put
+slot:FD02     fixed       P                  # ring buffer get
+slot:FD0C     fixed       WB                 # memset(Y, byte, count)
+slot:FD14     jumptable                      # goto table[D]
+slot:FD16     switch                         # switch (D) { case v: goto t }
+slot:FD18     addrword                       # [addr] = word ... $FFFF
+slot:FD1A     addrbyte                       # [addr] = byte ... $FFFF
+slot:FD38     addrword
+slot:FD84     fixed       BBCCCCCCCCBPP      # define parameter: idx, flags(b7=module-relative), name, ?, 2 ptrs
+slot:FD8E     fixed       P
+slot:FD90     fixed       P
+slot:FD92     fixed       P
+slot:FDBC     fixed       CCCCCCCC           # 8-char name
+slot:FDCC     fixed       FFFF               # call 4 routines
+# --- $FE00 extended API table ---
+slot:FE00     fixed       FFFFFF             # module-relative handlers -> $60E3..$60E9,$603A,$6036
+slot:FE02     softlabels4                    # 4 soft-key labels (00/01 or 8 chars)
+slot:FE04     bytepairs0                     # (param, $70xx offset) pairs, signed load
+slot:FE06     bytepairs0                     # (param, $70xx offset) pairs, unsigned load
+slot:FE08     bytepairs0                     # (param, $70xx offset) pairs
+slot:FE0C     fixed       W                  # D = min(D, word)
+slot:FE20     interp                         # piecewise-linear table lookup
+slot:FE22     fixed       WB
+slot:FE24     fixed       W
+slot:FE26     fixed       W
+slot:FE28     fixed       W
+slot:FE2C     fixed       P                  # call via descriptor (bank at +0B, fn at +02)
+slot:FE2E     fixed       P
+slot:FE30     fixed       P
+slot:FE3C     fixed       WW
+slot:FE5E     fixed       WW                 # pick word 0/1 by B
+# --- helpers taking a descriptor in X ("LDX #desc" just before the call) ---
+slot:FE1A     xdesc       FFP                # param page descriptor (stored at $619E)
+slot:FE1C     xdesc       FFP                # param descriptor: fn, fn, RAM state ptr (module-relative)
+# --- direct-call helpers (no table slot) ---
+addr:DB33     fixed       WW
+addr:E9B8     fixed       P

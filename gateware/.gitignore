@@ -8,6 +8,12 @@ frame*.bmp
 frame*.png
 *.svg
 
+# lorenz sim dumps
+*lorenz*.png
+
+# usb integration test outputs
+test*.pcap
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

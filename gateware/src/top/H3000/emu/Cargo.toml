@@ -1,0 +1,20 @@
+[package]
+name = "h3000-emu"
+version = "0.1.0"
+edition = "2021"
+description = "Eventide H3000/H3500 host-processor emulation (MC6809 + front panel + DSP host interface)"
+
+[features]
+default = []
+# Host-side tools (ROM loading from files, terminal LCD output).
+std = []
+
+[[bin]]
+name = "h3000-host"
+required-features = ["std"]
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+debug = true

@@ -1,0 +1,41 @@
+# Names for kernel API entry points, by table slot. Applied by ghidra/scripts/H3000Names.java.
+# Columns: slot  name  [kernels]   (kernels: both | v153 | h3500; default both)
+# Only behaviour that was checked in the disassembly is named; everything else stays API_xxxx.
+FC02  RomFindRecord            # D = record key; scans the bank chains, leaves bank/ptr/len in $6079/$607A/$607D
+FC04  RomStreamReadByte        # next byte of the current record (crosses bank boundaries)
+FC0A  FarCallModuleInline      v153   # inline word = record key; switch bank, JSR [$607A], restore
+FC12  KernelHelper_FC12        # inline: 2 words
+FC16  SetupParamEditPage       # inline 24-byte record: limits + display/adjust callbacks
+FC36  LcdSetCursor             # B = position 0-79 (2 x 40 LCD)
+FC38  LcdPrintInline           # inline text with control codes 0-7
+FC48  LcdPrintAt8Inline        # inline: position byte + 8 chars
+FC54  Io80A7_Clear             # $80A7 = 0
+FC56  Io80A7_Set               # $80A7 = $FF
+FC60  ModuleSetBase            # inline word: $600D = return address - word (position-independent modules)
+FC62  ModuleStorePtr           # inline ptr: [ptr] = D + module base
+FC8A  SoftKeyDefine            # B = key 0-3; inline handler + 10-char label
+FC9C  BankPushSelect           # push current bank on caller stack, select bank B
+FC9E  BankPop                  # pop bank pushed by BankPushSelect
+FCFE  RingBufInit              # inline ptr to ring buffer descriptor
+FD00  RingBufPut               # inline descriptor; B = byte
+FD02  RingBufGet               # inline descriptor; B = byte
+FD0C  MemsetInline             # inline count word + fill byte; Y = destination
+FD14  JumpTableDispatch        # D = index into inline table of code pointers (never returns here)
+FD16  SwitchInline             # inline (value, target)* list, compared with D
+FD18  StoreWordsInline         # inline ([addr] = word)* until $FFFF
+FD1A  StoreBytesInline         # inline ([addr] = byte)* until $FFFF
+FD30  DspLoadProgram           # B = DSP 1-3, X = record key of TMS32010 image; writes via bank $80|B
+FD38  StoreWordsInline2        # inline ([addr] = word)* until $FFFF, through helper
+FD84  DefineParameter          # inline 15-byte record: index, flags, 8-char name, ?, 2 pointers
+FDA0  RomFirstRecord
+FDA2  RomNextRecord
+FE00  SetModuleHandlers        # inline 6 module-relative handlers -> $60E3..$60E9, $603A, $6036
+FE02  SoftKeyLabels4Inline     # inline 4 labels (00/01 or 8 chars)
+FE04  LoadParamsSigned         # inline (param, $70xx offset) pairs
+FE06  LoadParamsUnsigned       # inline (param, $70xx offset) pairs
+FE08  LoadParamsScaled         # inline (param, $70xx offset) pairs
+FE0C  ClampMaxInline           # D = min(D, inline word)
+FE20  InterpTableLookup        # inline n + 2^n+1 point table
+FE1C  ParamDescriptorCall      # X = module-relative parameter descriptor
+FE78  DefineParameterAlt       h3500  # as DefineParameter with flags |= $40
+FD26  FarCallInline            h3500  # inline (key, descriptor)

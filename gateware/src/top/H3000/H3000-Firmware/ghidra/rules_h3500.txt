@@ -1,0 +1,64 @@
+# Inline-argument helpers in the H3500 kernel (see ghidra/scripts/H3000Disasm.java)
+# Each slot was checked against the H3500 code; several slots changed meaning from v1.53
+# (FC0A, FDBC, FDCC and FE22 no longer take inline data, FC8A uses a self-relative handler).
+# where       kind        spec
+# --- $FC00 API table ---
+slot:FC12     fixed       WW
+slot:FC16     fixed       BBBBBBBBWWWFFWWW   # parameter page (b7 of 8th byte = module-relative fns)
+slot:FC38     dispstr                        # LCD text with control codes
+slot:FC48     fixed       BCCCCCCCC          # position + 8 chars
+slot:FC60     fixed       W                  # module self-relocation: base = retaddr - word -> $600D
+slot:FC62     fixed       P                  # store D + module base into [ptr]
+slot:FC8A     fixed       RCCCCCCCCCC        # soft key B: self-relative handler + 10-char label
+slot:FCFE     fixed       P                  # init ring buffer descriptor
+slot:FD00     fixed       P                  # ring buffer put
+slot:FD02     fixed       P                  # ring buffer get
+slot:FD0C     fixed       WB                 # memset(Y, byte, count)
+slot:FD14     jumptable                      # goto table[D]
+slot:FD16     switch                         # switch (D) { case v: goto t }
+slot:FD18     addrword                       # [addr] = word ... $FFFF
+slot:FD1A     addrbyte                       # [addr] = byte ... $FFFF
+slot:FD26     fixed       WW                 # far call: (id, descriptor)
+slot:FD38     addrword
+slot:FD84     fixed       BBCCCCCCCCBPP      # define parameter: idx, flags(b7=module-relative), name, ?, 2 ptrs
+slot:FD8E     fixed       P
+slot:FD90     fixed       P
+slot:FD92     fixed       P
+slot:FDD6     fixed       P                  # [ptr] = current bank
+# --- $FE00 extended API table ---
+slot:FE00     fixed       FFFFFF             # module-relative handlers -> $60E3..$60E9,$603A,$6036
+slot:FE02     softlabels4                    # 4 soft-key labels (00/01 or 8 chars)
+slot:FE04     bytepairs0                     # (param, $70xx offset) pairs, signed load
+slot:FE06     bytepairs0                     # (param, $70xx offset) pairs, unsigned load
+slot:FE08     bytepairs0                     # (param, $70xx offset) pairs
+slot:FE0C     fixed       W                  # D = min(D, word)
+slot:FE20     interp                         # piecewise-linear table lookup
+slot:FE24     fixed       W
+slot:FE26     fixed       W
+slot:FE28     fixed       W
+slot:FE2C     fixed       P                  # call via descriptor (bank at +0B, fn at +02)
+slot:FE2E     fixed       P
+slot:FE30     fixed       P
+slot:FE3C     fixed       WW
+slot:FE5A     fixed       WW
+slot:FE5C     fixed       WW
+slot:FE5E     fixed       WW                 # pick word 0/1 by B
+slot:FE78     fixed       BBCCCCCCCCBPP      # define parameter (variant, flags |= $40)
+# --- helpers taking a module-relative parameter descriptor in X ("LDX #desc" before the call) ---
+slot:FDBC     xdesc       FF
+slot:FE1C     xdesc       FF
+slot:FE22     xdesc       FF
+slot:FE6A     xdesc       FF
+slot:FE6C     xdesc       FF
+slot:FE6E     xdesc       FF
+# --- direct-call kernel helpers (no table slot) ---
+addr:9AF3     fixed       WW
+addr:9CCC     fixed       rP                 # [ptr] = self-relative address
+addr:9CDD     fixed       r                  # D = self-relative address
+addr:C2B8     addrrel                        # [addr] = self-relative handler (0 = default $C2B7)
+addr:DC68     fixed       WW                 # = v1.53 $DB33
+addr:F43F     fixed       P                  # = v1.53 $E9B8
+# --- module-local helpers ---
+at:M6B_r2_00000::1671  fixed  PPPPPPPPPP
+at:M7A_r3_00000::043D  bytepairs0
+at:M7B_r3_08000::0498  bytepairs0

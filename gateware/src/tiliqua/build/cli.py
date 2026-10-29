@@ -48,6 +48,10 @@ def top_level_cli(
         repo_tag = repo.git.describe('--tags', '--exact-match', '--dirty')
     except git.exc.GitCommandError:
         repo_tag = repo.git.describe('--always', '--dirty')
+    if repo.is_dirty():
+        print(f"WARNING: repo is dirty (tag: {repo_tag})")
+        print(repo.git.status())
+        print(repo.git.diff('--stat'))
     # Only keep what the bootloader / bitstreams can display
     repo_tag = repo_tag[:BitstreamManifest.BITSTREAM_TAG_LEN]
 
@@ -229,7 +233,7 @@ def top_level_cli(
             clk0_hz=kwargs["clock_settings"].frequencies.audio,
             clk1_hz=kwargs["clock_settings"].frequencies.dvi,
             clk1_inherit=kwargs["clock_settings"].dynamic_modeline,
-            spread_spectrum=0.01)
+            spread_spectrum=0.0025)
         # Ensure PnR/LPF constraints match the external PLL settings above
         hw_platform.resources[('clkex', 0)].clock.frequency = archiver.external_pll_config.clk0_hz
         hw_platform.resources[('clkex', 1)].clock.frequency = archiver.external_pll_config.clk1_hz

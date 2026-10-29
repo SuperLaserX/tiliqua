@@ -1,0 +1,1 @@
+docker run -it --volume /d/midi/tiliqua:/tiliqua --workdir /tiliqua/gateware --rm --privileged --pid=host tiliqua_builder

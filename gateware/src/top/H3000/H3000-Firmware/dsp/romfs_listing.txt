@@ -1,0 +1,1287 @@
+== h3000_v153
+  H3000_153_BigROM.BIN     bank 08000 +0008  key 6B00 len 0060  module 6B table  'REVERB FACTORY'
+  H3000_153_BigROM.BIN     bank 08000 +0068  key 6B01 len 1B6B  module 6B 6809 code
+  H3000_153_BigROM.BIN     bank 08000 +1BD3  key 2810 len 0212  DSP program 28 for DSP 1 (load 800, 260 words)
+  H3000_153_BigROM.BIN     bank 08000 +1DE5  key 2811 len 02EA  DSP program 28 for DSP 2 (load 800, 368 words)
+  H3000_153_BigROM.BIN     bank 08000 +20CF  key 2812 len 01BA  DSP program 28 for DSP 3 (load 800, 216 words)
+  H3000_153_BigROM.BIN     bank 08000 +2289  key 1E10 len 02AE  DSP program 1E for DSP 1 (load 800, 338 words)
+  H3000_153_BigROM.BIN     bank 08000 +2537  key 1E11 len 0170  DSP program 1E for DSP 2 (load 800, 179 words)
+  H3000_153_BigROM.BIN     bank 08000 +26A7  key 1E12 len 03CC  DSP program 1E for DSP 3 (load 800, 481 words)
+  H3000_153_BigROM.BIN     bank 08000 +2A73  key 0810 len 0234  DSP program 08 for DSP 1 (load 800, 277 words)
+  H3000_153_BigROM.BIN     bank 08000 +2CA7  key 0811 len 024C  DSP program 08 for DSP 2 (load 800, 289 words)
+  H3000_153_BigROM.BIN     bank 08000 +2EF3  key 0812 len 000E  DSP program 08 for DSP 3 (load 800, 2 words)
+  H3000_153_BigROM.BIN     bank 08000 +2F01  key 0110 len 0142  DSP program 01 for DSP 1 (load 800, 156 words)
+  H3000_153_BigROM.BIN     bank 08000 +3043  key 0111 len 0150  DSP program 01 for DSP 2 (load 800, 163 words)
+  H3000_153_BigROM.BIN     bank 08000 +3193  key 0112 len 013E  DSP program 01 for DSP 3 (load 800, 154 words)
+  H3000_153_BigROM.BIN     bank 08000 +32D1  key 0012 len 07CA  DSP program 00 for DSP 3 (load 800, 992 words)
+  H3000_153_BigROM.BIN     bank 08000 +3A9B  key 0212 len 0198  DSP program 02 for DSP 3 (load 800, 199 words)
+  H3000_153_BigROM.BIN     bank 08000 +3C33  key 0312 len 00FC  DSP program 03 for DSP 3 (load 800, 121 words)
+  H3000_153_BigROM.BIN     bank 08000 +3D2F  key 1410 len 0234  DSP program 14 for DSP 1 (load 800, 277 words)
+  H3000_153_BigROM.BIN     bank 0C000 +0008  key 6902 len 3140  module 69 6809 code
+  H3000_153_BigROM.BIN     bank 0C000 +3148  key 6D00 len 0043  module 6D table  'LONG DIGIPLEX'
+  H3000_153_BigROM.BIN     bank 0C000 +318B  key 6D01 len 008C  module 6D 6809 code
+  H3000_153_BigROM.BIN     bank 0C000 +3217  key 6E00 len 005B  module 6E table  'DUAL DIGIPLEX'
+  H3000_153_BigROM.BIN     bank 0C000 +3272  key 6E01 len 0095  module 6E 6809 code
+  H3000_153_BigROM.BIN     bank 0C000 +3307  key 6900 len 0087  module 69 table  'SWEPT COMBS'
+  H3000_153_BigROM.BIN     bank 0C000 +338E  key 6901 len 009B  module 69 6809 code
+  H3000_153_BigROM.BIN     bank 0C000 +3429  key 6A00 len 0069  module 6A table  'SWEPT REVERB'
+  H3000_153_BigROM.BIN     bank 0C000 +3492  key 6A01 len 008F  module 6A 6809 code
+  H3000_153_BigROM.BIN     bank 0C000 +3521  key C835 len 00A0  preset 035  algorithm 6C01  'SWEEP RIGHT'
+  H3000_153_BigROM.BIN     bank 0C000 +35C1  key 1411 len 0268  DSP program 14 for DSP 2 (load 800, 303 words)
+  H3000_153_BigROM.BIN     bank 0C000 +3829  key 1412 len 03C6  DSP program 14 for DSP 3 (load 800, 478 words)
+  H3000_153_BigROM.BIN     bank 0C000 +3BEF  key 0411 len 038C  DSP program 04 for DSP 2 (load 800, 449 words)
+  H3000_153_SmallROM.BIN   bank 00000 +0008  key 6502 len 345F  module 65 6809 code
+  H3000_153_SmallROM.BIN   bank 00000 +3467  key 6600 len 0065  module 66 table  'DUAL SHIFT'
+  H3000_153_SmallROM.BIN   bank 00000 +34CC  key 6601 len 00A0  module 66 6809 code
+  H3000_153_SmallROM.BIN   bank 00000 +356C  key 6500 len 0065  module 65 table  'LAYERED SHIFT'
+  H3000_153_SmallROM.BIN   bank 00000 +35D1  key 6501 len 00A0  module 65 6809 code
+  H3000_153_SmallROM.BIN   bank 00000 +3671  key 6700 len 0045  module 67 table  'STEREO SHIFT'
+  H3000_153_SmallROM.BIN   bank 00000 +36B6  key 6701 len 00A0  module 67 6809 code
+  H3000_153_SmallROM.BIN   bank 00000 +3756  key 6800 len 0065  module 68 table  'REVERSE SHIFT'
+  H3000_153_SmallROM.BIN   bank 00000 +37BB  key 6801 len 0099  module 68 6809 code
+  H3000_153_SmallROM.BIN   bank 00000 +3854  key 6400 len 008C  module 64 table  'DIATONIC SHIFT'
+  H3000_153_SmallROM.BIN   bank 00000 +38E0  key 6401 len 00B5  module 64 6809 code
+  H3000_153_SmallROM.BIN   bank 00000 +3995  key C836 len 00A0  preset 036  algorithm 6C01  'CIRCLES'
+  H3000_153_SmallROM.BIN   bank 00000 +3A35  key C837 len 00A0  preset 037  algorithm 6C01  'GENERIC HALL'
+  H3000_153_SmallROM.BIN   bank 00000 +3AD5  key C839 len 005B  preset 039  algorithm 6E01  'MIDI 3 ON 2'
+  H3000_153_SmallROM.BIN   bank 00000 +3B30  key 0410 len 038E  DSP program 04 for DSP 1 (load 800, 450 words)
+  H3000_153_SmallROM.BIN   bank 00000 +3EBE  key 0412 len 00F8  DSP program 04 for DSP 3 (load 800, 119 words)
+  H3000_153_SmallROM.BIN   bank 04000 +0008  key 6C00 len 00A0  module 6C table  'ULTRA-TAP'
+  H3000_153_SmallROM.BIN   bank 04000 +00A8  key 6C01 len 27A9  module 6C 6809 code
+  H3000_153_SmallROM.BIN   bank 04000 +2851  key C80D len 0065  preset 00D  algorithm 6601  'DUEL EFFECT'
+  H3000_153_SmallROM.BIN   bank 04000 +28B6  key C80E len 0065  preset 00E  algorithm 6601  'SLAP/MICROPITCH'
+  H3000_153_SmallROM.BIN   bank 04000 +291B  key C80F len 0065  preset 00F  algorithm 6601  'DUAL H910S'
+  H3000_153_SmallROM.BIN   bank 04000 +2980  key C810 len 0065  preset 010  algorithm 6601  'GLITCH SHIFT'
+  H3000_153_SmallROM.BIN   bank 04000 +29E5  key C806 len 0065  preset 006  algorithm 6501  'TWELVE STRING'
+  H3000_153_SmallROM.BIN   bank 04000 +2A4A  key C807 len 0065  preset 007  algorithm 6501  'MICROPITCHSHIFT'
+  H3000_153_SmallROM.BIN   bank 04000 +2AAF  key C808 len 0065  preset 008  algorithm 6501  'H949'
+  H3000_153_SmallROM.BIN   bank 04000 +2B14  key C809 len 0065  preset 009  algorithm 6501  'MICROPITCH-SLAP'
+  H3000_153_SmallROM.BIN   bank 04000 +2B79  key C80A len 0065  preset 00A  algorithm 6501  'BIZARRMONIZER'
+  H3000_153_SmallROM.BIN   bank 04000 +2BDE  key C80B len 0065  preset 00B  algorithm 6501  "ROCK 'N' ROLL"
+  H3000_153_SmallROM.BIN   bank 04000 +2C43  key C80C len 0065  preset 00C  algorithm 6501  'BASS SHIFT'
+  H3000_153_SmallROM.BIN   bank 04000 +2CA8  key C811 len 0045  preset 011  algorithm 6701  'MUSIC SHIFT'
+  H3000_153_SmallROM.BIN   bank 04000 +2CED  key C812 len 0045  preset 012  algorithm 6701  'VOICE SHIFT'
+  H3000_153_SmallROM.BIN   bank 04000 +2D32  key C813 len 0065  preset 013  algorithm 6801  'CANNONS'
+  H3000_153_SmallROM.BIN   bank 04000 +2D97  key C814 len 0065  preset 014  algorithm 6801  'ANTI-AMBIENCE'
+  H3000_153_SmallROM.BIN   bank 04000 +2DFC  key C815 len 0065  preset 015  algorithm 6801  'ALIENS'
+  H3000_153_SmallROM.BIN   bank 04000 +2E61  key C816 len 0065  preset 016  algorithm 6801  'AVANTE-GARDE'
+  H3000_153_SmallROM.BIN   bank 04000 +2EC6  key C817 len 0065  preset 017  algorithm 6801  'SCARY MOVIE'
+  H3000_153_SmallROM.BIN   bank 04000 +2F2B  key C800 len 008C  preset 000  algorithm 6401  'THIRD & FIFTH'
+  H3000_153_SmallROM.BIN   bank 04000 +2FB7  key C801 len 008C  preset 001  algorithm 6401  'THIRD & OCTAVE'
+  H3000_153_SmallROM.BIN   bank 04000 +3043  key C802 len 008C  preset 002  algorithm 6401  'JUST 3RD & 5TH'
+  H3000_153_SmallROM.BIN   bank 04000 +30CF  key C803 len 008C  preset 003  algorithm 6401  'JUST 4TH & 6TH'
+  H3000_153_SmallROM.BIN   bank 04000 +315B  key C804 len 008C  preset 004  algorithm 6401  'A MINOR CHORDS'
+  H3000_153_SmallROM.BIN   bank 04000 +31E7  key C805 len 008C  preset 005  algorithm 6401  'PITCH QUANTIZE'
+  H3000_153_SmallROM.BIN   bank 04000 +3273  key C826 len 0060  preset 026  algorithm 6B01  'BIG SNARE'
+  H3000_153_SmallROM.BIN   bank 04000 +32D3  key C827 len 0060  preset 027  algorithm 6B01  'GATED REVERB'
+  H3000_153_SmallROM.BIN   bank 04000 +3333  key C828 len 0060  preset 028  algorithm 6B01  'WARM HALL'
+  H3000_153_SmallROM.BIN   bank 04000 +3393  key C829 len 0060  preset 029  algorithm 6B01  'SMALL ROOM'
+  H3000_153_SmallROM.BIN   bank 04000 +33F3  key C82A len 0060  preset 02A  algorithm 6B01  'BRIGHT ROOM'
+  H3000_153_SmallROM.BIN   bank 04000 +3453  key C82B len 0060  preset 02B  algorithm 6B01  'CANYON'
+  H3000_153_SmallROM.BIN   bank 04000 +34B3  key C82C len 0060  preset 02C  algorithm 6B01  "EXPLODING 'VERB"
+  H3000_153_SmallROM.BIN   bank 04000 +3513  key C82D len 0069  preset 02D  algorithm 6A01  'RICH PLATE'
+  H3000_153_SmallROM.BIN   bank 04000 +357C  key C82E len 0060  preset 02E  algorithm 6B01  'LOCKER ROOM'
+  H3000_153_SmallROM.BIN   bank 04000 +35DC  key C82F len 0060  preset 02F  algorithm 6B01  'DARK ROOM'
+  H3000_153_SmallROM.BIN   bank 04000 +363C  key C81D len 0069  preset 01D  algorithm 6A01  'BIG SWEEP'
+  H3000_153_SmallROM.BIN   bank 04000 +36A5  key C81E len 0069  preset 01E  algorithm 6A01  'SHIMMERISH'
+  H3000_153_SmallROM.BIN   bank 04000 +370E  key C81F len 0069  preset 01F  algorithm 6A01  'MODWHEEL REVERB'
+  H3000_153_SmallROM.BIN   bank 04000 +3777  key C820 len 0069  preset 020  algorithm 6A01  'DEATH FLANGE'
+  H3000_153_SmallROM.BIN   bank 04000 +37E0  key C821 len 0069  preset 021  algorithm 6A01  'THICK LOOP'
+  H3000_153_SmallROM.BIN   bank 04000 +3849  key C822 len 0069  preset 022  algorithm 6A01  'DRUM PROCESSOR'
+  H3000_153_SmallROM.BIN   bank 04000 +38B2  key C823 len 0069  preset 023  algorithm 6A01  'SPACE FLANGE'
+  H3000_153_SmallROM.BIN   bank 04000 +391B  key C824 len 0069  preset 024  algorithm 6A01  'MIDI PEDALSWEEP'
+  H3000_153_SmallROM.BIN   bank 04000 +3984  key C825 len 0069  preset 025  algorithm 6A01  'TONAL ROOM'
+  H3000_153_SmallROM.BIN   bank 04000 +39ED  key C818 len 0087  preset 018  algorithm 6901  'DISCRETE-VERB'
+  H3000_153_SmallROM.BIN   bank 04000 +3A74  key C819 len 0087  preset 019  algorithm 6901  'FLANGER'
+  H3000_153_SmallROM.BIN   bank 04000 +3AFB  key C81A len 0087  preset 01A  algorithm 6901  'MULTI-FLANGE'
+  H3000_153_SmallROM.BIN   bank 04000 +3B82  key C81B len 0087  preset 01B  algorithm 6901  'RICH CHORUS'
+  H3000_153_SmallROM.BIN   bank 04000 +3C09  key C81C len 0087  preset 01C  algorithm 6901  'FLANGE & REVERB'
+  H3000_153_SmallROM.BIN   bank 04000 +3C90  key C830 len 00A0  preset 030  algorithm 6C01  'RANDOM GATE'
+  H3000_153_SmallROM.BIN   bank 04000 +3D30  key C831 len 00A0  preset 031  algorithm 6C01  'REVERSE GATE'
+  H3000_153_SmallROM.BIN   bank 04000 +3DD0  key C832 len 00A0  preset 032  algorithm 6C01  'HUMP-VERB'
+  H3000_153_SmallROM.BIN   bank 04000 +3E70  key C833 len 00A0  preset 033  algorithm 6C01  'AMBIENCE'
+  H3000_153_SmallROM.BIN   bank 04000 +3F10  key C834 len 00A0  preset 034  algorithm 6C01  'FAT SLAP'
+  H3000_153_SmallROM.BIN   bank 04000 +3FB0  key C838 len 0043  preset 038  algorithm 6D01  'MIDIPLEX'
+== h3500
+  H3000-Upgrade_ROM1.BIN   bank 00000 +0008  key FE1E len 000E  module FE sub 1E
+  H3000-Upgrade_ROM1.BIN   bank 08000 +0008  key F803 len 0026  module F8 6809 code
+  H3000-Upgrade_ROM1.BIN   bank 08000 +002E  key F804 len 0A6B  module F8 sub 04
+  H3000-Upgrade_ROM1.BIN   bank 08000 +0A99  key F805 len 027E  module F8 sub 05
+  H3000-Upgrade_ROM1.BIN   bank 08000 +0D17  key F806 len 0638  module F8 sub 06
+  H3000-Upgrade_ROM1.BIN   bank 08000 +134F  key F805 len 0460  module F8 sub 05
+  H3000-Upgrade_ROM1.BIN   bank 08000 +17AF  key FFF0 len 060C  module FF sub F0
+  H3000-Upgrade_ROM1.BIN   bank 08000 +1DBB  key FFF1 len 021C  module FF sub F1
+  H3000-Upgrade_ROM2.BIN   bank 00000 +0008  key 6B00 len 00A0  module 6B table  'REVERB FACTORY'
+  H3000-Upgrade_ROM2.BIN   bank 00000 +00A8  key 6B01 len 19AA  module 6B 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 00000 +1A52  key 2810 len 0276  DSP program 28 for DSP 1 (load 800, 310 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +1CC8  key 2811 len 0360  DSP program 28 for DSP 2 (load 800, 427 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +2028  key 2812 len 01EC  DSP program 28 for DSP 3 (load 800, 241 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +2214  key 1E10 len 030A  DSP program 1E for DSP 1 (load 800, 384 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +251E  key 1E11 len 01C4  DSP program 1E for DSP 2 (load 800, 221 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +26E2  key 1E12 len 03F6  DSP program 1E for DSP 3 (load 800, 502 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +2AD8  key 0812 len 000E  DSP program 08 for DSP 3 (load 800, 2 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +2AE6  key 0110 len 01C2  DSP program 01 for DSP 1 (load 800, 220 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +2CA8  key 0111 len 01C8  DSP program 01 for DSP 2 (load 800, 223 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +2E70  key 0112 len 018C  DSP program 01 for DSP 3 (load 800, 193 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +2FFC  key 0012 len 07CA  DSP program 00 for DSP 3 (load 800, 992 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +37C6  key 0212 len 0198  DSP program 02 for DSP 3 (load 800, 199 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +395E  key 0312 len 00FC  DSP program 03 for DSP 3 (load 800, 121 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +3A5A  key 1410 len 02A8  DSP program 14 for DSP 1 (load 800, 335 words)
+  H3000-Upgrade_ROM2.BIN   bank 00000 +3D02  key 1411 len 02E4  DSP program 14 for DSP 2 (load 800, 365 words)
+  H3000-Upgrade_ROM2.BIN   bank 04000 +0008  key 6902 len 3213  module 69 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 04000 +321B  key 6D00 len 0083  module 6D table  'LONG DIGIPLEX'
+  H3000-Upgrade_ROM2.BIN   bank 04000 +329E  key 6D01 len 00A4  module 6D 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 04000 +3342  key 6E00 len 009B  module 6E table  'DUAL DIGIPLEX'
+  H3000-Upgrade_ROM2.BIN   bank 04000 +33DD  key 6E01 len 00A6  module 6E 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 04000 +3483  key 6900 len 00C7  module 69 table  'SWEPT COMBS'
+  H3000-Upgrade_ROM2.BIN   bank 04000 +354A  key 6901 len 00B2  module 69 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 04000 +35FC  key 6A00 len 00A9  module 6A table  'SWEPT REVERB'
+  H3000-Upgrade_ROM2.BIN   bank 04000 +36A5  key 6A01 len 009C  module 6A 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 08000 +0008  key 6502 len 343D  module 65 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 08000 +3445  key 6600 len 00A5  module 66 table  'DUAL SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 08000 +34EA  key 6601 len 009E  module 66 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 08000 +3588  key 6500 len 00A5  module 65 table  'LAYERED SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 08000 +362D  key 6501 len 009E  module 65 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 08000 +36CB  key 6700 len 0085  module 67 table  'STEREO SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 08000 +3750  key 6701 len 00A1  module 67 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 08000 +37F1  key 6800 len 00A5  module 68 table  'REVERSE SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 08000 +3896  key 6801 len 009E  module 68 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 08000 +3934  key 6400 len 00CE  module 64 table  'DIATONIC SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 08000 +3A02  key 6401 len 00AD  module 64 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 08000 +3AAF  key 0410 len 0440  DSP program 04 for DSP 1 (load 800, 539 words)
+  H3000-Upgrade_ROM2.BIN   bank 0C000 +0008  key 6C00 len 00E0  module 6C table  'ULTRA-TAP'
+  H3000-Upgrade_ROM2.BIN   bank 0C000 +00E8  key 6C01 len 286E  module 6C 6809 code
+  H3000-Upgrade_ROM2.BIN   bank 0C000 +2956  key 1412 len 0410  DSP program 14 for DSP 3 (load 800, 515 words)
+  H3000-Upgrade_ROM2.BIN   bank 0C000 +2D66  key 0411 len 0444  DSP program 04 for DSP 2 (load 800, 541 words)
+  H3000-Upgrade_ROM2.BIN   bank 0C000 +31AA  key 0412 len 00F8  DSP program 04 for DSP 3 (load 800, 119 words)
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0008  key CA64 len 0085  preset 264  algorithm 6701  'AIR'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +008D  key CA65 len 00CE  preset 265  algorithm 6401  'A LYDIAN 6ths'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +015B  key CA66 len 00CE  preset 266  algorithm 6401  'A mi WATER WELL'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0229  key CA67 len 00CE  preset 267  algorithm 6401  'A MIXO AIR'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +02F7  key CA68 len 0085  preset 268  algorithm 6701  'ANGEL HAIR'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +037C  key CA69 len 00A5  preset 269  algorithm 6601  'ARP'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0421  key CA6A len 00A5  preset 26A  algorithm 6601  'ARPEGGIATOR'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +04C6  key CA6B len 00A5  preset 26B  algorithm 6501  'BELL ECHOS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +056B  key CA6C len 009B  preset 26C  algorithm 6E01  'BIG AND LONG'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0606  key CA6D len 00C7  preset 26D  algorithm 6901  'BIG chorus ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +06CD  key CA6E len 00A5  preset 26E  algorithm 6801  'BIG GROUND'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0772  key CA6F len 00A5  preset 26F  algorithm 6801  'BIG LIGHT ECHO'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0817  key CA70 len 00E0  preset 270  algorithm 6C01  'BOUNCE VERB'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +08F7  key CA71 len 00A5  preset 271  algorithm 6601  "CHORUS N' ECHO"
+  H3000-Upgrade_ROM2.BIN   bank 10000 +099C  key CA72 len 00A5  preset 272  algorithm 6601  "CHORUS n' FLANG"
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0A41  key CA73 len 00CE  preset 273  algorithm 6401  'CLUSTER ECHO'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0B0F  key CA74 len 00E0  preset 274  algorithm 6C01  'DEATHLESS ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0BEF  key CA75 len 00A0  preset 275  algorithm 6B01  'DELAY TO WASH'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0C8F  key CA76 len 00E0  preset 276  algorithm 6C01  'ECHO BOUND'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0D6F  key CA77 len 00E0  preset 277  algorithm 6C01  'ENDLESS CAVE'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0E4F  key CA78 len 00A5  preset 278  algorithm 6501  'E.Z. CHORUS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0EF4  key CA79 len 00A5  preset 279  algorithm 6501  'FALLING FLANGER'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +0F99  key CA7A len 0085  preset 27A  algorithm 6701  'GREEN WRINGER'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +101E  key CA7B len 00A5  preset 27B  algorithm 6801  'HEAVEN'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +10C3  key CA7C len 00A5  preset 27C  algorithm 6801  'HELL'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1168  key CA7D len 00C7  preset 27D  algorithm 6901  'HEXA CHORUS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +122F  key CA7E len 00C7  preset 27E  algorithm 6901  'HEXA FLANGE'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +12F6  key CA7F len 00A5  preset 27F  algorithm 6601  'INSOMNIA'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +139B  key CA80 len 009B  preset 280  algorithm 6E01  'KICKBACK CHORUS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1436  key CA81 len 00CE  preset 281  algorithm 6401  'LOVE GUN'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1504  key CA82 len 00A5  preset 282  algorithm 6801  'MINOR 7th ECHOS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +15A9  key CA83 len 00A5  preset 283  algorithm 6601  'MONDO CHORUS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +164E  key CA84 len 00A5  preset 284  algorithm 6501  'OCTAVE DISPLACE'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +16F3  key CA85 len 00A5  preset 285  algorithm 6501  'OCTAVE FRENZY'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1798  key CA86 len 00A5  preset 286  algorithm 6801  'OUTDOOR ARENA'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +183D  key CA87 len 00E0  preset 287  algorithm 6C01  'PARIDITTLE'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +191D  key CA88 len 00E0  preset 288  algorithm 6C01  'REVERB-a-BOUND'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +19FD  key CA89 len 0085  preset 289  algorithm 6701  'SLOPPY 5ths'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1A82  key CA8A len 00C7  preset 28A  algorithm 6901  'SMALLchorusROOM'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1B49  key CA8B len 00A0  preset 28B  algorithm 6B01  'SMALL DARK ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1BE9  key CA8C len 00C7  preset 28C  algorithm 6901  'SPACE CATS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1CB0  key CA8D len 0085  preset 28D  algorithm 6701  'STUPIT GUN'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1D35  key CA8E len 00A5  preset 28E  algorithm 6601  'SYNTHISH'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1DDA  key CA8F len 00CE  preset 28F  algorithm 6401  'TARUS BULBA Em'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1EA8  key CA90 len 00A5  preset 290  algorithm 6501  'THE BLUBBA HOZE'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1F4D  key CA91 len 0085  preset 291  algorithm 6701  'TIGHT CHORUS'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +1FD2  key CA92 len 00C7  preset 292  algorithm 6901  'TRIPPLE SLAP'
+  H3000-Upgrade_ROM2.BIN   bank 10000 +2099  key CA93 len 009B  preset 293  algorithm 6E01  'TRIPPLE TREAT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0008  key C800 len 00A5  preset 000  algorithm 6801  'ALIENS'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +00AD  key C801 len 00E0  preset 001  algorithm 6C01  'AMBIENCE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +018D  key C802 len 00CC  preset 002  algorithm 6401  'A MINOR CHORDS'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0259  key C803 len 00A5  preset 003  algorithm 6801  'ANTI-AMBIENCE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +02FE  key C804 len 00A5  preset 004  algorithm 6801  'AVANTE-GARDE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +03A3  key C805 len 00A5  preset 005  algorithm 6501  'BASS SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0448  key C806 len 00A0  preset 006  algorithm 6B01  'BIG SNARE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +04E8  key C807 len 00A9  preset 007  algorithm 6A01  'BIG SWEEP'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0591  key C808 len 00A5  preset 008  algorithm 6501  'BIZARRMONIZER'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0636  key C809 len 00A0  preset 009  algorithm 6B01  'BRIGHT ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +06D6  key C80A len 00A5  preset 00A  algorithm 6801  'CANNONS'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +077B  key C80B len 00A0  preset 00B  algorithm 6B01  'CANYON'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +081B  key C80C len 00E0  preset 00C  algorithm 6C01  'CIRCLES'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +08FB  key C80D len 00A0  preset 00D  algorithm 6B01  'DARK ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +099B  key C80E len 00A9  preset 00E  algorithm 6A01  'DEATH FLANGE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0A44  key C80F len 00C7  preset 00F  algorithm 6901  'DISCRETE-VERB'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0B0B  key C810 len 00A9  preset 010  algorithm 6A01  'DRUM PROCESSOR'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0BB4  key C811 len 00A5  preset 011  algorithm 6601  'DUAL H910S'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0C59  key C812 len 00A5  preset 012  algorithm 6601  'DUEL EFFECT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0CFE  key C813 len 00A0  preset 013  algorithm 6B01  "EXPLODING 'VERB"
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0D9E  key C814 len 00E0  preset 014  algorithm 6C01  'FAT SLAP'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0E7E  key C815 len 00C7  preset 015  algorithm 6901  'FLANGE & REVERB'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +0F45  key C816 len 00C7  preset 016  algorithm 6901  'FLANGER'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +100C  key C817 len 00A0  preset 017  algorithm 6B01  'GATED REVERB'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +10AC  key C818 len 00E0  preset 018  algorithm 6C01  'GENERIC HALL'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +118C  key C819 len 00A5  preset 019  algorithm 6601  'GLITCH SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1231  key C81A len 00A5  preset 01A  algorithm 6501  'H949'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +12D6  key C81B len 00E0  preset 01B  algorithm 6C01  'HUMP-VERB'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +13B6  key C81C len 00CC  preset 01C  algorithm 6401  'JUST 3RD & 5TH'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1482  key C81D len 00CC  preset 01D  algorithm 6401  'JUST 4TH & 6TH'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +154E  key C81E len 00A0  preset 01E  algorithm 6B01  'LOCKER ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +15EE  key C81F len 00A5  preset 01F  algorithm 6501  'MICROPITCHSHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1693  key C820 len 00A5  preset 020  algorithm 6501  'MICROPITCH-SLAP'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1738  key C821 len 009B  preset 021  algorithm 6E01  'MIDI 3 ON 2'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +17D3  key C822 len 00A9  preset 022  algorithm 6A01  'MIDI PEDALSWEEP'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +187C  key C823 len 0083  preset 023  algorithm 6D01  'MIDIPLEX'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +18FF  key C824 len 00A9  preset 024  algorithm 6A01  'MODWHEEL REVERB'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +19A8  key C825 len 00C7  preset 025  algorithm 6901  'MULTI-FLANGE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1A6F  key C826 len 0085  preset 026  algorithm 6701  'MUSIC SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1AF4  key C827 len 00CC  preset 027  algorithm 6401  'PITCH QUANTIZE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1BC0  key C828 len 00E0  preset 028  algorithm 6C01  'RANDOM GATE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1CA0  key C829 len 00E0  preset 029  algorithm 6C01  'REVERSE GATE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1D80  key C82A len 00C7  preset 02A  algorithm 6901  'RICH CHORUS'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1E47  key C82B len 00A9  preset 02B  algorithm 6A01  'RICH PLATE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1EF0  key C82C len 00A5  preset 02C  algorithm 6501  "ROCK 'N' ROLL"
+  H3000-Upgrade_ROM2.BIN   bank 14000 +1F95  key C82D len 00A5  preset 02D  algorithm 6801  'SCARY MOVIE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +203A  key C82E len 00A9  preset 02E  algorithm 6A01  'SHIMMERISH'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +20E3  key C82F len 00A5  preset 02F  algorithm 6601  'SLAP/MICROPITCH'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +2188  key C830 len 00A0  preset 030  algorithm 6B01  'SMALL ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +2228  key C831 len 00A9  preset 031  algorithm 6A01  'SPACE FLANGE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +22D1  key C832 len 00E0  preset 032  algorithm 6C01  'SWEEP RIGHT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +23B1  key C833 len 00A9  preset 033  algorithm 6A01  'THICK LOOP'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +245A  key C834 len 00CC  preset 034  algorithm 6401  'THIRD & FIFTH'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +2526  key C835 len 00CC  preset 035  algorithm 6401  'THIRD & OCTAVE'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +25F2  key C836 len 00A9  preset 036  algorithm 6A01  'TONAL ROOM'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +269B  key C837 len 00A5  preset 037  algorithm 6501  'TWELVE STRING'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +2740  key C838 len 0085  preset 038  algorithm 6701  'VOICE SHIFT'
+  H3000-Upgrade_ROM2.BIN   bank 14000 +27C5  key C839 len 00A0  preset 039  algorithm 6B01  'WARM HALL'
+  H3000-Upgrade_ROM2.BIN   bank 20000 +0008  key 6B00 len 00A0  module 6B table  'REVERB FACTORY'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +00A8  key 6B01 len 19AA  module 6B 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +1A52  key 2810 len 0276  DSP program 28 for DSP 1 (load 800, 310 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +1CC8  key 2811 len 0360  DSP program 28 for DSP 2 (load 800, 427 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +2028  key 2812 len 01EC  DSP program 28 for DSP 3 (load 800, 241 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +2214  key 1E10 len 030A  DSP program 1E for DSP 1 (load 800, 384 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +251E  key 1E11 len 01C4  DSP program 1E for DSP 2 (load 800, 221 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +26E2  key 1E12 len 03F6  DSP program 1E for DSP 3 (load 800, 502 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +2AD8  key 0812 len 000E  DSP program 08 for DSP 3 (load 800, 2 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +2AE6  key 0110 len 01C2  DSP program 01 for DSP 1 (load 800, 220 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +2CA8  key 0111 len 01C8  DSP program 01 for DSP 2 (load 800, 223 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +2E70  key 0112 len 018C  DSP program 01 for DSP 3 (load 800, 193 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +2FFC  key 0012 len 07CA  DSP program 00 for DSP 3 (load 800, 992 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +37C6  key 0212 len 0198  DSP program 02 for DSP 3 (load 800, 199 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +395E  key 0312 len 00FC  DSP program 03 for DSP 3 (load 800, 121 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +3A5A  key 1410 len 02A8  DSP program 14 for DSP 1 (load 800, 335 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 20000 +3D02  key 1411 len 02E4  DSP program 14 for DSP 2 (load 800, 365 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +0008  key 6902 len 3213  module 69 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +321B  key 6D00 len 0083  module 6D table  'LONG DIGIPLEX'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +329E  key 6D01 len 00A4  module 6D 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +3342  key 6E00 len 009B  module 6E table  'DUAL DIGIPLEX'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +33DD  key 6E01 len 00A6  module 6E 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +3483  key 6900 len 00C7  module 69 table  'SWEPT COMBS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +354A  key 6901 len 00B2  module 69 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +35FC  key 6A00 len 00A9  module 6A table  'SWEPT REVERB'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 24000 +36A5  key 6A01 len 009C  module 6A 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +0008  key 6502 len 343D  module 65 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +3445  key 6600 len 00A5  module 66 table  'DUAL SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +34EA  key 6601 len 009E  module 66 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +3588  key 6500 len 00A5  module 65 table  'LAYERED SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +362D  key 6501 len 009E  module 65 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +36CB  key 6700 len 0085  module 67 table  'STEREO SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +3750  key 6701 len 00A1  module 67 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +37F1  key 6800 len 00A5  module 68 table  'REVERSE SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +3896  key 6801 len 009E  module 68 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +3934  key 6400 len 00CE  module 64 table  'DIATONIC SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +3A02  key 6401 len 00AD  module 64 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 28000 +3AAF  key 0410 len 0440  DSP program 04 for DSP 1 (load 800, 539 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 2C000 +0008  key 6C00 len 00E0  module 6C table  'ULTRA-TAP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 2C000 +00E8  key 6C01 len 286E  module 6C 6809 code  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 2C000 +2956  key 1412 len 0410  DSP program 14 for DSP 3 (load 800, 515 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 2C000 +2D66  key 0411 len 0444  DSP program 04 for DSP 2 (load 800, 541 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 2C000 +31AA  key 0412 len 00F8  DSP program 04 for DSP 3 (load 800, 119 words)  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0008  key CA64 len 0085  preset 264  algorithm 6701  'AIR'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +008D  key CA65 len 00CE  preset 265  algorithm 6401  'A LYDIAN 6ths'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +015B  key CA66 len 00CE  preset 266  algorithm 6401  'A mi WATER WELL'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0229  key CA67 len 00CE  preset 267  algorithm 6401  'A MIXO AIR'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +02F7  key CA68 len 0085  preset 268  algorithm 6701  'ANGEL HAIR'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +037C  key CA69 len 00A5  preset 269  algorithm 6601  'ARP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0421  key CA6A len 00A5  preset 26A  algorithm 6601  'ARPEGGIATOR'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +04C6  key CA6B len 00A5  preset 26B  algorithm 6501  'BELL ECHOS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +056B  key CA6C len 009B  preset 26C  algorithm 6E01  'BIG AND LONG'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0606  key CA6D len 00C7  preset 26D  algorithm 6901  'BIG chorus ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +06CD  key CA6E len 00A5  preset 26E  algorithm 6801  'BIG GROUND'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0772  key CA6F len 00A5  preset 26F  algorithm 6801  'BIG LIGHT ECHO'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0817  key CA70 len 00E0  preset 270  algorithm 6C01  'BOUNCE VERB'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +08F7  key CA71 len 00A5  preset 271  algorithm 6601  "CHORUS N' ECHO"  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +099C  key CA72 len 00A5  preset 272  algorithm 6601  "CHORUS n' FLANG"  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0A41  key CA73 len 00CE  preset 273  algorithm 6401  'CLUSTER ECHO'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0B0F  key CA74 len 00E0  preset 274  algorithm 6C01  'DEATHLESS ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0BEF  key CA75 len 00A0  preset 275  algorithm 6B01  'DELAY TO WASH'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0C8F  key CA76 len 00E0  preset 276  algorithm 6C01  'ECHO BOUND'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0D6F  key CA77 len 00E0  preset 277  algorithm 6C01  'ENDLESS CAVE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0E4F  key CA78 len 00A5  preset 278  algorithm 6501  'E.Z. CHORUS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0EF4  key CA79 len 00A5  preset 279  algorithm 6501  'FALLING FLANGER'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +0F99  key CA7A len 0085  preset 27A  algorithm 6701  'GREEN WRINGER'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +101E  key CA7B len 00A5  preset 27B  algorithm 6801  'HEAVEN'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +10C3  key CA7C len 00A5  preset 27C  algorithm 6801  'HELL'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1168  key CA7D len 00C7  preset 27D  algorithm 6901  'HEXA CHORUS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +122F  key CA7E len 00C7  preset 27E  algorithm 6901  'HEXA FLANGE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +12F6  key CA7F len 00A5  preset 27F  algorithm 6601  'INSOMNIA'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +139B  key CA80 len 009B  preset 280  algorithm 6E01  'KICKBACK CHORUS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1436  key CA81 len 00CE  preset 281  algorithm 6401  'LOVE GUN'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1504  key CA82 len 00A5  preset 282  algorithm 6801  'MINOR 7th ECHOS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +15A9  key CA83 len 00A5  preset 283  algorithm 6601  'MONDO CHORUS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +164E  key CA84 len 00A5  preset 284  algorithm 6501  'OCTAVE DISPLACE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +16F3  key CA85 len 00A5  preset 285  algorithm 6501  'OCTAVE FRENZY'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1798  key CA86 len 00A5  preset 286  algorithm 6801  'OUTDOOR ARENA'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +183D  key CA87 len 00E0  preset 287  algorithm 6C01  'PARIDITTLE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +191D  key CA88 len 00E0  preset 288  algorithm 6C01  'REVERB-a-BOUND'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +19FD  key CA89 len 0085  preset 289  algorithm 6701  'SLOPPY 5ths'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1A82  key CA8A len 00C7  preset 28A  algorithm 6901  'SMALLchorusROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1B49  key CA8B len 00A0  preset 28B  algorithm 6B01  'SMALL DARK ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1BE9  key CA8C len 00C7  preset 28C  algorithm 6901  'SPACE CATS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1CB0  key CA8D len 0085  preset 28D  algorithm 6701  'STUPIT GUN'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1D35  key CA8E len 00A5  preset 28E  algorithm 6601  'SYNTHISH'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1DDA  key CA8F len 00CE  preset 28F  algorithm 6401  'TARUS BULBA Em'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1EA8  key CA90 len 00A5  preset 290  algorithm 6501  'THE BLUBBA HOZE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1F4D  key CA91 len 0085  preset 291  algorithm 6701  'TIGHT CHORUS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +1FD2  key CA92 len 00C7  preset 292  algorithm 6901  'TRIPPLE SLAP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 30000 +2099  key CA93 len 009B  preset 293  algorithm 6E01  'TRIPPLE TREAT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0008  key C800 len 00A5  preset 000  algorithm 6801  'ALIENS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +00AD  key C801 len 00E0  preset 001  algorithm 6C01  'AMBIENCE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +018D  key C802 len 00CC  preset 002  algorithm 6401  'A MINOR CHORDS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0259  key C803 len 00A5  preset 003  algorithm 6801  'ANTI-AMBIENCE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +02FE  key C804 len 00A5  preset 004  algorithm 6801  'AVANTE-GARDE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +03A3  key C805 len 00A5  preset 005  algorithm 6501  'BASS SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0448  key C806 len 00A0  preset 006  algorithm 6B01  'BIG SNARE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +04E8  key C807 len 00A9  preset 007  algorithm 6A01  'BIG SWEEP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0591  key C808 len 00A5  preset 008  algorithm 6501  'BIZARRMONIZER'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0636  key C809 len 00A0  preset 009  algorithm 6B01  'BRIGHT ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +06D6  key C80A len 00A5  preset 00A  algorithm 6801  'CANNONS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +077B  key C80B len 00A0  preset 00B  algorithm 6B01  'CANYON'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +081B  key C80C len 00E0  preset 00C  algorithm 6C01  'CIRCLES'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +08FB  key C80D len 00A0  preset 00D  algorithm 6B01  'DARK ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +099B  key C80E len 00A9  preset 00E  algorithm 6A01  'DEATH FLANGE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0A44  key C80F len 00C7  preset 00F  algorithm 6901  'DISCRETE-VERB'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0B0B  key C810 len 00A9  preset 010  algorithm 6A01  'DRUM PROCESSOR'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0BB4  key C811 len 00A5  preset 011  algorithm 6601  'DUAL H910S'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0C59  key C812 len 00A5  preset 012  algorithm 6601  'DUEL EFFECT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0CFE  key C813 len 00A0  preset 013  algorithm 6B01  "EXPLODING 'VERB"  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0D9E  key C814 len 00E0  preset 014  algorithm 6C01  'FAT SLAP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0E7E  key C815 len 00C7  preset 015  algorithm 6901  'FLANGE & REVERB'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +0F45  key C816 len 00C7  preset 016  algorithm 6901  'FLANGER'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +100C  key C817 len 00A0  preset 017  algorithm 6B01  'GATED REVERB'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +10AC  key C818 len 00E0  preset 018  algorithm 6C01  'GENERIC HALL'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +118C  key C819 len 00A5  preset 019  algorithm 6601  'GLITCH SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1231  key C81A len 00A5  preset 01A  algorithm 6501  'H949'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +12D6  key C81B len 00E0  preset 01B  algorithm 6C01  'HUMP-VERB'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +13B6  key C81C len 00CC  preset 01C  algorithm 6401  'JUST 3RD & 5TH'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1482  key C81D len 00CC  preset 01D  algorithm 6401  'JUST 4TH & 6TH'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +154E  key C81E len 00A0  preset 01E  algorithm 6B01  'LOCKER ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +15EE  key C81F len 00A5  preset 01F  algorithm 6501  'MICROPITCHSHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1693  key C820 len 00A5  preset 020  algorithm 6501  'MICROPITCH-SLAP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1738  key C821 len 009B  preset 021  algorithm 6E01  'MIDI 3 ON 2'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +17D3  key C822 len 00A9  preset 022  algorithm 6A01  'MIDI PEDALSWEEP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +187C  key C823 len 0083  preset 023  algorithm 6D01  'MIDIPLEX'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +18FF  key C824 len 00A9  preset 024  algorithm 6A01  'MODWHEEL REVERB'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +19A8  key C825 len 00C7  preset 025  algorithm 6901  'MULTI-FLANGE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1A6F  key C826 len 0085  preset 026  algorithm 6701  'MUSIC SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1AF4  key C827 len 00CC  preset 027  algorithm 6401  'PITCH QUANTIZE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1BC0  key C828 len 00E0  preset 028  algorithm 6C01  'RANDOM GATE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1CA0  key C829 len 00E0  preset 029  algorithm 6C01  'REVERSE GATE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1D80  key C82A len 00C7  preset 02A  algorithm 6901  'RICH CHORUS'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1E47  key C82B len 00A9  preset 02B  algorithm 6A01  'RICH PLATE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1EF0  key C82C len 00A5  preset 02C  algorithm 6501  "ROCK 'N' ROLL"  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +1F95  key C82D len 00A5  preset 02D  algorithm 6801  'SCARY MOVIE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +203A  key C82E len 00A9  preset 02E  algorithm 6A01  'SHIMMERISH'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +20E3  key C82F len 00A5  preset 02F  algorithm 6601  'SLAP/MICROPITCH'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +2188  key C830 len 00A0  preset 030  algorithm 6B01  'SMALL ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +2228  key C831 len 00A9  preset 031  algorithm 6A01  'SPACE FLANGE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +22D1  key C832 len 00E0  preset 032  algorithm 6C01  'SWEEP RIGHT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +23B1  key C833 len 00A9  preset 033  algorithm 6A01  'THICK LOOP'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +245A  key C834 len 00CC  preset 034  algorithm 6401  'THIRD & FIFTH'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +2526  key C835 len 00CC  preset 035  algorithm 6401  'THIRD & OCTAVE'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +25F2  key C836 len 00A9  preset 036  algorithm 6A01  'TONAL ROOM'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +269B  key C837 len 00A5  preset 037  algorithm 6501  'TWELVE STRING'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +2740  key C838 len 0085  preset 038  algorithm 6701  'VOICE SHIFT'  (duplicate)
+  H3000-Upgrade_ROM2.BIN   bank 34000 +27C5  key C839 len 00A0  preset 039  algorithm 6B01  'WARM HALL'  (duplicate)
+  H3000-Upgrade_ROM3.BIN   bank 00000 +0008  key 7A01 len 3ED0  module 7A 6809 code
+  H3000-Upgrade_ROM3.BIN   bank 04000 +0008  key 7A00 len 0154  module 7A table  'mod factory|one'
+  H3000-Upgrade_ROM3.BIN   bank 04000 +015C  key 7A10 len 0562  DSP program 7A for DSP 1 (load 800, 684 words)
+  H3000-Upgrade_ROM3.BIN   bank 04000 +06BE  key 7A11 len 09B6  DSP program 7A for DSP 2 (load 800, 1238 words)
+  H3000-Upgrade_ROM3.BIN   bank 04000 +1074  key 7A12 len 0B46  DSP program 7A for DSP 3 (load 800, 1438 words)
+  H3000-Upgrade_ROM3.BIN   bank 08000 +0008  key 7B01 len 3FE1  module 7B 6809 code
+  H3000-Upgrade_ROM3.BIN   bank 0C000 +0008  key 7B00 len 0157  module 7B table  'mod factory|two'
+  H3000-Upgrade_ROM3.BIN   bank 0C000 +015F  key 7A13 len 0634  DSP program 7A for DSP 4 (load 800, 789 words)
+  H3000-Upgrade_ROM3.BIN   bank 0C000 +0793  key 7A14 len 0A7A  DSP program 7A for DSP 5 (load 800, 1336 words)
+  H3000-Upgrade_ROM3.BIN   bank 0C000 +120D  key 7A15 len 0A68  DSP program 7A for DSP 6 (load 800, 1327 words)
+  H3000-Upgrade_ROM3.BIN   bank 10000 +0008  key CB00 len 0157  preset 300  algorithm 7B01  'allpass detune'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +015F  key CB01 len 0154  preset 301  algorithm 7A01  'anti-duck fdbck'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +02B3  key CB02 len 0157  preset 302  algorithm 7B01  'awesome flange'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +040A  key CB03 len 0157  preset 303  algorithm 7B01  'awesome knob'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +0561  key CB04 len 0154  preset 304  algorithm 7A01  'band compress'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +06B5  key CB05 len 0154  preset 305  algorithm 7A01  'band flip'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +0809  key CB06 len 0154  preset 306  algorithm 7A01  'bandsplit delay'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +095D  key CB07 len 0154  preset 307  algorithm 7A01  'boing (trig)'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +0AB1  key CB08 len 0154  preset 308  algorithm 7A01  'bpm panner'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +0C05  key CB09 len 0154  preset 309  algorithm 7A01  'bpm trips & qtr'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +0D59  key CB0A len 0154  preset 30A  algorithm 7A01  'bpm trip pan'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +0EAD  key CB0B len 0154  preset 30B  algorithm 7A01  'bpm x-fed duck'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1001  key CB0C len 0157  preset 30C  algorithm 7B01  'chorus/duck trm'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1158  key CB0D len 0157  preset 30D  algorithm 7B01  'chorus/duck dly'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +12AF  key CB0E len 0157  preset 30E  algorithm 7B01  'chorus/pan dly'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1406  key CB0F len 0157  preset 30F  algorithm 7B01  'chorus room'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +155D  key CB10 len 0154  preset 310  algorithm 7A01  'compress 2:1'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +16B1  key CB11 len 0157  preset 311  algorithm 7B01  'detuned space'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1808  key CB12 len 0157  preset 312  algorithm 7B01  'detune darkly'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +195F  key CB13 len 0154  preset 313  algorithm 7A01  'dual long delay'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1AB3  key CB14 len 0154  preset 314  algorithm 7A01  'dual duck delay'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1C07  key CB15 len 0154  preset 315  algorithm 7A01  'dual panners'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1D5B  key CB16 len 0154  preset 316  algorithm 7A01  'dual tremolo'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +1EAF  key CB17 len 0157  preset 317  algorithm 7B01  "ducked 'verb   ."
+  H3000-Upgrade_ROM3.BIN   bank 10000 +2006  key CB18 len 0154  preset 318  algorithm 7A01  'dynamic fdback'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +215A  key CB19 len 0154  preset 319  algorithm 7A01  'dynamic flange'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +22AE  key CB1A len 0157  preset 31A  algorithm 7B01  'dynamic tremolo'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +2405  key CB1B len 0157  preset 31B  algorithm 7B01  'envelope detune'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +255C  key CB1C len 0154  preset 31C  algorithm 7A01  'envelope filter'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +26B0  key CB1D len 0154  preset 31D  algorithm 7A01  'envelope flange'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +2804  key CB1E len 0154  preset 31E  algorithm 7A01  'env filter/slap.'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +2958  key CB1F len 0154  preset 31F  algorithm 7A01  'env filter/verb'
+  H3000-Upgrade_ROM3.BIN   bank 10000 +2AAC  key CB20 len 0154  preset 320  algorithm 7A01  'envelope pan'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +0008  key CB21 len 0157  preset 321  algorithm 7B01  'ethereal'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +015F  key CB22 len 0157  preset 322  algorithm 7B01  'ethereal logic .'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +02B6  key CB23 len 0157  preset 323  algorithm 7B01  'etherpan       .'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +040D  key CB24 len 0157  preset 324  algorithm 7B01  'ethertrem      .'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +0564  key CB25 len 0157  preset 325  algorithm 7B01  'exponential'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +06BB  key CB26 len 0154  preset 326  algorithm 7A01  'filter sweep'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +080F  key CB27 len 0154  preset 327  algorithm 7A01  'flangepan'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +0963  key CB28 len 0157  preset 328  algorithm 7B01  'flutter'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +0ABA  key CB29 len 0154  preset 329  algorithm 7A01  'funky squares'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +0C0E  key CB2A len 0157  preset 32A  algorithm 7B01  'fuzz/chorus'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +0D65  key CB2B len 0157  preset 32B  algorithm 7B01  'fuzz/clean chrs'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +0EBC  key CB2C len 0154  preset 32C  algorithm 7A01  'fuzz/eq/cmpress'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1010  key CB2D len 0154  preset 32D  algorithm 7A01  'fuzz/eq/rotary'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1164  key CB2E len 0154  preset 32E  algorithm 7A01  'fuzz/eq/tremolo'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +12B8  key CB2F len 0157  preset 32F  algorithm 7B01  'fuzz-head'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +140F  key CB30 len 0157  preset 330  algorithm 7B01  'gated ghost    .'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1566  key CB31 len 0157  preset 331  algorithm 7B01  'gated multitap'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +16BD  key CB32 len 0154  preset 332  algorithm 7A01  'Haas panner'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1811  key CB33 len 0154  preset 333  algorithm 7A01  'Haas pan/manual'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1965  key CB34 len 0154  preset 334  algorithm 7A01  'hi~efx lo~noefx'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1AB9  key CB35 len 0154  preset 335  algorithm 7A01  'high~lft low~rt'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1C0D  key CB36 len 0154  preset 336  algorithm 7A01  'knob zippers'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1D61  key CB37 len 0154  preset 337  algorithm 7A01  'manual flange'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +1EB5  key CB38 len 0157  preset 338  algorithm 7B01  'midi efx rack'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +200C  key CB39 len 0157  preset 339  algorithm 7B01  'multitap chorus'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +2163  key CB3A len 0154  preset 33A  algorithm 7A01  'overdub loop'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +22B7  key CB3B len 0157  preset 33B  algorithm 7B01  'overdub/detune'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +240E  key CB3C len 0157  preset 33C  algorithm 7B01  'overdub/tremolo'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +2565  key CB3D len 0154  preset 33D  algorithm 7A01  'overdub dual'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +26B9  key CB3E len 0154  preset 33E  algorithm 7A01  'panning bands'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +280D  key CB3F len 0154  preset 33F  algorithm 7A01  'panning delays'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +2961  key CB40 len 0157  preset 340  algorithm 7B01  'panning detune'
+  H3000-Upgrade_ROM3.BIN   bank 14000 +2AB8  key CB41 len 0154  preset 341  algorithm 7A01  'pan into delays'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +0008  key CB42 len 0154  preset 342  algorithm 7A01  'panner'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +015C  key CB43 len 0154  preset 343  algorithm 7A01  'pan squarely'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +02B0  key CB44 len 0157  preset 344  algorithm 7B01  'ping-pong'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +0407  key CB45 len 0157  preset 345  algorithm 7B01  'ping-pong duck'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +055E  key CB46 len 0154  preset 346  algorithm 7A01  'quivering echo'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +06B2  key CB47 len 0154  preset 347  algorithm 7A01  'rich flange'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +0806  key CB48 len 0154  preset 348  algorithm 7A01  'rich flange/man'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +095A  key CB49 len 0157  preset 349  algorithm 7B01  'rich rhythm'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +0AB1  key CB4A len 0154  preset 34A  algorithm 7A01  'sine flange'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +0C05  key CB4B len 0157  preset 34B  algorithm 7B01  'slap center'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +0D5C  key CB4C len 0157  preset 34C  algorithm 7B01  'slide into tune'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +0EB3  key CB4D len 0154  preset 34D  algorithm 7A01  'speaker spinner'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1007  key CB4E len 0157  preset 34E  algorithm 7B01  'square chorus'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +115E  key CB4F len 0157  preset 34F  algorithm 7B01  'stereo detune'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +12B5  key CB50 len 0154  preset 350  algorithm 7A01  'stereo enhance'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1409  key CB51 len 0157  preset 351  algorithm 7B01  'stereo widen'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1560  key CB52 len 0154  preset 352  algorithm 7A01  'strange loop'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +16B4  key CB53 len 0154  preset 353  algorithm 7A01  'swell'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1808  key CB54 len 0157  preset 354  algorithm 7B01  'swell reverb   .'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +195F  key CB55 len 0157  preset 355  algorithm 7B01  'swell taps'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1AB6  key CB56 len 0157  preset 356  algorithm 7B01  'throaty'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1C0D  key CB57 len 0157  preset 357  algorithm 7B01  'tremolo'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1D64  key CB58 len 0157  preset 358  algorithm 7B01  'triggered air  .'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +1EBB  key CB59 len 0154  preset 359  algorithm 7A01  'trigged flange'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +200F  key CB5A len 0154  preset 35A  algorithm 7A01  'triggered pan'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +2163  key CB5B len 0154  preset 35B  algorithm 7A01  'trig pan r~l~r'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +22B7  key CB5C len 0154  preset 35C  algorithm 7A01  'true flange'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +240B  key CB5D len 0157  preset 35D  algorithm 7B01  'undulator'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +2562  key CB5E len 0154  preset 35E  algorithm 7A01  'vibrato'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +26B6  key CB5F len 0154  preset 35F  algorithm 7A01  'whaaat-a-panner'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +280A  key CB60 len 0154  preset 360  algorithm 7A01  'whoopie'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +295E  key CB61 len 0154  preset 361  algorithm 7A01  'wide tremolo'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +2AB2  key CB62 len 0157  preset 362  algorithm 7B01  'wilting phrase'
+  H3000-Upgrade_ROM3.BIN   bank 18000 +2C09  key CB63 len 0154  preset 363  algorithm 7A01  'x-coupled ducks'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0008  key C919 len 0109  preset 119  algorithm 7401  '2 MULTI EFFECTs'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0111  key C91A len 00E0  preset 11A  algorithm 6C01  'AMBIENT SLAP'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +01F1  key C91B len 00F1  preset 11B  algorithm 7201  'BALLAD SNARE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +02E2  key C91C len 00D9  preset 11C  algorithm 6F01  'B00GALOO'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +03BB  key C91D len 00F2  preset 11D  algorithm 7501  'CASTENET PSYCHO'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +04AD  key C91E len 00A5  preset 11E  algorithm 6501  'CLACK'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0552  key C91F len 00D9  preset 11F  algorithm 6F01  "CRACK O'SNARE"
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +062B  key C920 len 00A0  preset 120  algorithm 6B01  'DARK CELLAR'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +06CB  key C921 len 00A9  preset 121  algorithm 6A01  'DAVES PLATE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0774  key C922 len 00A0  preset 122  algorithm 6B01  'DITH VERB'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0814  key C923 len 00D9  preset 123  algorithm 6F01  'DRUM WHEEZE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +08ED  key C924 len 00A9  preset 124  algorithm 6A01  'DRUNKIT'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0996  key C925 len 0109  preset 125  algorithm 7401  'DUAL FLAT FIXER'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0A9F  key C926 len 00A5  preset 126  algorithm 6601  'DUAL TOM SHIFT'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0B44  key C927 len 00A0  preset 127  algorithm 6B01  'DUCK VERB'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0BE4  key C928 len 00A0  preset 128  algorithm 6B01  'EMPTY WATR TANK'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0C84  key C929 len 00D9  preset 129  algorithm 6F01  'FALLING FLANGE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0D5D  key C92A len 00A5  preset 12A  algorithm 6501  'FAT FLAM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0E02  key C92B len 00D9  preset 12B  algorithm 6F01  'FiNeYoung Snare'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0EDB  key C92C len 00CE  preset 12C  algorithm 6401  'FIXT PITCH TOMS'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +0FA9  key C92D len 00E0  preset 12D  algorithm 6C01  'FUNKshunTAPS'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1089  key C92E len 00A0  preset 12E  algorithm 6B01  'GATED KIK'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1129  key C92F len 00A0  preset 12F  algorithm 6B01  'GATED SNARE 2'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +11C9  key C930 len 00A5  preset 130  algorithm 6601  'GRIF RANDOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +126E  key C931 len 00D9  preset 131  algorithm 6F01  'H949 REV 3'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1347  key C932 len 00A9  preset 132  algorithm 6A01  'HAT ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +13F0  key C933 len 00A9  preset 133  algorithm 6A01  'HI HAT BREATH'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1499  key C934 len 00D9  preset 134  algorithm 6F01  'HI HAT DELAY'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1572  key C935 len 00A9  preset 135  algorithm 6A01  'ITCHY COO TOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +161B  key C936 len 00A0  preset 136  algorithm 6B01  'JOES GATE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +16BB  key C937 len 00F2  preset 137  algorithm 7501  'JUNGLE 7'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +17AD  key C938 len 00A0  preset 138  algorithm 6B01  'KERR VERB'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +184D  key C939 len 00A9  preset 139  algorithm 6A01  'KIT FLANGER'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +18F6  key C93A len 00A0  preset 13A  algorithm 6B01  'LEXY ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1996  key C93B len 00A0  preset 13B  algorithm 6B01  'LITE ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1A36  key C93C len 00F1  preset 13C  algorithm 7201  'LONG ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1B27  key C93D len 00A9  preset 13D  algorithm 6A01  'LO PROCESSOR'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1BD0  key C93E len 00A0  preset 13E  algorithm 6B01  'MIDI GATE VERB'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1C70  key C93F len 00A9  preset 13F  algorithm 6A01  'MIDI SWEPT VERB'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1D19  key C940 len 00CE  preset 140  algorithm 6401  'OCTAVE DOWNERs'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1DE7  key C941 len 00E0  preset 141  algorithm 6C01  'One And Ah 16th'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1EC7  key C942 len 00A0  preset 142  algorithm 6B01  'ONE CAR GARAGE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +1F67  key C943 len 00E0  preset 143  algorithm 6C01  'One Ee And Ah'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2047  key C944 len 00E0  preset 144  algorithm 6C01  'One Ee Ah 16ths'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2127  key C945 len 00D9  preset 145  algorithm 6F01  'PERC WAH WAH'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2200  key C946 len 00E0  preset 146  algorithm 6C01  'PHONERING DELAY'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +22E0  key C947 len 00E0  preset 147  algorithm 6C01  'ROOM 90x40x15'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +23C0  key C948 len 00F1  preset 148  algorithm 7201  'ROCK ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +24B1  key C949 len 00E0  preset 149  algorithm 6C01  'SEXTUPLETS A'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2591  key C94A len 00E0  preset 14A  algorithm 6C01  'SEXTUPLETS'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2671  key C94B len 00D9  preset 14B  algorithm 6F01  'SEWER VERB'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +274A  key C94C len 00A0  preset 14C  algorithm 6B01  'SHORT ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +27EA  key C94D len 00D9  preset 14D  algorithm 6F01  'SIMMONIZE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +28C3  key C94E len 00A0  preset 14E  algorithm 6B01  'SMALL TILED RM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2963  key C94F len 00F1  preset 14F  algorithm 7201  'SON OF BIGSNARE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2A54  key C950 len 0109  preset 150  algorithm 7401  'STEREO TOM DELY'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2B5D  key C951 len 00F2  preset 151  algorithm 7501  'SWEEP 8'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2C4F  key C952 len 00A9  preset 152  algorithm 6A01  'THICK RICK'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2CF8  key C953 len 00A0  preset 153  algorithm 6B01  'TILED HAT ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2D98  key C954 len 00D9  preset 154  algorithm 6F01  'tImBrAl bRooM'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2E71  key C955 len 00A9  preset 155  algorithm 6A01  'TIMID VERB'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +2F1A  key C956 len 00F1  preset 156  algorithm 7201  'TINY WAREHOUSE'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +300B  key C957 len 00A0  preset 157  algorithm 6B01  'TOMBALLS'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +30AB  key C958 len 00F2  preset 158  algorithm 7501  'TOM SWEEP'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +319D  key C959 len 00A9  preset 159  algorithm 6A01  'TRASHY DRUMS'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +3246  key C95A len 0109  preset 15A  algorithm 7401  'TWINKIE SHIFT'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +334F  key C95B len 00D9  preset 15B  algorithm 6F01  'Two Warm Delays'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +3428  key C95C len 00A9  preset 15C  algorithm 6A01  'WARP 2'
+  H3000-Upgrade_ROM3.BIN   bank 1C000 +34D1  key C95D len 00A5  preset 15D  algorithm 6501  'WORD UP'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0008  key CA96 len 00D9  preset 296  algorithm 6F01  'ADR TAPE HISS'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +00E1  key CA97 len 00D9  preset 297  algorithm 6F01  'BOING HIT      .'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +01BA  key CA98 len 00E0  preset 298  algorithm 6C01  'CIRCLES'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +029A  key CA99 len 00A9  preset 299  algorithm 6A01  'DAY IN A LIFE'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0343  key CA9A len 00D9  preset 29A  algorithm 6F01  'DRAGWAY AD'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +041C  key CA9B len 00A5  preset 29B  algorithm 6501  'FADE TO DREAM'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +04C1  key CA9C len 00F1  preset 29C  algorithm 7201  "GIL'S ROOM"
+  H3000-Upgrade_ROM3.BIN   bank 20000 +05B2  key CA9D len 00D9  preset 29D  algorithm 6F01  'GREGORIAN CHANT'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +068B  key CA9E len 00C7  preset 29E  algorithm 6901  'HOUSEVERB'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0752  key CA9F len 00D9  preset 29F  algorithm 6F01  'JET FLY BY     .'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +082B  key CAA0 len 00D9  preset 2A0  algorithm 6F01  'LASER HIT      .'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0904  key CAA1 len 00E0  preset 2A1  algorithm 6C01  'MassiveStrngTap'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +09E4  key CAA2 len 00D9  preset 2A2  algorithm 6F01  'MEGAPHONE'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0ABD  key CAA3 len 0109  preset 2A3  algorithm 7401  'MovingVocalSprd'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0BC6  key CAA4 len 00D9  preset 2A4  algorithm 6F01  'PLUCK HIT      .'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0C9F  key CAA5 len 00F1  preset 2A5  algorithm 7201  'PULSING ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0D90  key CAA6 len 00A5  preset 2A6  algorithm 6501  'RANDOM SHIFT'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0E35  key CAA7 len 00A5  preset 2A7  algorithm 6801  'REVERSE DOGS'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0EDA  key CAA8 len 00D9  preset 2A8  algorithm 6F01  'RIPPED WOOFER'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +0FB3  key CAA9 len 00A9  preset 2A9  algorithm 6A01  'SHIMMERISH'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +105C  key CAAA len 00D9  preset 2AA  algorithm 6F01  'STEREO COPTER  .'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1135  key CAAB len 00A0  preset 2AB  algorithm 6B01  'ST PETERS CATH.'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +11D5  key CAAC len 00D9  preset 2AC  algorithm 6F01  'TELEPHONE'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +12AE  key CAAD len 00D9  preset 2AD  algorithm 6F01  'THUNDER BOLT   .'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1387  key CAAE len 00D9  preset 2AE  algorithm 6F01  'TV/Radio/JukeBx'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1460  key CAAF len 00C7  preset 2AF  algorithm 6901  'VOICE DISGUISER'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1527  key CAB0 len 00A5  preset 2B0  algorithm 6601  'WalaWala'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +15CC  key CAB1 len 0085  preset 2B1  algorithm 6701  'WARPED LP'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1651  key CAB2 len 00D9  preset 2B2  algorithm 6F01  'WIND STORM'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +172A  key CAB3 len 00D9  preset 2B3  algorithm 6F01  'DIRECT BOX'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1803  key CAB4 len 00D9  preset 2B4  algorithm 6F01  'MEAN OCTAVES'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +18DC  key CAB5 len 00D9  preset 2B5  algorithm 6F01  'PIGNOSY'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +19B5  key CAB6 len 00D9  preset 2B6  algorithm 6F01  'R&B PLUCK'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1A8E  key CAB7 len 00D9  preset 2B7  algorithm 6F01  'SCREAMER DELAY'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1B67  key CAB8 len 00D9  preset 2B8  algorithm 6F01  'SCREAMER uPITCH'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1C40  key CAB9 len 00D9  preset 2B9  algorithm 6F01  'SILVERTONE II'
+  H3000-Upgrade_ROM3.BIN   bank 20000 +1D19  key CABA len 00D9  preset 2BA  algorithm 6F01  'ULTRALUX'
+  H3000-Upgrade_ROM3.BIN   bank 24000 +0008  key 7801 len 1F9B  module 78 6809 code
+  H3000-Upgrade_ROM3.BIN   bank 24000 +1FA3  key 7802 len 06FD  module 78 6809 code
+  H3000-Upgrade_ROM3.BIN   bank 24000 +26A0  key 7803 len 06C0  module 78 6809 code
+  H3000-Upgrade_ROM3.BIN   bank 24000 +2D60  key 7804 len 09A2  module 78 sub 04
+  H3000-Upgrade_ROM3.BIN   bank 24000 +3702  key 7805 len 08DC  module 78 sub 05
+  H3000-Upgrade_ROM3.BIN   bank 28000 +0008  key 7806 len 1B74  module 78 sub 06
+  H3000-Upgrade_ROM3.BIN   bank 28000 +1B7C  key 7800 len 00FD  module 78 table  'STUDIO SAMPLER'
+  H3000-Upgrade_ROM3.BIN   bank 28000 +1C79  key 7900 len 00FD  module 79 table  'STEREO SAMPLER'
+  H3000-Upgrade_ROM3.BIN   bank 2C000 +0008  key 7810 len 0E7A  DSP program 78 for DSP 1 (load 800, 1848 words)
+  H3000-Upgrade_ROM3.BIN   bank 2C000 +0E82  key 7811 len 0D40  DSP program 78 for DSP 2 (load 800, 1691 words)
+  H3000-Upgrade_ROM3.BIN   bank 2C000 +1BC2  key 7812 len 09C6  DSP program 78 for DSP 3 (load 800, 1246 words)
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0008  key C8C2 len 00A0  preset 0C2  algorithm 6B01  '5 SEC HANG VERB'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +00A8  key CBB1 len 00A5  preset 3B1  algorithm 6801  'HIGH SWELLS'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +014D  key C8C3 len 00F1  preset 0C3  algorithm 7201  'HUGE DENSE HALL'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +023E  key C8C4 len 00F1  preset 0C4  algorithm 7201  'HUGES YNTHSPACE'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +032F  key C85A len 00E0  preset 05A  algorithm 6C01  'INSIDE  OUT'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +040F  key C8C5 len 00A0  preset 0C5  algorithm 6B01  'IN YOUR FACE'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +04AF  key C8C6 len 00A9  preset 0C6  algorithm 6A01  'KALEIDOSCOPEYES.'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0558  key C963 len 0157  preset 163  algorithm 7B01  'KAMIKAZE DELAYS'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +06AF  key CAC1 len 00A0  preset 2C1  algorithm 6B01  'CLONEVERB'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +074F  key CAC2 len 00A0  preset 2C2  algorithm 6B01  'LIKE ENOSE IN E'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +07EF  key CAC3 len 00A0  preset 2C3  algorithm 6B01  'LONG & SMOOTH'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +088F  key CAC4 len 00F1  preset 2C4  algorithm 7201  'MEAT LOCKER'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0980  key CAC5 len 009B  preset 2C5  algorithm 6E01  'MIDI 3 ON 2'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0A1B  key C8C6 len 0083  preset 0C6  algorithm 6D01  'MIDIPLEX'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0A9E  key C960 len 0157  preset 160  algorithm 7B01  'MOON TURN TIDES'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0BF5  key CAC7 len 00C7  preset 2C7  algorithm 6901  'MULTI FLANGERS'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0CBC  key CBAF len 00C7  preset 3AF  algorithm 6901  'MULTI DOUBLER'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0D83  key CBB0 len 00D9  preset 3B0  algorithm 6F01  'MUTRUM'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0E5C  key CBB2 len 00F1  preset 3B2  algorithm 7201  'NewBrightChambr'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +0F4D  key CBC0 len 00E5  preset 3C0  algorithm 7701  'ONVELOPE FILTER'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1032  key CBB4 len 00A0  preset 3B4  algorithm 6B01  'PAPER PLATE'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +10D2  key CBB5 len 00A5  preset 3B5  algorithm 6501  'OTHERS MONO DLY'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1177  key CBB7 len 00E5  preset 3B7  algorithm 7701  'PHASER GTR'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +125C  key CBB8 len 00E5  preset 3B8  algorithm 7701  'ROEYs PHASOLOGY'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1341  key C860 len 0103  preset 060  algorithm 7601  'PRISTINE CLEAN$.'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1444  key C861 len 00D9  preset 061  algorithm 6F01  'SHIFT FAR LEFT'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +151D  key C862 len 00D9  preset 062  algorithm 6F01  'SHIFT FAR RIGHT'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +15F6  key CBBA len 00A5  preset 3BA  algorithm 6501  'POOBLICE ON 9'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +169B  key CBBB len 00D9  preset 3BB  algorithm 6F01  'R&B DIRTSKI *'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1774  key CBBC len 0105  preset 3BC  algorithm 7401  'REAL CHORUS 2'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1879  key CBBD len 00C7  preset 3BD  algorithm 6901  'ResonateInEnozE'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1940  key CBBE len 00D9  preset 3BE  algorithm 6F01  'ROBO DRUM'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1A19  key CBC1 len 00A0  preset 3C1  algorithm 6B01  'UK STYLE VERB'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1AB9  key CBC2 len 00A0  preset 3C2  algorithm 6B01  'SHO IZ TITE VRB'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1B59  key CBC3 len 00A0  preset 3C3  algorithm 6B01  'SMALL&LIVE VERB'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1BF9  key CBB3 len 00F1  preset 3B3  algorithm 7201  'SmallEmptyClub'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1CEA  key C961 len 0154  preset 161  algorithm 7A01  'SMOOTH DELAYS'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1E3E  key CBC4 len 00D9  preset 3C4  algorithm 6F01  'SNARE SLAP'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1F17  key C912 len 00A9  preset 112  algorithm 6A01  'SPACE FLANGE BC.'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +1FC0  key C916 len 0109  preset 116  algorithm 7401  'TITE STEREO CUE'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +20C9  key C913 len 00C7  preset 113  algorithm 6901  'STEREO W FLANGE.'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +2190  key CBC5 len 0103  preset 3C5  algorithm 7601  'STRING MODLER#9'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +2293  key C914 len 00C7  preset 114  algorithm 6901  'SWEPT PANNER'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +235A  key CBC6 len 00D9  preset 3C6  algorithm 6F01  'TALKIN BUM'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +2433  key CBC7 len 00D9  preset 3C7  algorithm 6F01  'THUNDER TOMS'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +250C  key C915 len 0085  preset 115  algorithm 6701  'TITE STEREO DLY'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +2591  key CBB9 len 00A0  preset 3B9  algorithm 6B01  'USEFUL VERB 2'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +2631  key C917 len 0109  preset 117  algorithm 7401  'VOC DOUBLER BC'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +273A  key C8B8 len 00A9  preset 0B8  algorithm 6A01  'VERBY CHORUS'
+  H3000-Upgrade_ROM3.BIN   bank 30000 +27E3  key C8A6 len 00A0  preset 0A6  algorithm 6B01  '1/2SEC  GATORVRB'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0008  key C8A6 len 00A0  preset 0A6  algorithm 6B01  '1/2SEC GATORVRB'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +00A8  key C85B len 0157  preset 05B  algorithm 7B01  '3d DUCKY DELAYS'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +01FF  key C85C len 0154  preset 05C  algorithm 7A01  '3d DUAL DUK DLY'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0353  key C858 len 0157  preset 058  algorithm 7B01  '3D DELAY LEFT'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +04AA  key C85D len 0154  preset 05D  algorithm 7A01  '3d HAAS PAN'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +05FE  key CBB6 len 00E5  preset 3B6  algorithm 7701  '007 PHASE GUN'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +06E3  key C8A7 len 00A5  preset 0A7  algorithm 6801  'ACIDREIGN'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0788  key C8A8 len 00F1  preset 0A8  algorithm 7201  'ACCURATE ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0879  key CBBF len 00F1  preset 3BF  algorithm 7201  'AIR SHAMIR'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +096A  key C8A9 len 00F1  preset 0A9  algorithm 7201  'AMBIENT BOOTH'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0A5B  key C8AA len 00A5  preset 0AA  algorithm 6801  'ATLANTIS'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0B00  key C8AB len 00F1  preset 0AB  algorithm 7201  'BASS SPACE'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0BF1  key C910 len 00E5  preset 110  algorithm 7701  "BOB C'S PHASER"
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0CD6  key C8AC len 00A0  preset 0AC  algorithm 6B01  'BriteBrassPlate'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0D76  key C8AE len 00C7  preset 0AE  algorithm 6901  'CABO BOING'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0E3D  key C8AF len 00C7  preset 0AF  algorithm 6901  'CHORUS SLOW'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +0F04  key C8B0 len 0103  preset 0B0  algorithm 7601  'CLOSENCOUNTERS .'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1007  key C8B1 len 00A0  preset 0B1  algorithm 6B01  'CLOSE MIKED'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +10A7  key C8B2 len 00A0  preset 0B2  algorithm 6B01  'COMB SPACE 1'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1147  key C8B3 len 00F1  preset 0B3  algorithm 7201  'COMPRESSED AIR .'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1238  key C8B4 len 0109  preset 0B4  algorithm 7401  'CRYSTALESQUE *'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1341  key C8AD len 0154  preset 0AD  algorithm 7A01  'DAVES SPIN     .'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1495  key C8B5 len 00F1  preset 0B5  algorithm 7201  'DOUBLE  SPACE  .'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1586  key C8B6 len 00F1  preset 0B6  algorithm 7201  'DENSE HALL 2'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1677  key C911 len 013F  preset 111  algorithm 6C01  'DEEPENED CLAPS'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +17B6  key C8B7 len 00F1  preset 0B7  algorithm 7201  'DELAY W/ ROOM  .'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +18A7  key C8B9 len 00A9  preset 0B9  algorithm 6A01  'DRAGON BREATH'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1950  key C8BA len 00F1  preset 0BA  algorithm 7201  'DrewzNooRoom'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1A41  key C8BB len 00F1  preset 0BB  algorithm 7201  'DRUM AMBIENCE'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1B32  key C8C7 len 0109  preset 0C7  algorithm 7401  'FAN WHIPPER'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1C3B  key C85E len 0157  preset 05E  algorithm 7B01  'FAR LEFT'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1D92  key C85F len 0157  preset 05F  algorithm 7B01  'FAR RIGHT'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1EE9  key C8BC len 00E7  preset 0BC  algorithm 7001  'FLASHBACK'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +1FD0  key C8BD len 00C7  preset 0BD  algorithm 6901  'SORE THROAT'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +2097  key C8BE len 00A0  preset 0BE  algorithm 6B01  'GATED FENCE'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +2137  key C8BF len 00A0  preset 0BF  algorithm 6B01  'GATED ROOM 2'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +21D7  key C8C0 len 00E0  preset 0C0  algorithm 6C01  'GENERIC HALL'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +22B7  key C859 len 00E0  preset 059  algorithm 6C01  'GHOST 3D DELAYS'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +2397  key C857 len 00E0  preset 057  algorithm 6C01  'GIANT 3D DELAYS'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +2477  key C962 len 0157  preset 162  algorithm 7B01  'GIGUNDO CHORUS'
+  H3000-Upgrade_ROM3.BIN   bank 34000 +25CE  key C8C1 len 00A0  preset 0C1  algorithm 6B01  'GREAT DRUMSPACE'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0008  key C847 len 0109  preset 047  algorithm 7401  '3 OCTAVES UP'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0111  key 9800 len 009B  module 98 table  '3+ OF ME'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +01AC  key 9A00 len 00A9  module 9A table  '8 SEC REVERB'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0255  key 9600 len 0105  module 96 table  '12BYRD-STRING'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +035A  key 9700 len 0105  module 97 table  '12 STRING & 5th'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +045F  key 9900 len 00A9  module 99 table  '60sSITAR FLANGE.'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0508  key C849 len 0154  preset 049  algorithm 7A01  'ABOUT YOU VIBD'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +065C  key C8C5 len 00A5  preset 0C5  algorithm 6801  'ACID REIGN'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0701  key 9B00 len 00D9  module 9B table  'ANALOG  DELAYS2'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +07DA  key C8AA len 00A5  preset 0AA  algorithm 6801  'ATLANTIS'  (duplicate)
+  H3000-Upgrade_ROM3.BIN   bank 38000 +087F  key 9C00 len 00E0  module 9C table  'BACK TAPPING'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +095F  key 9D00 len 0109  module 9D table  'BassChor DDL'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0A68  key 9E00 len 0105  module 9E table  'BIG 5TH HARMONY'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0B6D  key 9F00 len 0109  module 9F table  'THE BIG CHEEZ 2'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0C76  key A000 len 00A5  module A0 table  'BLACK JACK'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0D1B  key A100 len 00C7  module A1 table  'CHORUS SLAP'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0DE2  key C84A len 0154  preset 04A  algorithm 7A01  'CHORWASHdual'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +0F36  key A200 len 0157  module A2 table  'COOL  PRES'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +108D  key A300 len 00A5  module A3 table  'CRYSTAL  ECHO 2'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1132  key C8B4 len 0109  preset 0B4  algorithm 7401  'CRYSTALESQUE *'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +123B  key C8AD len 0154  preset 0AD  algorithm 7A01  'DAVES SPIN     .'  (duplicate)
+  H3000-Upgrade_ROM3.BIN   bank 38000 +138F  key A400 len 0109  module A4 table  'DELAY  &  HARM'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1498  key A500 len 0109  module A5 table  'DETUNE + DELAY'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +15A1  key A600 len 00E0  module A6 table  'DIFFUSED SLAP'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1681  key A700 len 00A5  module A7 table  'DOLPHIN  TALK'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1726  key C8B9 len 00A9  preset 0B9  algorithm 6A01  'DRAGON BREATH'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +17CF  key A800 len 00A5  module A8 table  'DREAM  FANTASY3'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1874  key C850 len 00A5  preset 050  algorithm 6801  'DRUNK ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1919  key C84C len 0109  preset 04C  algorithm 7401  'DRY CHORUS'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1A22  key A900 len 009B  module A9 table  'DUAL GTR DELAYS'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1ABD  key C8C7 len 0109  preset 0C7  algorithm 7401  'FAN WHIPPER'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1BC6  key AA00 len 00A5  module AA table  'FAT AS CAN -B'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1C6B  key AB00 len 00C7  module AB table  'FLESH 4 FANTASY'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1D32  key AC00 len 00E0  module AC table  'FLOAT!'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1E12  key AD00 len 00A9  module AD table  'FLOAT FLANGE   ,'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1EBB  key C84E len 0085  preset 04E  algorithm 6701  'FLUTTEROUS ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +1F40  key AE00 len 00E0  module AE table  'FRIZZLE FRY'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +2020  key C859 len 00E0  preset 059  algorithm 6C01  'GHOST 3D DELAYS'  (duplicate)
+  H3000-Upgrade_ROM3.BIN   bank 38000 +2100  key AF00 len 00CE  module AF table  'G MAJ MOD WHEEL'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +21CE  key B000 len 0157  module B0 table  'GTR OFF STAGE L'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +2325  key B100 len 0157  module B1 table  'GTR OFF STAGE R'
+  H3000-Upgrade_ROM3.BIN   bank 38000 +247C  key B200 len 00A0  module B2 table  'GUITAR ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0008  key C851 len 00A5  preset 051  algorithm 6501  'HARMONY ROOM 2'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +00AD  key B300 len 00A5  module B3 table  'HEAVEN I KNOW 9.'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0152  key B400 len 00A5  module B4 table  'HEAVENLY PAD DM'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +01F7  key B500 len 00A0  module B5 table  'HUNTER DELAY'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0297  key C85A len 00E0  preset 05A  algorithm 6C01  'INSIDE  OUT 3D'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0377  key B600 len 0105  module B6 table  'JERRY RACE CAR'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +047C  key B700 len 00A5  module B7 table  'JIMI JAMES     .'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0521  key C963 len 0157  preset 163  algorithm 7B01  'KAMIKAZE DELAYS'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0678  key C853 len 00A0  preset 053  algorithm 6B01  'LG GUITAR ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0718  key C854 len 0157  preset 054  algorithm 7B01  'LONG LEAD PING'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +086F  key C848 len 00A5  preset 048  algorithm 6801  'LO & BEHOLD'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0914  key B800 len 00C7  module B8 table  'LUSH LIFE'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +09DB  key B900 len 0109  module B9 table  'MAJ3RD-MIN3RD+'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0AE4  key C852 len 00A0  preset 052  algorithm 6B01  'MARKS MED DARK'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0B84  key C84D len 0109  preset 04D  algorithm 7401  'MILD CHORSDELAY'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0C8D  key BA00 len 0154  module BA table  'MIGHTY DUCK'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0DE1  key C842 len 0105  preset 042  algorithm 7401  'MODULATOR-VERB'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0EE6  key BB00 len 00A5  module BB table  'MOD WHEEL CLIMB'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +0F8B  key BC00 len 00A5  module BC table  'MOD WHEEL DIVE'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1030  key C960 len 0157  preset 160  algorithm 7B01  'MOON TURN TIDES'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1187  key BD00 len 00C7  module BD table  'MULTI SLAP'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +124E  key C84B len 00A5  preset 04B  algorithm 6801  'MY BLOODY VAL'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +12F3  key C843 len 0105  preset 043  algorithm 7401  'OCTAVE ECHOES'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +13F8  key C856 len 00A5  preset 056  algorithm 6501  'PANDELAY250/125'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +149D  key C845 len 0109  preset 045  algorithm 7401  'PanOctavDlyVerb'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +15A6  key C844 len 0109  preset 044  algorithm 7401  'PanPitchDlyVerb'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +16AF  key CBBB len 00D9  preset 3BB  algorithm 6F01  'R&B DIRTSKI *'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1788  key BF00 len 00A5  module BF table  'RAYGUN'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +182D  key CBBC len 0105  preset 3BC  algorithm 7401  'REAL CHORUS 2'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1932  key C000 len 00C7  module C0 table  'ResoVibroEee'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +19F9  key C100 len 00A0  module C1 table  'ROOM OF DOOM'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1A99  key C200 len 0105  module C2 table  'RYTHM & REVERB 0'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1B9E  key C300 len 0083  module C3 table  'SEAS OF CHEESE'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1C21  key BE00 len 0154  module BE table  'SHOULDER PHONE'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1D75  key C846 len 00CE  preset 046  algorithm 6401  'SkilScale'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1E43  key C400 len 00C7  module C4 table  'SLUDGWIK'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +1F0A  key C500 len 0157  module C5 table  'SON OF KAMIKAZE'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +2061  key C912 len 00A9  preset 112  algorithm 6A01  'SPACE FLANGE BC.'  (duplicate)
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +210A  key C600 len 00C7  module C6 table  'STEREO W FLANGE.'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +21D1  key C700 len 00A9  module C7 table  'SWEPT FLANGE 2'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +227A  key C83B len 00C7  preset 03B  algorithm 6901  'SymphonicChorus'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +2341  key C83C len 00A5  preset 03C  algorithm 6601  'SYNTHISH ON YOU.'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +23E6  key C845 len 0109  preset 045  algorithm 7401  'THIK/WET DELAY'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +24EF  key C83D len 00A0  preset 03D  algorithm 6B01  'THRAX-VERB'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +258F  key C83E len 00A9  preset 03E  algorithm 6A01  'TWIRLING ROOM'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +2638  key C83F len 00D9  preset 03F  algorithm 6F01  'UnderwaterDelay'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +2711  key C840 len 00D9  preset 040  algorithm 6F01  'UNREAL 12 STRNG0'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +27EA  key C841 len 00A0  preset 041  algorithm 6B01  'USEFUL VERB'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +288A  key C8B8 len 00A9  preset 0B8  algorithm 6A01  'VERBY CHORUS'
+  H3000-Upgrade_ROM3.BIN   bank 3C000 +2933  key C84F len 00A5  preset 04F  algorithm 6501  'WATERY CHORUS'
+  H3000-Upgrade_ROM4.BIN   bank 00000 +0008  key 7200 len 00F1  module 72 table  'DENSE ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 00000 +00F9  key 7201 len 2580  module 72 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 00000 +2679  key 7210 len 0168  DSP program 72 for DSP 1 (load 800, 175 words)
+  H3000-Upgrade_ROM4.BIN   bank 00000 +27E1  key 7211 len 0172  DSP program 72 for DSP 2 (load 800, 180 words)
+  H3000-Upgrade_ROM4.BIN   bank 00000 +2953  key 7212 len 0166  DSP program 72 for DSP 3 (load 800, 174 words)
+  H3000-Upgrade_ROM4.BIN   bank 04000 +0008  key 7400 len 0109  module 74 table  'MULTI-SHIFT'
+  H3000-Upgrade_ROM4.BIN   bank 04000 +0111  key 7401 len 2E9B  module 74 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 04000 +2FAC  key 7410 len 02D4  DSP program 74 for DSP 1 (load 800, 357 words)
+  H3000-Upgrade_ROM4.BIN   bank 04000 +3280  key 7411 len 02CE  DSP program 74 for DSP 2 (load 800, 354 words)
+  H3000-Upgrade_ROM4.BIN   bank 04000 +354E  key 7412 len 092A  DSP program 74 for DSP 3 (load 800, 1168 words)
+  H3000-Upgrade_ROM4.BIN   bank 08000 +0008  key 7500 len 00F2  module 75 table  'BAND DELAY'
+  H3000-Upgrade_ROM4.BIN   bank 08000 +00FA  key 7501 len 342B  module 75 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 08000 +3525  key 7A02 len 0204  module 7A 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 08000 +3729  key 7510 len 01BE  DSP program 75 for DSP 1 (load 800, 218 words)
+  H3000-Upgrade_ROM4.BIN   bank 08000 +38E7  key 7511 len 01D8  DSP program 75 for DSP 2 (load 800, 231 words)
+  H3000-Upgrade_ROM4.BIN   bank 08000 +3ABF  key 7512 len 01AE  DSP program 75 for DSP 3 (load 800, 210 words)
+  H3000-Upgrade_ROM4.BIN   bank 0C000 +0008  key 7600 len 0103  module 76 table  'STRING MODELLER'
+  H3000-Upgrade_ROM4.BIN   bank 0C000 +010B  key 7601 len 215B  module 76 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 0C000 +2266  key 7A02 len 0D58  module 7A 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 0C000 +2FBE  key 7610 len 0578  DSP program 76 for DSP 1 (load 800, 695 words)
+  H3000-Upgrade_ROM4.BIN   bank 0C000 +3536  key 7611 len 0542  DSP program 76 for DSP 2 (load 800, 668 words)
+  H3000-Upgrade_ROM4.BIN   bank 0C000 +3A78  key 7612 len 0518  DSP program 76 for DSP 3 (load 800, 647 words)
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0008  key C964 len 00E5  preset 164  algorithm 7701  'ADSR FILTER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +00ED  key C965 len 00E5  preset 165  algorithm 7701  'ADSR PHASER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +01D2  key C966 len 00D9  preset 166  algorithm 6F01  'ANALOG THICK'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +02AB  key C967 len 0109  preset 167  algorithm 7401  'BASS CHORUS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +03B4  key C968 len 00E5  preset 168  algorithm 7701  'BUENOS NOTCHES'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0499  key C969 len 00A9  preset 169  algorithm 6A01  'DEATH FLANGE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0542  key C96A len 0105  preset 16A  algorithm 7401  'DIGDLY & MICRO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0647  key C96B len 00D9  preset 16B  algorithm 6F01  'DGDLY+WAH+MICRO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0720  key C96C len 0105  preset 16C  algorithm 7401  'DUAL H910 MICRO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0825  key C96D len 00E5  preset 16D  algorithm 7701  'ENVELOPE FILTER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +090A  key C96E len 00E5  preset 16E  algorithm 7701  'ENVELOPE PHASER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +09EF  key C96F len 00C7  preset 16F  algorithm 6901  'FLANGE & REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0AB6  key C970 len 00C7  preset 170  algorithm 6901  'FLANGER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0B7D  key C971 len 00E5  preset 171  algorithm 7701  'INSTANT PHASER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0C62  key C972 len 0109  preset 172  algorithm 7401  'JUST STEREO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0D6B  key C973 len 00A5  preset 173  algorithm 6501  'MAGIC AIR'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0E10  key C974 len 0109  preset 174  algorithm 7401  'MANYREFLECTIONS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +0F19  key C975 len 0105  preset 175  algorithm 7401  'MICRO + DRYSLAP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +101E  key C976 len 0105  preset 176  algorithm 7401  'MICRO + REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1123  key C977 len 0109  preset 177  algorithm 7401  'MICROPITCHSHIFT'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +122C  key C978 len 0105  preset 178  algorithm 7401  'MICRO-REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1331  key C979 len 0109  preset 179  algorithm 7401  'MICROPITCH-SLAP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +143A  key C97A len 00C7  preset 17A  algorithm 6901  'MULTI-DLYEFFECT'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1501  key C97B len 00C7  preset 17B  algorithm 6901  'MULTI-FLANGE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +15C8  key C97C len 0109  preset 17C  algorithm 7401  'QUADRUPLER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +16D1  key C97D len 0105  preset 17D  algorithm 7401  'RANDOM FLANGE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +17D6  key C97E len 00E5  preset 17E  algorithm 7701  'RESONANT SWEEP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +18BB  key C97F len 00C7  preset 17F  algorithm 6901  'RICH CHORUS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1982  key C980 len 0105  preset 180  algorithm 7401  'REAL CHORUS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1A87  key C981 len 00A9  preset 181  algorithm 6A01  'SPACE FLANGE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1B30  key C982 len 0109  preset 182  algorithm 7401  'TREMOLO DELAY'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1C39  key C983 len 0109  preset 183  algorithm 7401  'TWO THICKENERS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1D42  key C984 len 0109  preset 184  algorithm 7401  'ULTRA-THICK'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1E4B  key C985 len 00A5  preset 185  algorithm 6501  'VOICE DOUBLER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1EF0  key C986 len 00C7  preset 186  algorithm 6901  'WATERY FLANGE  .'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +1FB7  key C987 len 00D9  preset 187  algorithm 6F01  'ANALOG DELAYS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2090  key C988 len 00E0  preset 188  algorithm 6C01  'BUILD-A-SHIMMER'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2170  key C989 len 00E0  preset 189  algorithm 6C01  'CIRCLES'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2250  key C98A len 0083  preset 18A  algorithm 6D01  'DIGITAL DELAY'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +22D3  key C98B len 009B  preset 18B  algorithm 6E01  'DUAL DELAYS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +236E  key C98C len 009B  preset 18C  algorithm 6E01  'ECHOPLEXINGPONG'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2409  key C98D len 0083  preset 18D  algorithm 6D01  'ECHO RAMP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +248C  key C98E len 00E0  preset 18E  algorithm 6C01  'FAT SLAP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +256C  key C98F len 00E0  preset 18F  algorithm 6C01  'FIFTH AVE ECHO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +264C  key C990 len 0083  preset 190  algorithm 6D01  'LONG DELAY'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +26CF  key C991 len 00E0  preset 191  algorithm 6C01  'MULTI-TAP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +27AF  key C992 len 00E0  preset 192  algorithm 6C01  'PING PONG BALL'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +288F  key C993 len 00F2  preset 193  algorithm 7501  'SETTLEDOWN ECHO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2981  key C994 len 00F1  preset 194  algorithm 7201  'SOFT SHORT ECHO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2A72  key C995 len 00D9  preset 195  algorithm 6F01  'SPACE ECHO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2B4B  key C996 len 00A5  preset 196  algorithm 6601  'SUBTLE SWEEP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2BF0  key C997 len 00E0  preset 197  algorithm 6C01  'SWEEP RIGHT'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2CD0  key C998 len 00A9  preset 198  algorithm 6A01  'THICK LOOP'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2D79  key C999 len 009B  preset 199  algorithm 6E01  'THREE ON TWO'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2E14  key C99A len 00E0  preset 19A  algorithm 6C01  'WIDENING TAPS'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2EF4  key C99B len 00E0  preset 19B  algorithm 6C01  'AMBIENCE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +2FD4  key C99C len 00F1  preset 19C  algorithm 7201  'AMBIENT BOOTH'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +30C5  key C99D len 00A0  preset 19D  algorithm 6B01  'BATHROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3165  key C99E len 00A9  preset 19E  algorithm 6A01  'CHORUS ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +320E  key C99F len 00F1  preset 19F  algorithm 7201  'CRASS ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +32FF  key C9A0 len 00E0  preset 1A0  algorithm 6C01  'DE-BURR'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +33DF  key C9A1 len 00F1  preset 1A1  algorithm 7201  "DREW'S CHAMBER"
+  H3000-Upgrade_ROM4.BIN   bank 10000 +34D0  key C9A2 len 00F1  preset 1A2  algorithm 7201  'DRUM AMBIENCE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +35C1  key C9A3 len 00A9  preset 1A3  algorithm 6A01  'EMPTY CLOSET'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +366A  key C9A4 len 00A9  preset 1A4  algorithm 6A01  'EMPTY ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3713  key C9A5 len 00A9  preset 1A5  algorithm 6A01  'MEDIUM SPACE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +37BC  key C9A6 len 00C7  preset 1A6  algorithm 6901  'NEW HOUSE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3883  key C9A7 len 00F1  preset 1A7  algorithm 7201  'PRCSVHORN PLATE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3974  key C9A8 len 00A9  preset 1A8  algorithm 6A01  'REAL ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3A1D  key C9A9 len 00A0  preset 1A9  algorithm 6B01  'SMALL ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3ABD  key C9AA len 00A9  preset 1AA  algorithm 6A01  'SML:STEREOSPACE'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3B66  key C9AB len 00F1  preset 1AB  algorithm 7201  'SMALLVOCAL ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3C57  key C9AC len 00F1  preset 1AC  algorithm 7201  'TIGHT ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3D48  key C9AD len 00F1  preset 1AD  algorithm 7201  'TIGHT & BRIGHT'
+  H3000-Upgrade_ROM4.BIN   bank 10000 +3E39  key C9AE len 00F1  preset 1AE  algorithm 7201  'VOCAL BOOTH'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0008  key C9AF len 00A9  preset 1AF  algorithm 6A01  'ALIVE CHAMBER'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +00B1  key C9B0 len 00A0  preset 1B0  algorithm 6B01  'BIG SNARE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0151  key C9B1 len 00A9  preset 1B1  algorithm 6A01  'BIG SWEEP'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +01FA  key C9B2 len 00F1  preset 1B2  algorithm 7201  "BOB'S ROOM"
+  H3000-Upgrade_ROM4.BIN   bank 14000 +02EB  key C9B3 len 00A9  preset 1B3  algorithm 6A01  'BREATHINGCANYON'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0394  key C9B4 len 00F1  preset 1B4  algorithm 7201  'BRIGHT ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0485  key C9B5 len 00A0  preset 1B5  algorithm 6B01  'CANYON'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0525  key C9B6 len 00F1  preset 1B6  algorithm 7201  'CONCERT HALL'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0616  key C9B7 len 00A0  preset 1B7  algorithm 6B01  'DARK ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +06B6  key C9B8 len 00C7  preset 1B8  algorithm 6901  'DISCRETE-VERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +077D  key C9B9 len 00F1  preset 1B9  algorithm 7201  'NORTHWEST HALL .'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +086E  key C9BA len 00A9  preset 1BA  algorithm 6A01  'RICH PLATE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0917  key C9BB len 00F1  preset 1BB  algorithm 7201  'SLAPVERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0A08  key C9BC len 00F1  preset 1BC  algorithm 7201  'SMOOTH PLATE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0AF9  key C9BD len 00A0  preset 1BD  algorithm 6B01  'WARM HALL'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0B99  key C9BE len 0105  preset 1BE  algorithm 7401  'BACKWARD REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0C9E  key C9BF len 00F1  preset 1BF  algorithm 7201  'ECHO-VERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0D8F  key C9C0 len 00A0  preset 1C0  algorithm 6B01  "EXPLODING 'VERB"
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0E2F  key C9C1 len 00A0  preset 1C1  algorithm 6B01  'GATED REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0ECF  key C9C2 len 00A0  preset 1C2  algorithm 6B01  'GATED ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +0F6F  key C9C3 len 00A0  preset 1C3  algorithm 6B01  'GATE ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +100F  key C9C4 len 00E0  preset 1C4  algorithm 6C01  'HUMP-VERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +10EF  key C9C5 len 00E0  preset 1C5  algorithm 6C01  'METALVERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +11CF  key C9C6 len 00E0  preset 1C6  algorithm 6C01  'RANDOM GATE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +12AF  key C9C7 len 0103  preset 1C7  algorithm 7601  'RESONANT WORLD'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +13B2  key CA00 len 00E0  preset 200  algorithm 6C01  'REVERSE GATE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1492  key CA01 len 00A9  preset 201  algorithm 6A01  'REVERB RAMP'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +153B  key CA02 len 00A9  preset 202  algorithm 6A01  'SHIMMERISH'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +15E4  key CA03 len 00A9  preset 203  algorithm 6A01  'TONAL ROOM'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +168D  key CA04 len 0105  preset 204  algorithm 7401  'UP/DOWN REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1792  key CA05 len 00CC  preset 205  algorithm 6401  'A MINOR CHORDS'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +185E  key CA06 len 0105  preset 206  algorithm 7401  'ARPEGGIOS'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1963  key CA07 len 0109  preset 207  algorithm 7401  'BASS SHIFT'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1A6C  key CA08 len 00D9  preset 208  algorithm 6F01  'DEEPEN'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1B45  key CA09 len 00CE  preset 209  algorithm 6401  'DIATONIC DANCE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1C13  key CA0A len 0105  preset 20A  algorithm 7401  'DUAL SHIFT EASY'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1D18  key CA0B len 00A5  preset 20B  algorithm 6601  'GLITCH SHIFT'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1DBD  key CA0C len 00D9  preset 20C  algorithm 6F01  'GREGORIAN CHANT'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1E96  key CA0D len 00A5  preset 20D  algorithm 6501  'H949'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1F3B  key CA0E len 009B  preset 20E  algorithm 6E01  'HAMMER-ON 3RD'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +1FD6  key CA0F len 009B  preset 20F  algorithm 6E01  'HAMMER-ON 5TH'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2071  key CA10 len 0105  preset 210  algorithm 7401  'HARMO-CHORUS'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2176  key CA11 len 0105  preset 211  algorithm 7401  'IN SIX'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +227B  key CA12 len 00CC  preset 212  algorithm 6401  'JUST 3RD & 5TH'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2347  key CA13 len 00CC  preset 213  algorithm 6401  'JUST 4TH & 6TH'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2413  key CA14 len 0085  preset 214  algorithm 6701  'MUSIC SHIFT'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2498  key CA15 len 0105  preset 215  algorithm 7401  'OCTAVE ECHOES'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +259D  key CA16 len 0105  preset 216  algorithm 7401  'PITCHED ECHO'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +26A2  key CA17 len 00CC  preset 217  algorithm 6401  'PITCH QUANTIZE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +276E  key CA18 len 0109  preset 218  algorithm 7401  'SUSPENSE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2877  key CA19 len 00CC  preset 219  algorithm 6401  'THIRD & FIFTH'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2943  key CA1A len 00CC  preset 21A  algorithm 6401  'THIRD & OCTAVE'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2A0F  key CA1B len 0105  preset 21B  algorithm 7401  'TWELVE STRING'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2B14  key CA1C len 0109  preset 21C  algorithm 7401  'VIBRATO'
+  H3000-Upgrade_ROM4.BIN   bank 14000 +2C1D  key CA1D len 0085  preset 21D  algorithm 6701  'VOICE SHIFT'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0008  key CA1E len 00A5  preset 21E  algorithm 6801  'ALIENS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +00AD  key CA1F len 00A5  preset 21F  algorithm 6801  'ANTI-AMBIENCE'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0152  key CA20 len 00C7  preset 220  algorithm 6901  'AUTOPANNER'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0219  key CA21 len 00A5  preset 221  algorithm 6801  'AVANTE-GARDE'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +02BE  key CA22 len 00A5  preset 222  algorithm 6801  'BACKWARDS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0363  key CA23 len 00F2  preset 223  algorithm 7501  'BAND PAN'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0455  key CA24 len 00F2  preset 224  algorithm 7501  'BAND SLAP'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0547  key CA25 len 00F2  preset 225  algorithm 7501  'BANDSWEEPRANDOM'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0639  key CA26 len 00F2  preset 226  algorithm 7501  'BAND SWEEP'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +072B  key CA27 len 00A5  preset 227  algorithm 6501  'BIZARREMONIZER'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +07D0  key CA28 len 00A5  preset 228  algorithm 6801  'CANNONS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0875  key CA29 len 00D9  preset 229  algorithm 6F01  'CRITICAL BAND'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +094E  key CA2A len 00A5  preset 22A  algorithm 6801  'CRYSTAL ECHOES'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +09F3  key CA2B len 00A9  preset 22B  algorithm 6A01  'DRUM PROCESSOR'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0A9C  key CA2C len 00D9  preset 22C  algorithm 6F01  'FILTER PAN'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0B75  key CA2D len 0105  preset 22D  algorithm 7401  'FUTURE SHIFT'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0C7A  key CA2E len 00F2  preset 22E  algorithm 7501  'LIQUID REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0D6C  key CA2F len 00D9  preset 22F  algorithm 6F01  'LOWPASS FILTERS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0E45  key CA30 len 0103  preset 230  algorithm 7601  'MAJOR WIND HARP'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +0F48  key CA31 len 0105  preset 231  algorithm 7401  'MODULATORS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +104D  key CA32 len 0105  preset 232  algorithm 7401  'MODULATOR-VERB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1152  key CA33 len 00F2  preset 233  algorithm 7501  'OCTAVE FILTERS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1244  key CA34 len 00C7  preset 234  algorithm 6901  'PSYCHO-PANNER'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +130B  key CA35 len 0103  preset 235  algorithm 7601  'RESONANT MAJ7'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +140E  key CA36 len 0103  preset 236  algorithm 7601  'RESONANT PENT'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1511  key CA37 len 0105  preset 237  algorithm 7401  'REVERSERB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1616  key CA38 len 00F2  preset 238  algorithm 7501  'RUNTHRUMYMIND'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1708  key CA39 len 00A5  preset 239  algorithm 6801  'SCARY MOVIE'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +17AD  key CA3A len 00F2  preset 23A  algorithm 7501  'S/H PAN-A-DELAY'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +189F  key CA3B len 00D9  preset 23B  algorithm 6F01  'SLAP+WAH+MICRO'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1978  key CA3C len 00F2  preset 23C  algorithm 7501  'SPACE CRICKETS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1A6A  key CA3D len 00E7  preset 23D  algorithm 7001  'STUTTER'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1B51  key CA3E len 00E7  preset 23E  algorithm 7001  'STUTTER RANDOM'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1C38  key CA3F len 00F2  preset 23F  algorithm 7501  'SWEEP DOWN'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1D2A  key CA40 len 0103  preset 240  algorithm 7601  'SWEEP & REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1E2D  key CA41 len 00F2  preset 241  algorithm 7501  'SWEEP UP/DOWN'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +1F1F  key CA42 len 00F2  preset 242  algorithm 7501  'SWEEP UP LINEAR'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2011  key CA43 len 00F2  preset 243  algorithm 7501  'SWEEP UP'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2103  key CA44 len 0096  preset 244  algorithm 7301  'TALKING GUITAR'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2199  key CA45 len 0103  preset 245  algorithm 7601  'TRIGGERED SCALE'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +229C  key CA46 len 00F2  preset 246  algorithm 7501  'TUBE CLONE'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +238E  key CA47 len 00D9  preset 247  algorithm 6F01  'TWO-BAND FILTER'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2467  key CA48 len 00D9  preset 248  algorithm 6F01  'WAH WAH + MICRO'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2540  key CA49 len 00D9  preset 249  algorithm 6F01  'WAH WAH'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2619  key CA4A len 00F2  preset 24A  algorithm 7501  'WAH-VERB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +270B  key CA4B len 00D9  preset 24B  algorithm 6F01  'A 440          .'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +27E4  key CA4C len 0103  preset 24C  algorithm 7601  'GUITAR-ESQUE'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +28E7  key CA4D len 0103  preset 24D  algorithm 7601  'HVYMETALCELLO'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +29EA  key CA4E len 0103  preset 24E  algorithm 7601  'KEYBOARD'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2AED  key CA4F len 0103  preset 24F  algorithm 7601  'KOTO'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2BF0  key CA50 len 0103  preset 250  algorithm 7601  'LS BACH HARPSCD'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2CF3  key CA51 len 0103  preset 251  algorithm 7601  'LS BOWED STRING'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2DF6  key CA52 len 0103  preset 252  algorithm 7601  'LS CLAVICHORD'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2EF9  key CA53 len 0103  preset 253  algorithm 7601  'LS FAR STRINGS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +2FFC  key CA54 len 0103  preset 254  algorithm 7601  'LS HARP RESONS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +30FF  key CA55 len 0103  preset 255  algorithm 7601  'LS HARPSICHORD'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +3202  key CA56 len 0103  preset 256  algorithm 7601  'LS HIT STRING'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +3305  key CA57 len 0103  preset 257  algorithm 7601  'LS NOSTALGIA KB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +3408  key CA58 len 0103  preset 258  algorithm 7601  'LS PSEUDO PIANO'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +350B  key CA59 len 0103  preset 259  algorithm 7601  'LS ZITHER'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +360E  key CA5A len 00F1  preset 25A  algorithm 7201  'ALICE-VERB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +36FF  key CA5B len 009B  preset 25B  algorithm 6E01  'DUAL GLIDEDELAY'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +379A  key CA5C len 00F2  preset 25C  algorithm 7501  'FILTER SWEEPS'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +388C  key CA5D len 0083  preset 25D  algorithm 6D01  'GLIDEDELAY'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +390F  key CA5E len 009B  preset 25E  algorithm 6E01  'MIDI 3 ON 2'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +39AA  key CA5F len 00A9  preset 25F  algorithm 6A01  'MIDI PEDALSWEEP'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +3A53  key CA60 len 0083  preset 260  algorithm 6D01  'MIDIPLEX'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +3AD6  key CA61 len 00F2  preset 261  algorithm 7501  'MIDI BANDSWEEP'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +3BC8  key CA62 len 00A9  preset 262  algorithm 6A01  'MODWHEEL REVERB'
+  H3000-Upgrade_ROM4.BIN   bank 18000 +3C71  key CA63 len 00A5  preset 263  algorithm 6501  "ROCK 'N' ROLL"
+  H3000-Upgrade_ROM4.BIN   bank 20000 +0008  key 6B00 len 00A0  module 6B table  'REVERB FACTORY'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +00A8  key 6B01 len 19AA  module 6B 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +1A52  key 2810 len 0276  DSP program 28 for DSP 1 (load 800, 310 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +1CC8  key 2811 len 0360  DSP program 28 for DSP 2 (load 800, 427 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +2028  key 2812 len 01EC  DSP program 28 for DSP 3 (load 800, 241 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +2214  key 1E10 len 030A  DSP program 1E for DSP 1 (load 800, 384 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +251E  key 1E11 len 01C4  DSP program 1E for DSP 2 (load 800, 221 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +26E2  key 1E12 len 03F6  DSP program 1E for DSP 3 (load 800, 502 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +2AD8  key 0812 len 000E  DSP program 08 for DSP 3 (load 800, 2 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +2AE6  key 0110 len 01C2  DSP program 01 for DSP 1 (load 800, 220 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +2CA8  key 0111 len 01C8  DSP program 01 for DSP 2 (load 800, 223 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +2E70  key 0112 len 018C  DSP program 01 for DSP 3 (load 800, 193 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +2FFC  key 0012 len 07CA  DSP program 00 for DSP 3 (load 800, 992 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +37C6  key 0212 len 0198  DSP program 02 for DSP 3 (load 800, 199 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +395E  key 0312 len 00FC  DSP program 03 for DSP 3 (load 800, 121 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +3A5A  key 1410 len 02A8  DSP program 14 for DSP 1 (load 800, 335 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 20000 +3D02  key 1411 len 02E4  DSP program 14 for DSP 2 (load 800, 365 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +0008  key 6902 len 3213  module 69 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 24000 +321B  key 6D00 len 0083  module 6D table  'LONG DIGIPLEX'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +329E  key 6D01 len 00A4  module 6D 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +3342  key 6E00 len 009B  module 6E table  'DUAL DIGIPLEX'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +33DD  key 6E01 len 00A6  module 6E 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +3483  key 6900 len 00C7  module 69 table  'SWEPT COMBS'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +354A  key 6901 len 00B2  module 69 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +35FC  key 6A00 len 00A9  module 6A table  'SWEPT REVERB'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 24000 +36A5  key 6A01 len 009C  module 6A 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +0008  key 6502 len 343D  module 65 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +3445  key 6600 len 00A5  module 66 table  'DUAL SHIFT'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +34EA  key 6601 len 009E  module 66 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +3588  key 6500 len 00A5  module 65 table  'LAYERED SHIFT'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +362D  key 6501 len 009E  module 65 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +36CB  key 6700 len 0085  module 67 table  'STEREO SHIFT'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +3750  key 6701 len 00A1  module 67 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +37F1  key 6800 len 00A5  module 68 table  'REVERSE SHIFT'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +3896  key 6801 len 009E  module 68 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +3934  key 6400 len 00CE  module 64 table  'DIATONIC SHIFT'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +3A02  key 6401 len 00AD  module 64 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 28000 +3AAF  key 0410 len 0440  DSP program 04 for DSP 1 (load 800, 539 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 2C000 +0008  key 6C00 len 00E0  module 6C table  'ULTRA-TAP'  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 2C000 +00E8  key 6C01 len 286E  module 6C 6809 code  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 2C000 +2956  key 1412 len 0410  DSP program 14 for DSP 3 (load 800, 515 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 2C000 +2D66  key 0411 len 0444  DSP program 04 for DSP 2 (load 800, 541 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 2C000 +31AA  key 0412 len 00F8  DSP program 04 for DSP 3 (load 800, 119 words)  (duplicate)
+  H3000-Upgrade_ROM4.BIN   bank 30000 +0008  key 7000 len 00E7  module 70 table  'STUTTER'
+  H3000-Upgrade_ROM4.BIN   bank 30000 +00EF  key 7001 len 0B16  module 70 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 30000 +0C05  key 7002 len 119D  module 70 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 30000 +1DA2  key 7003 len 1283  module 70 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 30000 +3025  key 7004 len 0931  module 70 sub 04
+  H3000-Upgrade_ROM4.BIN   bank 30000 +3956  key 7005 len 03F5  module 70 sub 05
+  H3000-Upgrade_ROM4.BIN   bank 34000 +0008  key 6F00 len 00D9  module 6F table  'PATCH FACTORY'
+  H3000-Upgrade_ROM4.BIN   bank 34000 +00E1  key 6F01 len 292E  module 6F 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 34000 +2A0F  key 6F10 len 019A  DSP program 6F for DSP 1 (load 800, 200 words)
+  H3000-Upgrade_ROM4.BIN   bank 34000 +2BA9  key 6F11 len 0B0E  DSP program 6F for DSP 2 (load 800, 1410 words)
+  H3000-Upgrade_ROM4.BIN   bank 34000 +36B7  key 6F12 len 00EC  DSP program 6F for DSP 3 (load 800, 113 words)
+  H3000-Upgrade_ROM4.BIN   bank 34000 +37A3  key 7010 len 039E  DSP program 70 for DSP 1 (load 800, 458 words)
+  H3000-Upgrade_ROM4.BIN   bank 34000 +3B41  key 7011 len 03B2  DSP program 70 for DSP 2 (load 800, 468 words)
+  H3000-Upgrade_ROM4.BIN   bank 34000 +3EF3  key 7012 len 00F2  DSP program 70 for DSP 3 (load 800, 116 words)
+  H3000-Upgrade_ROM4.BIN   bank 38000 +0008  key 7700 len 00E5  module 77 table  'PHASER'
+  H3000-Upgrade_ROM4.BIN   bank 38000 +00ED  key 7701 len 167C  module 77 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 38000 +1769  key 7702 len 0620  module 77 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 38000 +1D89  key 7710 len 0162  DSP program 77 for DSP 1 (load 800, 172 words)
+  H3000-Upgrade_ROM4.BIN   bank 38000 +1EEB  key 7711 len 0160  DSP program 77 for DSP 2 (load 800, 171 words)
+  H3000-Upgrade_ROM4.BIN   bank 38000 +204B  key 7712 len 0240  DSP program 77 for DSP 3 (load 800, 283 words)
+  H3000-Upgrade_ROM4.BIN   bank 3C000 +0008  key 7300 len 0096  module 73 table  'VOCODER'
+  H3000-Upgrade_ROM4.BIN   bank 3C000 +009E  key 7301 len 0D0A  module 73 6809 code
+  H3000-Upgrade_ROM4.BIN   bank 3C000 +0DA8  key 7310 len 062A  DSP program 73 for DSP 1 (load 800, 784 words)
+  H3000-Upgrade_ROM4.BIN   bank 3C000 +13D2  key 7311 len 03A2  DSP program 73 for DSP 2 (load 800, 460 words)
+  H3000-Upgrade_ROM4.BIN   bank 3C000 +1774  key 7312 len 0B38  DSP program 73 for DSP 3 (load 800, 1431 words)
+  H3000-Upgrade_ROM5.BIN   bank 00000 +0008  key 7000 len 00E7  module 70 table  'STUTTER'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 00000 +00EF  key 7001 len 0B16  module 70 6809 code  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 00000 +0C05  key 7002 len 119D  module 70 6809 code  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 00000 +1DA2  key 7003 len 1283  module 70 6809 code  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 00000 +3025  key 7004 len 0931  module 70 sub 04  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 00000 +3956  key 7005 len 03F5  module 70 sub 05  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 04000 +0008  key 7010 len 039E  DSP program 70 for DSP 1 (load 800, 458 words)  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 04000 +03A6  key 7011 len 03B2  DSP program 70 for DSP 2 (load 800, 468 words)  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 04000 +0758  key 7012 len 00F2  DSP program 70 for DSP 3 (load 800, 116 words)  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0008  key C900 len 00D9  preset 100  algorithm 6F01  'A 440          .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +00E1  key C901 len 00D9  preset 101  algorithm 6F01  'ALERT          .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +01BA  key C902 len 00D9  preset 102  algorithm 6F01  'BOINGY BUZZ    .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0293  key C903 len 00D9  preset 103  algorithm 6F01  'DOORBELL       .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +036C  key C904 len 00D9  preset 104  algorithm 6F01  'JET            .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0445  key C905 len 00D9  preset 105  algorithm 6F01  'JETTISON       .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +051E  key C906 len 00D9  preset 106  algorithm 6F01  'LASER ECHO     .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +05F7  key C907 len 00D9  preset 107  algorithm 6F01  'PLUCK          .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +06D0  key C908 len 00D9  preset 108  algorithm 6F01  'SIREN          .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +07A9  key C909 len 00D9  preset 109  algorithm 6F01  'SONAR          .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0882  key C90A len 00D9  preset 10A  algorithm 6F01  'STEREO COPTER  .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +095B  key C90B len 00D9  preset 10B  algorithm 6F01  'TANK ATTACK    .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0A34  key C90C len 00D9  preset 10C  algorithm 6F01  'THUNDER        .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0B0D  key C90D len 00D9  preset 10D  algorithm 6F01  'UFO            .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0BE6  key C90E len 00D9  preset 10E  algorithm 6F01  'WAVE           .'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0CBF  key C90F len 00D9  preset 10F  algorithm 6F01  'WIND STORM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0D98  key C864 len 00E1  preset 064  algorithm 6F01  'AIRPORT PAGE'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0E79  key C865 len 00A5  preset 065  algorithm 6501  'ALVIN'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +0F1E  key C866 len 00E7  preset 066  algorithm 7001  'AUTO-MAX'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1005  key C867 len 00C7  preset 067  algorithm 6901  'AUTOPANNER'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +10CC  key C868 len 00A5  preset 068  algorithm 6801  'AVANTE-GARDE'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1171  key C869 len 00A5  preset 069  algorithm 6801  'BACKWARDS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1216  key C86A len 00A0  preset 06A  algorithm 6B01  'BRIGHT ROOM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +12B6  key C86B len 00A5  preset 06B  algorithm 6801  'CANNONS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +135B  key C86C len 00A0  preset 06C  algorithm 6B01  'CANYON'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +13FB  key C86D len 009B  preset 06D  algorithm 6E01  'CAVE ECHO'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1496  key C86E len 00D9  preset 06E  algorithm 6F01  'CB'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +156F  key C86F len 00C7  preset 06F  algorithm 6901  'CHORUS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1636  key C870 len 00E0  preset 070  algorithm 6C01  'CIRCLES'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1716  key C871 len 00A5  preset 071  algorithm 6801  'CUZZIN IT'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +17BB  key C872 len 00C7  preset 072  algorithm 6901  'CYLONS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1882  key C873 len 00D9  preset 073  algorithm 6F01  'DRAGWAY AD'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +195B  key C874 len 00A5  preset 074  algorithm 6501  'FADE TO DREAM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1A00  key C875 len 00C7  preset 075  algorithm 6901  'FLANGER'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1AC7  key C876 len 00D9  preset 076  algorithm 6F01  'FLYING SAUCERS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1BA0  key C877 len 00D9  preset 077  algorithm 6F01  'GREGORIAN CHANT'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1C79  key C878 len 00A5  preset 078  algorithm 6501  'GREMLINS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1D1E  key C879 len 00D9  preset 079  algorithm 6F01  'HELLVERB'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1DF7  key C87A len 00A5  preset 07A  algorithm 6501  'JAVA THE HUN'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1E9C  key C87B len 00A0  preset 07B  algorithm 6B01  'LOCKER ROOM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +1F3C  key C87C len 00D9  preset 07C  algorithm 6F01  'LOWPASS FILTERS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2015  key C87D len 00A5  preset 07D  algorithm 6501  'MAGIC'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +20BA  key C87E len 00C7  preset 07E  algorithm 6901  'MANY PITCHES'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2181  key C87F len 00A5  preset 07F  algorithm 6501  'MARTIANS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2226  key C880 len 00D9  preset 080  algorithm 6F01  'MEGAPHONE'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +22FF  key C881 len 00A5  preset 081  algorithm 6801  'MORE ALIENS'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +23A4  key C882 len 00C7  preset 082  algorithm 6901  'NEW HOUSE'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +246B  key C884 len 00A5  preset 084  algorithm 6801  'PLANET ZORGON'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2510  key C885 len 00C7  preset 085  algorithm 6901  'PSYCHO-PANNER'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +25D7  key C886 len 00A5  preset 086  algorithm 6501  'RANDOM SHIFT'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +267C  key C887 len 00A5  preset 087  algorithm 6501  'SHAKY'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2721  key C888 len 00A9  preset 088  algorithm 6A01  'SHIMMERISH'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +27CA  key C889 len 0083  preset 089  algorithm 6D01  'SIMPLE DELAY'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +284D  key C88A len 00A5  preset 08A  algorithm 6501  'SISSY'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +28F2  key C88B len 00A0  preset 08B  algorithm 6B01  'SMALL ROOM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2992  key C88C len 00A9  preset 08C  algorithm 6A01  'SPACE FLANGE'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2A3B  key C88D len 00D9  preset 08D  algorithm 6F01  'STADIUM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2B14  key C88E len 00D9  preset 08E  algorithm 6F01  'STEAM BATH'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2BED  key C88F len 00A0  preset 08F  algorithm 6B01  'ST PETERS CATH.'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2C8D  key C890 len 00E7  preset 090  algorithm 7001  'STUTTER'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2D74  key C891 len 00E7  preset 091  algorithm 7001  'STUTTER DOWN'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2E5B  key C892 len 00E7  preset 092  algorithm 7001  'STUTTER DUAL'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +2F42  key C893 len 00E7  preset 093  algorithm 7001  'STUTTER RANDOM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3029  key C894 len 00E7  preset 094  algorithm 7001  'STUTTER UP'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3110  key C895 len 00E7  preset 095  algorithm 7001  'STUTTER UP/DOWN'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +31F7  key C896 len 00E0  preset 096  algorithm 6C01  'SWEEP RIGHT'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +32D7  key C897 len 00A5  preset 097  algorithm 6501  'SWEET FLANGE'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +337C  key C898 len 00D9  preset 098  algorithm 6F01  'TELEPHONE'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3455  key C899 len 00A5  preset 099  algorithm 6601  'THREE OF ME'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +34FA  key C89A len 009B  preset 09A  algorithm 6E01  'THREE ON TWO'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3595  key C89B len 00A5  preset 09B  algorithm 6601  'TIME WARP'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +363A  key C89C len 00A9  preset 09C  algorithm 6A01  'TONAL ROOM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +36E3  key C89D len 00D9  preset 09D  algorithm 6F01  'TRAFFIC REPORT'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +37BC  key C89E len 00D9  preset 09E  algorithm 6F01  'TV IN NEXT ROOM'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3895  key C89F len 00D9  preset 09F  algorithm 6F01  'UNDERWATER'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +396E  key C8A0 len 00D9  preset 0A0  algorithm 6F01  'WAH WAH'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3A47  key C8A1 len 00A0  preset 0A1  algorithm 6B01  'WARM HALL'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3AE7  key C8A2 len 0085  preset 0A2  algorithm 6701  'WARPED 45'
+  H3000-Upgrade_ROM5.BIN   bank 08000 +3B6C  key C8A3 len 0085  preset 0A3  algorithm 6701  'WARPED LP'
+  H3000-Upgrade_ROM5.BIN   bank 20000 +0008  key 7000 len 00E7  module 70 table  'STUTTER'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 20000 +00EF  key 7001 len 0B16  module 70 6809 code  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 20000 +0C05  key 7002 len 119D  module 70 6809 code  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 20000 +1DA2  key 7003 len 1283  module 70 6809 code  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 20000 +3025  key 7004 len 0931  module 70 sub 04  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 20000 +3956  key 7005 len 03F5  module 70 sub 05  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 24000 +0008  key 7010 len 039E  DSP program 70 for DSP 1 (load 800, 458 words)  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 24000 +03A6  key 7011 len 03B2  DSP program 70 for DSP 2 (load 800, 468 words)  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 24000 +0758  key 7012 len 00F2  DSP program 70 for DSP 3 (load 800, 116 words)  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0008  key C900 len 00D9  preset 100  algorithm 6F01  'A 440          .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +00E1  key C901 len 00D9  preset 101  algorithm 6F01  'ALERT          .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +01BA  key C902 len 00D9  preset 102  algorithm 6F01  'BOINGY BUZZ    .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0293  key C903 len 00D9  preset 103  algorithm 6F01  'DOORBELL       .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +036C  key C904 len 00D9  preset 104  algorithm 6F01  'JET            .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0445  key C905 len 00D9  preset 105  algorithm 6F01  'JETTISON       .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +051E  key C906 len 00D9  preset 106  algorithm 6F01  'LASER ECHO     .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +05F7  key C907 len 00D9  preset 107  algorithm 6F01  'PLUCK          .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +06D0  key C908 len 00D9  preset 108  algorithm 6F01  'SIREN          .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +07A9  key C909 len 00D9  preset 109  algorithm 6F01  'SONAR          .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0882  key C90A len 00D9  preset 10A  algorithm 6F01  'STEREO COPTER  .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +095B  key C90B len 00D9  preset 10B  algorithm 6F01  'TANK ATTACK    .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0A34  key C90C len 00D9  preset 10C  algorithm 6F01  'THUNDER        .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0B0D  key C90D len 00D9  preset 10D  algorithm 6F01  'UFO            .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0BE6  key C90E len 00D9  preset 10E  algorithm 6F01  'WAVE           .'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0CBF  key C90F len 00D9  preset 10F  algorithm 6F01  'WIND STORM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0D98  key C864 len 00E1  preset 064  algorithm 6F01  'AIRPORT PAGE'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0E79  key C865 len 00A5  preset 065  algorithm 6501  'ALVIN'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +0F1E  key C866 len 00E7  preset 066  algorithm 7001  'AUTO-MAX'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1005  key C867 len 00C7  preset 067  algorithm 6901  'AUTOPANNER'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +10CC  key C868 len 00A5  preset 068  algorithm 6801  'AVANTE-GARDE'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1171  key C869 len 00A5  preset 069  algorithm 6801  'BACKWARDS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1216  key C86A len 00A0  preset 06A  algorithm 6B01  'BRIGHT ROOM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +12B6  key C86B len 00A5  preset 06B  algorithm 6801  'CANNONS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +135B  key C86C len 00A0  preset 06C  algorithm 6B01  'CANYON'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +13FB  key C86D len 009B  preset 06D  algorithm 6E01  'CAVE ECHO'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1496  key C86E len 00D9  preset 06E  algorithm 6F01  'CB'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +156F  key C86F len 00C7  preset 06F  algorithm 6901  'CHORUS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1636  key C870 len 00E0  preset 070  algorithm 6C01  'CIRCLES'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1716  key C871 len 00A5  preset 071  algorithm 6801  'CUZZIN IT'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +17BB  key C872 len 00C7  preset 072  algorithm 6901  'CYLONS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1882  key C873 len 00D9  preset 073  algorithm 6F01  'DRAGWAY AD'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +195B  key C874 len 00A5  preset 074  algorithm 6501  'FADE TO DREAM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1A00  key C875 len 00C7  preset 075  algorithm 6901  'FLANGER'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1AC7  key C876 len 00D9  preset 076  algorithm 6F01  'FLYING SAUCERS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1BA0  key C877 len 00D9  preset 077  algorithm 6F01  'GREGORIAN CHANT'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1C79  key C878 len 00A5  preset 078  algorithm 6501  'GREMLINS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1D1E  key C879 len 00D9  preset 079  algorithm 6F01  'HELLVERB'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1DF7  key C87A len 00A5  preset 07A  algorithm 6501  'JAVA THE HUN'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1E9C  key C87B len 00A0  preset 07B  algorithm 6B01  'LOCKER ROOM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +1F3C  key C87C len 00D9  preset 07C  algorithm 6F01  'LOWPASS FILTERS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2015  key C87D len 00A5  preset 07D  algorithm 6501  'MAGIC'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +20BA  key C87E len 00C7  preset 07E  algorithm 6901  'MANY PITCHES'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2181  key C87F len 00A5  preset 07F  algorithm 6501  'MARTIANS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2226  key C880 len 00D9  preset 080  algorithm 6F01  'MEGAPHONE'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +22FF  key C881 len 00A5  preset 081  algorithm 6801  'MORE ALIENS'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +23A4  key C882 len 00C7  preset 082  algorithm 6901  'NEW HOUSE'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +246B  key C884 len 00A5  preset 084  algorithm 6801  'PLANET ZORGON'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2510  key C885 len 00C7  preset 085  algorithm 6901  'PSYCHO-PANNER'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +25D7  key C886 len 00A5  preset 086  algorithm 6501  'RANDOM SHIFT'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +267C  key C887 len 00A5  preset 087  algorithm 6501  'SHAKY'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2721  key C888 len 00A9  preset 088  algorithm 6A01  'SHIMMERISH'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +27CA  key C889 len 0083  preset 089  algorithm 6D01  'SIMPLE DELAY'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +284D  key C88A len 00A5  preset 08A  algorithm 6501  'SISSY'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +28F2  key C88B len 00A0  preset 08B  algorithm 6B01  'SMALL ROOM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2992  key C88C len 00A9  preset 08C  algorithm 6A01  'SPACE FLANGE'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2A3B  key C88D len 00D9  preset 08D  algorithm 6F01  'STADIUM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2B14  key C88E len 00D9  preset 08E  algorithm 6F01  'STEAM BATH'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2BED  key C88F len 00A0  preset 08F  algorithm 6B01  'ST PETERS CATH.'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2C8D  key C890 len 00E7  preset 090  algorithm 7001  'STUTTER'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2D74  key C891 len 00E7  preset 091  algorithm 7001  'STUTTER DOWN'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2E5B  key C892 len 00E7  preset 092  algorithm 7001  'STUTTER DUAL'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +2F42  key C893 len 00E7  preset 093  algorithm 7001  'STUTTER RANDOM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3029  key C894 len 00E7  preset 094  algorithm 7001  'STUTTER UP'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3110  key C895 len 00E7  preset 095  algorithm 7001  'STUTTER UP/DOWN'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +31F7  key C896 len 00E0  preset 096  algorithm 6C01  'SWEEP RIGHT'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +32D7  key C897 len 00A5  preset 097  algorithm 6501  'SWEET FLANGE'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +337C  key C898 len 00D9  preset 098  algorithm 6F01  'TELEPHONE'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3455  key C899 len 00A5  preset 099  algorithm 6601  'THREE OF ME'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +34FA  key C89A len 009B  preset 09A  algorithm 6E01  'THREE ON TWO'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3595  key C89B len 00A5  preset 09B  algorithm 6601  'TIME WARP'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +363A  key C89C len 00A9  preset 09C  algorithm 6A01  'TONAL ROOM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +36E3  key C89D len 00D9  preset 09D  algorithm 6F01  'TRAFFIC REPORT'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +37BC  key C89E len 00D9  preset 09E  algorithm 6F01  'TV IN NEXT ROOM'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3895  key C89F len 00D9  preset 09F  algorithm 6F01  'UNDERWATER'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +396E  key C8A0 len 00D9  preset 0A0  algorithm 6F01  'WAH WAH'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3A47  key C8A1 len 00A0  preset 0A1  algorithm 6B01  'WARM HALL'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3AE7  key C8A2 len 0085  preset 0A2  algorithm 6701  'WARPED 45'  (duplicate)
+  H3000-Upgrade_ROM5.BIN   bank 28000 +3B6C  key C8A3 len 0085  preset 0A3  algorithm 6701  'WARPED LP'  (duplicate)

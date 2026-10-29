@@ -1,0 +1,103 @@
+; Eventide h3500 DSP microcode
+; key 6F12  algorithm 6F (PATCH FACTORY)  DSP 3
+; source H3000-Upgrade_ROM4.BIN offset 376B7, 113 program words loaded at 800
+;
+  800  7F8B        SOVM
+  801  6E00        LDPK  0
+  802  7F81        DINT
+  803  6880        LARP  0
+  804  708F        LARK  AR0,0x8F
+  805  7F89        ZAC
+L806:
+  806  5888        SACH  *
+  807  F400 0806   BANZ  L806
+  809  7000        LARK  AR0,0x00
+  80A  7100        LARK  AR1,0x00
+  80B  7E01        LACK  0x01
+  80C  502E        SACL  0x2E
+  80D  2A2E        LAC   0x2E,10
+  80E  5035        SACL  0x35
+  80F  2E2E        LAC   0x2E,14
+  810  5036        SACL  0x36
+  811  282E        LAC   0x2E,8
+  812  062E        ADD   0x2E,6
+  813  5037        SACL  0x37
+  814  501C        SACL  0x1C
+  815  241C        LAC   0x1C,4
+  816  501E        SACL  0x1E
+  817  7E02        LACK  0x02
+  818  502F        SACL  0x2F
+  819  7E03        LACK  0x03
+  81A  5030        SACL  0x30
+  81B  7E04        LACK  0x04
+  81C  5031        SACL  0x31
+  81D  7EFF        LACK  0xFF
+  81E  5032        SACL  0x32
+  81F  2732        LAC   0x32,7
+  820  7A32        OR    0x32
+  821  5032        SACL  0x32
+  822  6A2E        LT    0x2E
+  823  8D48        MPYK  3400
+  824  7F8E        PAC
+  825  5038        SACL  0x38
+  826  8D68        MPYK  3432
+  827  7F8E        PAC
+  828  5033        SACL  0x33
+  829  8C08        MPYK  3080
+  82A  7F8E        PAC
+  82B  5034        SACL  0x34
+  82C  7F89        ZAC
+  82D  501B        SACL  0x1B
+  82E  7F89        ZAC
+  82F  5019        SACL  0x19
+L830:
+  830  700A        LARK  AR0,0x0A
+L831:
+  831  F400 0831   BANZ  L831
+  833  002E        ADD   0x2E
+  834  5000        SACL  0x00
+  835  6600        ZALS  0x00
+  836  FE00 0830   BNZ   L830
+L838:
+  838  F800 08CD   CALL  L8CD
+  83A  F800 0B46   CALL  LB46
+  83C  F800 0900   CALL  L900
+  83E  6623        ZALS  0x23
+  83F  102E        SUB   0x2E
+  840  FB00 085B   BLEZ  L85B
+  842  112E        SUB   0x2E,1
+  843  FB00 0857   BLEZ  L857
+  845  122E        SUB   0x2E,2
+  846  FB00 0853   BLEZ  L853
+  848  132E        SUB   0x2E,3
+  849  FB00 084F   BLEZ  L84F
+  84B  F800 0993   CALL  L993
+  84D  F900 085D   B     L85D
+
+L84F:
+  84F  F800 096D   CALL  L96D
+  851  F900 085D   B     L85D
+
+L853:
+  853  F800 094F   CALL  L94F
+  855  F900 085D   B     L85D
+
+L857:
+  857  F800 0935   CALL  L935
+  859  F900 085D   B     L85D
+
+L85B:
+  85B  F800 0920   CALL  L920
+L85D:
+  85D  F800 0A21   CALL  LA21
+  85F  F800 0A48   CALL  LA48
+  861  FE00 086F   BNZ   L86F
+  863  F800 0A65   CALL  LA65
+  865  F800 0A80   CALL  LA80
+  867  F800 0880   CALL  L880
+  869  FE00 086F   BNZ   L86F
+  86B  F800 0A93   CALL  LA93
+  86D  F800 0B34   CALL  LB34
+L86F:
+  86F  F900 0838   B     L838
+

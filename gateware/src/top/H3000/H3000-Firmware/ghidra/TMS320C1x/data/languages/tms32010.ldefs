@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="TMS32010"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="tms32010.sla"
+            processorspec="tms32010.pspec"
+            id="TMS32010:BE:16:default">
+    <description>Texas Instruments TMS32010 / TMS320C1x DSP (word addressed)</description>
+    <compiler name="default" spec="tms32010.cspec" id="default"/>
+  </language>
+</language_definitions>

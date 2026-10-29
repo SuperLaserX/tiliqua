@@ -1,0 +1,7 @@
+fw/memory.x
+fw/target/
+pac/
+emu/target/
+sim/build*/
+sim/*.log
+__pycache__/

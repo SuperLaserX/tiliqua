@@ -1,0 +1,7 @@
+[package]
+name = "bfr-cpu"
+version = "0.1.0"
+edition = "2021"
+description = "The bfr engine's CPU side: generated program tables, parameter math, crossfade policy"
+
+[dependencies]

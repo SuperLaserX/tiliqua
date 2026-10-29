@@ -1,0 +1,431 @@
+# TMS32010 / TMS320C1x - first-generation Texas Instruments fixed-point DSP
+#
+# Written for the Eventide H3000/H3500 DSP microcode analysis.
+#
+# Model notes
+#  * Program memory ("prog") and data memory ("data") are 16-bit word addressed.
+#    Program memory is 4K words (12-bit PC); data RAM is 144 words (0x00-0x8F).
+#  * Direct addressing: address = DP:dma (DP selects page 0 = 0x00-0x7F or
+#    page 1 = 0x80-0x8F). DP is tracked as the context variable "dpc" so direct
+#    operands resolve to absolute data addresses at disassembly time.
+#    LDPK sets it; LDP/LST (dynamic loads) cannot be followed statically.
+#  * Indirect addressing uses AR[ARP]. ARP is tracked as the context variable
+#    "arpc" (set by LARP / the next-ARP field of indirect instructions) so the
+#    decompiler sees AR0 or AR1 directly. The runtime ARP/DP registers are also
+#    written for completeness.
+#  * Accumulator overflow saturation (SOVM mode) is NOT modelled in p-code;
+#    OV is set on signed overflow. Auxiliary register auto inc/dec is modelled
+#    as a plain 16-bit +/-1 (hardware only touches the low 9 bits).
+#  * The 4-level hardware PC stack is modelled as the "hwstack" space.
+
+define endian=big;
+define alignment=2;
+
+define space prog     type=ram_space      size=2 wordsize=2 default;
+define space data     type=ram_space      size=2 wordsize=2;
+define space io       type=ram_space      size=2 wordsize=2;
+define space hwstack  type=ram_space      size=1 wordsize=2;
+define space register type=register_space size=2;
+
+define register offset=0x00 size=4 [ ACC P ];
+define register offset=0x08 size=2 [ T AR0 AR1 PC ];
+define register offset=0x10 size=1 [ SP ARP DP OV OVM INTM ];
+define register offset=0x20 size=4 [ contextreg ];
+
+define context contextreg
+  arpc = (0,0)       # current auxiliary register pointer (0 = AR0, 1 = AR1)
+  dpc  = (1,1)       # current data page pointer
+;
+
+define token instr(16)
+  op16  = (0,15)
+  op8   = (8,15)
+  op7   = (9,15)
+  op5   = (11,15)
+  op4   = (12,15)
+  op3   = (13,15)
+  shf4  = (8,11)
+  shf3  = (8,10)
+  port  = (8,10)
+  arx   = (8,8)
+  ind   = (7,7)
+  dma   = (0,6)
+  b6    = (6,6)
+  mm    = (4,5)
+  nar   = (3,3)
+  b21   = (1,2)
+  narp  = (0,0)
+  k1    = (0,0)
+  b17   = (1,7)
+  k8    = (0,7)
+  k13   = (0,12) signed
+;
+
+define token word2(16)
+  imm16 = (0,15)
+;
+
+attach variables [ arx ] [ AR0 AR1 ];
+
+# decimal display in TI syntax (Ghidra's listing prints raw scalars in hex)
+attach names [ port ] [ "PA0" "PA1" "PA2" "PA3" "PA4" "PA5" "PA6" "PA7" ];
+attach names [ narp ] [ "AR0" "AR1" ];
+attach names [ k1 ]   [ "0" "1" ];
+attach names [ shf4 ] [ "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" ];
+attach names [ shf3 ] [ "0" "1" "2" "3" "4" "5" "6" "7" ];
+
+define pcodeop bio_pin;        # state of the external BIO input pin (BIOZ)
+
+# ---------------------------------------------------------------------------
+# Hardware stack helpers
+
+macro hwpush(v) {
+  *[hwstack]:2 SP = v;
+  SP = SP + 2;
+}
+
+macro hwpop(v) {
+  SP = SP - 2;
+  v = *[hwstack]:2 SP;
+}
+
+# ---------------------------------------------------------------------------
+# Addressing
+
+# Current auxiliary register (selected by ARP context)
+CURAR: AR0 is arpc=0 & AR0 { export AR0; }
+CURAR: AR1 is arpc=1 & AR1 { export AR1; }
+
+# Memory operand: exports the 16-bit data address
+MA: daddr  is ind=0 & dma & dpc  [ daddr = (dpc << 7) | dma; ] { export *[const]:2 daddr; }
+MA: "*"    is ind=1 & mm=0 & CURAR { local a:2 = CURAR & 0xff; export a; }
+MA: "*-"   is ind=1 & mm=1 & CURAR { local a:2 = CURAR & 0xff; export a; }
+MA: "*+"   is ind=1 & mm=2 & CURAR { local a:2 = CURAR & 0xff; export a; }
+MA: "*+-"  is ind=1 & mm=3 & CURAR { local a:2 = CURAR & 0xff; export a; }
+
+# Post-access auxiliary register modification (build explicitly after the access)
+POSTM: is ind=0                  { }
+POSTM: is ind=1 & mm=0           { }
+POSTM: is ind=1 & mm=1 & CURAR   { CURAR = CURAR - 1; }
+POSTM: is ind=1 & mm=2 & CURAR   { CURAR = CURAR + 1; }
+POSTM: is ind=1 & mm=3           { }
+
+# Next-ARP selection for indirect addressing
+NARP: ""          is ind=0                  { }
+NARP: ""          is ind=1 & nar=1          { }
+NARP: ","^narp    is ind=1 & nar=0 & narp   [ arpc = narp; globalset(inst_next, arpc); ] { ARP = narp; }
+
+# 4-bit shift field (ADD/SUB/LAC). Shown when non-zero or needed before a next-ARP.
+SHF4: ""          is shf4=0 & ind=0          { export 0:1; }
+SHF4: ""          is shf4=0 & ind=1 & nar=1  { export 0:1; }
+SHF4: ",0"        is shf4=0 & ind=1 & nar=0  { export 0:1; }
+SHF4: ","^shf4    is shf4                    { export *[const]:1 shf4; }
+
+# 3-bit shift field (SACH)
+SHF3: ""          is shf3=0 & ind=0          { export 0:1; }
+SHF3: ""          is shf3=0 & ind=1 & nar=1  { export 0:1; }
+SHF3: ",0"        is shf3=0 & ind=1 & nar=0  { export 0:1; }
+SHF3: ","^shf3    is shf3                    { export *[const]:1 shf3; }
+
+# I/O port PA0-PA7
+PA: port          is port { export *[io]:2 port; }
+
+# SST in direct mode always stores into page 1
+SSTA: a           is ind=0 & dma [ a = 0x80 | dma; ] { export *[const]:2 a; }
+SSTA: MA          is ind=1 & MA  { export MA; }
+
+# Branch target (second word, 12-bit program address)
+ADDR: a           is imm16 [ a = imm16 & 0xfff; ] { export *:2 a; }
+
+K13: "#"^k13      is k13 { export *[const]:4 k13; }
+
+# ---------------------------------------------------------------------------
+# Accumulator / memory instructions
+
+:ADD MA^SHF4^NARP   is op4=0x0 & MA & SHF4 & NARP & POSTM {
+  local v:4 = sext(*[data]:2 MA) << SHF4;
+  OV = OV | scarry(ACC, v);
+  ACC = ACC + v;
+  build POSTM; build NARP;
+}
+
+:SUB MA^SHF4^NARP   is op4=0x1 & MA & SHF4 & NARP & POSTM {
+  local v:4 = sext(*[data]:2 MA) << SHF4;
+  OV = OV | sborrow(ACC, v);
+  ACC = ACC - v;
+  build POSTM; build NARP;
+}
+
+:LAC MA^SHF4^NARP   is op4=0x2 & MA & SHF4 & NARP & POSTM {
+  ACC = sext(*[data]:2 MA) << SHF4;
+  build POSTM; build NARP;
+}
+
+:SAR arx,MA^NARP    is op7=0x18 & arx & MA & NARP & POSTM {
+  *[data]:2 MA = arx;
+  build POSTM; build NARP;
+}
+
+:LAR arx,MA^NARP    is op7=0x1C & arx & MA & NARP & POSTM {
+  local v:2 = *[data]:2 MA;
+  build POSTM;
+  arx = v;
+  build NARP;
+}
+
+:IN MA,PA^NARP      is op5=0x08 & MA & PA & NARP & POSTM {
+  *[data]:2 MA = PA;
+  build POSTM; build NARP;
+}
+
+:OUT MA,PA^NARP     is op5=0x09 & MA & PA & NARP & POSTM {
+  PA = *[data]:2 MA;
+  build POSTM; build NARP;
+}
+
+:SACL MA^NARP       is op5=0x0A & MA & NARP & POSTM {
+  *[data]:2 MA = ACC:2;
+  build POSTM; build NARP;
+}
+
+:SACH MA^SHF3^NARP  is op5=0x0B & MA & SHF3 & NARP & POSTM {
+  local t:4 = ACC << SHF3;
+  *[data]:2 MA = t(2);
+  build POSTM; build NARP;
+}
+
+:ADDH MA^NARP       is op8=0x60 & MA & NARP & POSTM {
+  local v:4 = zext(*[data]:2 MA) << 16;
+  OV = OV | scarry(ACC, v);
+  ACC = ACC + v;
+  build POSTM; build NARP;
+}
+
+:ADDS MA^NARP       is op8=0x61 & MA & NARP & POSTM {
+  local v:4 = zext(*[data]:2 MA);
+  OV = OV | scarry(ACC, v);
+  ACC = ACC + v;
+  build POSTM; build NARP;
+}
+
+:SUBH MA^NARP       is op8=0x62 & MA & NARP & POSTM {
+  local v:4 = zext(*[data]:2 MA) << 16;
+  OV = OV | sborrow(ACC, v);
+  ACC = ACC - v;
+  build POSTM; build NARP;
+}
+
+:SUBS MA^NARP       is op8=0x63 & MA & NARP & POSTM {
+  local v:4 = zext(*[data]:2 MA);
+  OV = OV | sborrow(ACC, v);
+  ACC = ACC - v;
+  build POSTM; build NARP;
+}
+
+:SUBC MA^NARP       is op8=0x64 & MA & NARP & POSTM {
+  local v:4 = zext(*[data]:2 MA) << 15;
+  local d:4 = ACC - v;
+  if (d s< 0) goto <shift_only>;
+  ACC = (d << 1) + 1;
+  goto <done>;
+<shift_only>
+  ACC = ACC << 1;
+<done>
+  build POSTM; build NARP;
+}
+
+:ZALH MA^NARP       is op8=0x65 & MA & NARP & POSTM {
+  ACC = zext(*[data]:2 MA) << 16;
+  build POSTM; build NARP;
+}
+
+:ZALS MA^NARP       is op8=0x66 & MA & NARP & POSTM {
+  ACC = zext(*[data]:2 MA);
+  build POSTM; build NARP;
+}
+
+:TBLR MA^NARP       is op8=0x67 & MA & NARP & POSTM {
+  local a:2 = ACC:2 & 0xfff;
+  *[data]:2 MA = *[prog]:2 a;
+  build POSTM; build NARP;
+}
+
+# LARP k is the encoding of "MAR *,ARk"
+:LARP k1            is op8=0x68 & ind=1 & b6=0 & mm=0 & nar=0 & b21=0 & k1 [ arpc = k1; globalset(inst_next, arpc); ] {
+  ARP = k1;
+}
+
+:MAR MA^NARP        is op8=0x68 & MA & NARP & POSTM {
+  build POSTM; build NARP;
+}
+
+:DMOV MA^NARP       is op8=0x69 & MA & NARP & POSTM {
+  local a:2 = MA;
+  *[data]:2 (a + 1) = *[data]:2 a;
+  build POSTM; build NARP;
+}
+
+:LT MA^NARP         is op8=0x6A & MA & NARP & POSTM {
+  T = *[data]:2 MA;
+  build POSTM; build NARP;
+}
+
+:LTD MA^NARP        is op8=0x6B & MA & NARP & POSTM {
+  local a:2 = MA;
+  local v:2 = *[data]:2 a;
+  T = v;
+  *[data]:2 (a + 1) = v;
+  ACC = ACC + P;
+  build POSTM; build NARP;
+}
+
+:LTA MA^NARP        is op8=0x6C & MA & NARP & POSTM {
+  T = *[data]:2 MA;
+  ACC = ACC + P;
+  build POSTM; build NARP;
+}
+
+:MPY MA^NARP        is op8=0x6D & MA & NARP & POSTM {
+  P = sext(T) * sext(*[data]:2 MA);
+  build POSTM; build NARP;
+}
+
+:LDPK k1            is op8=0x6E & b17=0 & k1 [ dpc = k1; globalset(inst_next, dpc); ] {
+  DP = k1;
+}
+
+:LDP MA^NARP        is op8=0x6F & MA & NARP & POSTM {
+  local v:2 = *[data]:2 MA;
+  DP = v:1 & 1;
+  build POSTM; build NARP;
+}
+
+:LARK arx,k8        is op7=0x38 & arx & k8 {
+  arx = k8;
+}
+
+:XOR MA^NARP        is op8=0x78 & MA & NARP & POSTM {
+  ACC = ACC ^ zext(*[data]:2 MA);
+  build POSTM; build NARP;
+}
+
+:AND MA^NARP        is op8=0x79 & MA & NARP & POSTM {
+  ACC = ACC & zext(*[data]:2 MA);
+  build POSTM; build NARP;
+}
+
+:OR MA^NARP         is op8=0x7A & MA & NARP & POSTM {
+  ACC = ACC | zext(*[data]:2 MA);
+  build POSTM; build NARP;
+}
+
+# LST ignores the next-ARP field and never loads INTM
+:LST MA             is op8=0x7B & MA & POSTM {
+  local v:2 = *[data]:2 MA;
+  local s15:2 = v >> 15;
+  local s14:2 = v >> 14;
+  local s8:2 = v >> 8;
+  OV  = s15:1 & 1;
+  OVM = s14:1 & 1;
+  ARP = s8:1 & 1;
+  DP  = v:1 & 1;
+  build POSTM;
+}
+
+:SST SSTA^NARP      is op8=0x7C & SSTA & NARP & POSTM {
+  *[data]:2 SSTA = (zext(OV) << 15) | (zext(OVM) << 14) | (zext(INTM) << 13) | (zext(ARP) << 8) | zext(DP) | 0x1efe;
+  build POSTM; build NARP;
+}
+
+:TBLW MA^NARP       is op8=0x7D & MA & NARP & POSTM {
+  local a:2 = ACC:2 & 0xfff;
+  *[prog]:2 a = *[data]:2 MA;
+  build POSTM; build NARP;
+}
+
+:LACK k8            is op8=0x7E & k8 {
+  ACC = k8;
+}
+
+:MPYK K13           is op3=0x4 & K13 {
+  P = sext(T) * K13;
+}
+
+# ---------------------------------------------------------------------------
+# Single-word control instructions
+
+:NOP    is op16=0x7F80 { }
+:DINT   is op16=0x7F81 { INTM = 1; }
+:EINT   is op16=0x7F82 { INTM = 0; }
+
+:ABS    is op16=0x7F88 {
+  if (ACC s>= 0) goto <done>;
+  ACC = -ACC;
+<done>
+}
+
+:ZAC    is op16=0x7F89 { ACC = 0; }
+:ROVM   is op16=0x7F8A { OVM = 0; }
+:SOVM   is op16=0x7F8B { OVM = 1; }
+
+:CALA   is op16=0x7F8C {
+  local t:2 = ACC:2 & 0xfff;
+  local ret:2 = inst_next;
+  hwpush(ret);
+  call [t];
+}
+
+:RET    is op16=0x7F8D {
+  local t:2 = 0;
+  hwpop(t);
+  return [t];
+}
+
+:PAC    is op16=0x7F8E { ACC = P; }
+:APAC   is op16=0x7F8F { ACC = ACC + P; }
+:SPAC   is op16=0x7F90 { ACC = ACC - P; }
+
+:PUSH   is op16=0x7F9C {
+  local t:2 = ACC:2 & 0xfff;
+  hwpush(t);
+}
+
+:POP    is op16=0x7F9D {
+  local t:2 = 0;
+  hwpop(t);
+  ACC = zext(t);
+}
+
+# ---------------------------------------------------------------------------
+# Two-word branches
+
+:BANZ ADDR   is op16=0xF400 & CURAR; ADDR {
+  local t:2 = CURAR & 0x1ff;
+  CURAR = CURAR - 1;
+  if (t != 0) goto ADDR;
+}
+
+:BV ADDR     is op16=0xF500; ADDR {
+  local o:1 = OV;
+  OV = 0;
+  if (o != 0) goto ADDR;
+}
+
+:BIOZ ADDR   is op16=0xF600; ADDR {
+  local b:1 = bio_pin();
+  if (b == 0) goto ADDR;
+}
+
+:CALL ADDR   is op16=0xF800; ADDR {
+  local ret:2 = inst_next;
+  hwpush(ret);
+  call ADDR;
+}
+
+:B ADDR      is op16=0xF900; ADDR { goto ADDR; }
+:BLZ ADDR    is op16=0xFA00; ADDR { if (ACC s<  0) goto ADDR; }
+:BLEZ ADDR   is op16=0xFB00; ADDR { if (ACC s<= 0) goto ADDR; }
+:BGZ ADDR    is op16=0xFC00; ADDR { if (ACC s>  0) goto ADDR; }
+:BGEZ ADDR   is op16=0xFD00; ADDR { if (ACC s>= 0) goto ADDR; }
+:BNZ ADDR    is op16=0xFE00; ADDR { if (ACC != 0) goto ADDR; }
+:BZ ADDR     is op16=0xFF00; ADDR { if (ACC == 0) goto ADDR; }
