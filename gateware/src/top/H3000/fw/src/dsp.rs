@@ -207,12 +207,7 @@ impl Host for DspBoard {
     fn dsp_param_ready(&mut self) -> bool {
         self.param_level() < PARAM_FIFO_DEPTH - 4
     }
-            self.param_stalls += 1;
-            let t0 = timer();
-            let mut n = 0;
-            while self.param_level() >= PARAM_FIFO_DEPTH - 1 && n < SPIN_LIMIT {
-                n += 1;
-            }
+
     fn bus_write(&mut self, port: u8, data: u16) {
         self.bus_writes += 1;
         self.bus_request(port, data, false);

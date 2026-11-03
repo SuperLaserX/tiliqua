@@ -59,8 +59,8 @@ Anything the DSP clock enable (`stall` / `pcen`) depends on must be
 registered: the delay cache's hit and way select are, for that reason.
 The DVI pixel clock (74.25 MHz) used to be placement-sensitive (65-72 MHz
 on most seeds); with the framebuffer path registered (see Emulator speed)
-it passes on every seed at 79-86 MHz. The released bitstream uses
-`--seed 8`.
+it passes on most seeds. The released H3500 bitstream (2026-11-02) uses
+`--seed 28` (see Emulator speed).
 
 ## The DSP board
 
@@ -69,7 +69,7 @@ One frame of 104 instruction cycles per 44.1 kHz sample. Port map (see
 
 | Port | IN | OUT |
 |------|----|-----|
-| PA0 | status: parity, DAC FSYN STAT, flags Q0-Q7 | status port: synthesizers (`$2xxx`/`$3xxx`), flags (`$8xxx`-`$9xxx`), FIRQ (`$C000`) |
+| PA0 | status: parity, DAC FSYN STAT, FIRQ request (bit 1), flags Q0, Q2-Q7 | status port: synthesizers (`$2xxx`/`$3xxx`), flags (`$8xxx`-`$9xxx`), FIRQ (`$C000`) |
 | PA1-3 | mailbox | mailbox |
 | PA4 | delay memory read (address += 1) | delay memory write |
 | PA5 / PA6 | host latch address / data | left / right DAC |
@@ -91,6 +91,29 @@ between 123 and 898, e.g. 294 FAR LEFT, 833 ethereal) route their outputs and
 modulation by latch addresses `$3700` and up, which they take without a DSP
 check. Treating `$81-$83` as program RAM while running (an earlier mistake)
 left those programs at DC or silent.
+
+The 6809's latch writes are queued (32 entries in the gateware): each entry
+is shown to the DSPs until every DSP has read PA5, or for 8 frames, while the
+kernel's latch routine (`API_FD2E`, `$C430`) only waits for the service
+manual's ADDRESS STAT / DATA STAT bits (`$8053` bits 0 and 6, read here as
+"queue not full").
+
+Some DSP programs take their parameters at their own pace: the pitch
+detector DSP3 (image `0012`, used by 549 SPACE ECHO and others), and the
+H3500 Vocoder, Multi-Shift and Studio Sampler DSP3s. They raise FIRQ (`$C000`),
+then read the latch once per frame for as long as status bit 1 is set, and
+the kernel's FIRQ handler (installed at `$6600`) sends their parameters
+before it acknowledges (`$8055`): for 549, module 6F (`$2D:05F5`) sends 12
+values to DSP3 and then acknowledges. So status bit 1 is the FIRQ request
+(no kernel ever sets Q1, the earlier guess for that bit), and the
+acknowledge goes to the DSPs through the latch queue (`PARAM_FIRQ_ACK`,
+address bit 15) so that it cannot overtake the parameters sent before it;
+the 6809's FIRQ line drops at once. Before this, DSP3 never got its
+parameters: the pitch shifter in DSP2 waits for DSP3's splice length (mailbox
+PA1), so 549 SPACE ECHO, 999 THUNDER TOM, 475 SEWER VERB and the harmonizers
+208, 464 and 639 were silent, 357 TRAFFIC REPORT and 319 GREGORIAN CHANT
+clipped, and 252 THIRD & FIFTH and 388 FLASHBACK were weak or silent on one
+side (PC runner `health` scan of all 780 programs: nothing got worse).
 
 ## Checking the gateware against the model
 
@@ -123,8 +146,9 @@ py -m model.audio p.txt 30000 out.txt 441       # run the dumped session through
 ```
 
 Commands: `wait s`, `key n [hold s]`, `knob n`, `factory`, `lcd`, `log on`,
-`stats`, `midi hex..`, `dump file` (programs, host latch writes, bus writes
-and clock selects); `ACIA_TRACE=1` logs each MIDI byte the 6809 reads. The
+`stats`, `midi hex..`, `dump file` (programs, host latch writes with the
+FIRQ acknowledges among them, bus writes and clock selects); `ACIA_TRACE=1`
+logs each MIDI byte the 6809 reads. The
 panel's key handling: `press n` (a press timed by the keypad scans),
 `browse`, `turn n`, `click` (browse mode; the LCD's first row is then
 printed as it changes), `browse ?` (browser state), `keys on`, `scanrate ms`
@@ -151,7 +175,11 @@ port of the model, advances one frame per 26 E cycles with the real FIRQ /
 IRQ / bus traffic, about 9x faster than real time. `tone hz amp` / `tone off`
 drive its input, `rec on`, `wav file` and `env ms` capture and summarise its
 output, `cache` reports misses per frame of the gateware's delay cache
-geometry, and `params` the deepest host latch queue:
+geometry, and `params` the deepest host latch queue. `dspram d` prints
+DSP d's data RAM, `hostreads s` each DSP's PA5 / PA6 reads per second, and
+while profiling (`profile on`, single-stepped) `pwatch <latch addr>` and
+`rwatch <RAM addr>` print the 6809's PC, bank and stack at each write of a
+host latch address or change of a RAM byte:
 
 ```sh
 h3000-host ../H3000-Firmware v153 "dsp on; factory; wait 2; key 8; wait 0.3; key 12; wait 0.3; \
@@ -419,9 +447,13 @@ coordinates from the timing registers in the same cycle as comparing the
 counters with them, and vsync then gated the FIFO read. Both are now
 registered (`tiliqua/video/dvi.py`, `framebuffer.py`; behaviour checked
 cycle by cycle against the original), and every seed tried passes at
-79-86 MHz. The bitstream is nextpnr seed 8, picked with `sim/sta.py` for
-the 60 MHz domain: CPU register-file paths -3.4 ns (as the previous
-bitstream, which works) and core-to-board paths -0.5 ns (multi-cycle).
+79-86 MHz. The 2026-10-21 bitstream was nextpnr seed 8, picked with
+`sim/sta.py` for the 60 MHz domain: CPU register-file paths -3.4 ns (as the
+previous bitstream, which works) and core-to-board paths -0.5 ns
+(multi-cycle). After the FIRQ request change (2026-11-02) seed 8 gave
+-6.0 ns on the CPU's data-cache write enables; of 33 seeds the best were 27
+and 28 (-3.9 ns). The bitstream is seed 28: CPU -3.87 ns, board logic
+-0.76 ns, core-to-board -0.58 ns, DVI 77.9 MHz.
 
 ## FIRQ rate limit
 

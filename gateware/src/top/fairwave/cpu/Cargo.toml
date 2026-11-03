@@ -1,0 +1,11 @@
+[package]
+name = "fairwave-cpu"
+version = "0.1.0"
+edition = "2021"
+description = "FairWave's CPU side with no hardware in it: screen geometry, navigation, formatting. Tested on the host."
+
+[dependencies]
+heapless = "0.8.0"
+guh-dma = { git = "https://github.com/apfaudio/guh", rev = "32e7f0d" }
+guh-usb-msc = { git = "https://github.com/apfaudio/guh", rev = "32e7f0d", default-features = false, features = ["fatfs"] }
+fatfs = { git = "https://github.com/vk2seb/rust-fatfs.git", branch = "seb/dma-geo", default-features = false, features = ["lfn"] }

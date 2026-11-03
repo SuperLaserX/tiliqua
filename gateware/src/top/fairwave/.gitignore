@@ -1,0 +1,5 @@
+fw/memory.x
+fw/target/
+pac/
+cpu/target/
+__pycache__/

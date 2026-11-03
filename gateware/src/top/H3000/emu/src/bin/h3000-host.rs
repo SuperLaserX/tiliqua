@@ -18,6 +18,12 @@
 //!   wav <file>          write the recorded output (16-bit stereo 44.1 kHz)
 //!   env <ms>            print the recorded output level per block
 //!   cache [reset]       delay cache misses per frame (gateware cache model)
+//!   dspram <d>          print DSP d's (1-3) data RAM
+//!   hostreads <s>       PA5 / PA6 reads per second by each DSP
+//!   pwatch <hex addr>   while profiling: 6809 PC and stack at each write of
+//!                       that host latch address
+//!   rwatch <hex addr>   while profiling: 6809 PC and stack at each change of
+//!                       that RAM byte ($6000-$7FFF)
 //! The display is printed whenever it changes during a `wait`.
 
 use h3000_emu::browse::{Browser, Keys, ProgramList};
