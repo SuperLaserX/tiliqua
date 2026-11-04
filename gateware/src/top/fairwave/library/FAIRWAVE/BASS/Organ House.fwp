@@ -1,0 +1,33 @@
+FAIRWAVE PATCH 1
+NAME  = ORGAN HOUSE
+ABOUT = 90S HOUSE ORGAN. GATE 1, CV 1
+
+# The drawbar organ bass of early nineties house, short and bouncy. POS pulls out the stops.
+[OSC 1]
+TABLE = TABLES/ORGAN.WAV
+TUNE = -12
+POS = 50%
+
+[OSC 2]
+TABLE = TABLES/ORGAN.WAV
+TUNE = -12
+FINE = 4
+POS = 40%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 170 MS
+SUSTAIN = 20%
+RELEASE = 40 MS
+D CURVE = 40
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

@@ -1,0 +1,35 @@
+FAIRWAVE PATCH 1
+NAME  = PSY ROUND
+ABOUT = HOLLOW, ROUNDER. ABOUT 145 BPM
+
+# The same roll with a square: hollow and softer-edged, the notes a little longer.
+[OSC 1]
+TABLE = TABLES/SQRLP.WAV
+TUNE = -24
+POS = 18%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 12%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 76 MS
+SUSTAIN = 0%
+RELEASE = 25 MS
+D CURVE = 20
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 38%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 30%

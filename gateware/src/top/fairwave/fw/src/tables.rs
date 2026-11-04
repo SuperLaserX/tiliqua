@@ -5,12 +5,30 @@ use log::{info, warn};
 
 use fairwave_cpu::browser::{shape_of, Library};
 use fairwave_cpu::table::{Pool, Table};
-use fairwave_cpu::{wav, wavegen, wavetables};
+use fairwave_cpu::{mip, wav, wavegen, wavetables};
 
 use crate::engine::clean_dcache;
 use crate::pac::constants::*;
 
 pub use fairwave_cpu::browser::MAX_TABLES;
+
+/// Free PSRAM in the UI scratch, for the levels on their way down.
+const MIP_SCRATCH: usize = 0xC0000;
+
+/// Makes one frame's band-limited levels, and sees them to PSRAM for the engine. (`mip.rs`.)
+pub fn make_mips(table: &Table, frame: u16) {
+    let len = table.frame_len();
+    let at = PSRAM_BASE + table.offset;
+    let (from, row, scratch) = unsafe {
+        (
+            core::slice::from_raw_parts((at + ((frame as usize) << table.frame_log2) * 2) as *const i16, len),
+            core::slice::from_raw_parts_mut((at + table.mip_row(frame) * 2) as *mut i16, len),
+            core::slice::from_raw_parts_mut((PSRAM_BASE + PSRAM_UI_SCRATCH + MIP_SCRATCH) as *mut i16, len),
+        )
+    };
+    mip::build_row(from, row, scratch);
+    clean_dcache(at + table.mip_row(frame) * 2, len * 2);
+}
 
 /// A table's samples in PSRAM.
 pub fn slice(table: &Table) -> &'static mut [i16] {

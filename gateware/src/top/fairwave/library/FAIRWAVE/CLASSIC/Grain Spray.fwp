@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = GRAIN SPRAY
+ABOUT = SCATTERED GRAINS. BY ITSELF
+
+# Faster and scattered: a random LFO picks each grain's place in a built-in table of single overtones, so
+# each grain sings a different one. Turn LFO 3's amounts up for wilder, and LFO 1 and 2's rates up for a texture.
+[OSC 1]
+TABLE = HARMONICS
+TUNE = -12
+POS = 22%
+GRAIN = LFO 1
+LEVEL = 0%
+
+[OSC 2]
+TABLE = HARMONICS
+TUNE = -5
+POS = 26%
+GRAIN = LFO 2
+LEVEL = 0%
+
+[LFO 1]
+RATE = 4.3 HZ
+SHAPE = SINE
+POLAR = UNI
+PHASE = 270
+
+[LFO 2]
+RATE = 6.1 HZ
+SHAPE = SINE
+POLAR = UNI
+PHASE = 270
+
+[LFO 3]
+RATE = 9 HZ
+SHAPE = RANDOM
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 100%
+LFO 2 > LEVEL 2 = 100%
+LFO 3 > POS 1 = 12%
+LFO 3 > POS 2 = -12%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

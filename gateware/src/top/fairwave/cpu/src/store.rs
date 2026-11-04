@@ -9,9 +9,11 @@
 //! later firmware can still read it: reflashing keeps this window. Version 1 kept the matrix's
 //! amounts in whole percents; since version 2 they are in half-percents. Version 3 has room for more
 //! tables' frame lengths, and says which file a layer's table came from, if it came from a drive.
+//! Version 4 adds how a layer is read, its grains, and what one oscillator does to the other.
+//! Version 5 adds a layer's fine tuning.
 
 use crate::modulation::*;
-use crate::patch::{Edge, Layer, Patch, N_LAYERS};
+use crate::patch::{Cross, CrossMode, Edge, Layer, Patch, ReadStyle, FINE_MAX, N_LAYERS};
 
 pub const N_PATCHES: usize = 8;
 /// How many tables' frame lengths a patch keeps (the FRAME row reshapes a table for all who
@@ -28,7 +30,7 @@ const SECTOR: u32 = 4096;
 pub const WINDOW_BYTES: u32 = N_PATCHES as u32 * 2 * SECTOR;
 
 const MAGIC: [u8; 4] = *b"FWPT";
-const VERSION: u8 = 3;
+pub const VERSION: u8 = 5;
 const HEADER_BYTES: usize = 16;
 const PAGE: usize = 256;
 
@@ -148,8 +150,12 @@ impl Reader<'_> {
 }
 
 /// Enough for a patch, in the fields written below.
-pub const PATCH_BYTES: usize =
-    N_LAYERS * 9 + N_ENVELOPES * 12 + N_LFOS * 7 + N_SLOTS * 4 + 6 + N_TABLES + N_LAYERS * (PATH_BYTES + 1);
+pub const PATCH_BYTES: usize = N_LAYERS * 9 + N_ENVELOPES * 12 + N_LFOS * 7 + N_SLOTS * 4 + 6 + N_TABLES
+    + N_LAYERS * (PATH_BYTES + 1) + VERSION_4_BYTES + VERSION_5_BYTES;
+/// What version 4 added, at the end.
+const VERSION_4_BYTES: usize = N_LAYERS * 2 + 4;
+/// And version 5, after that.
+const VERSION_5_BYTES: usize = N_LAYERS;
 const _: () = assert!(PATCH_BYTES <= PAGE - HEADER_BYTES);
 
 /// A patch as bytes. Enums go by number: they are only ever added to at their ends.
@@ -201,6 +207,16 @@ pub fn encode(saved: &Saved) -> [u8; PATCH_BYTES] {
         }
         w.u8(f.frame_log2);
     }
+    for l in &p.layers {
+        w.u8(l.read as u8);
+        w.u8(l.grain);
+    }
+    w.u8(p.cross.mode as u8);
+    w.u8(p.cross.modulator);
+    w.i16(p.cross.depth as i16);
+    for l in &p.layers {
+        w.u8(l.fine as u8);
+    }
     out
 }
 
@@ -213,10 +229,13 @@ pub fn decode(bytes: &[u8], version: u8) -> Option<Saved> {
         *l = Layer {
             table: r.u8()?,
             semitones: r.within(48)?,
+            fine: 0,
             position: r.within(1000)?.max(0) as u16,
             shift: r.within(2000)?,
             edge: Edge::Clamp.next(r.u8()? as i32),
             level: r.at_most(100)?,
+            read: ReadStyle::Clean,
+            grain: 0,
         };
     }
     for e in p.envelopes.iter_mut() {
@@ -262,6 +281,22 @@ pub fn decode(bytes: &[u8], version: u8) -> Option<Saved> {
                 *b = r.u8()?;
             }
             f.frame_log2 = r.u8()?;
+        }
+    }
+    if version >= 4 {
+        for l in p.layers.iter_mut() {
+            l.read = ReadStyle::Clean.next(r.u8()? as i32);
+            l.grain = r.at_most(3)?;
+        }
+        p.cross = Cross {
+            mode: CrossMode::Off.next(r.u8()? as i32),
+            modulator: r.at_most(1)?,
+            depth: r.within(1000)?.max(0) as u16,
+        };
+    }
+    if version >= 5 {
+        for l in p.layers.iter_mut() {
+            l.fine = (r.u8()? as i8).clamp(-FINE_MAX, FINE_MAX);
         }
     }
     Some(saved)
@@ -480,6 +515,7 @@ mod tests {
     fn a_patch(n: u8) -> Saved {
         let mut p = Patch::default();
         p.layers[0].semitones = n as i16 - 5;
+        p.layers[1].fine = n as i8 - 12;
         p.layers[1].position = 100 + n as u16;
         p.layers[1].shift = -(n as i16) * 10;
         p.layers[0].edge = Edge::Mirror;
@@ -493,6 +529,9 @@ mod tests {
         p.slots[11] = Slot { source: Source::Lfo3, dest: Dest::Balance, amount: -400 };
         p.mixer.outs = [OutSel::Mix, OutSel::Lfo1, OutSel::Off, OutSel::Env2];
         p.mixer.balance = 1000;
+        p.layers[0].read = ReadStyle::Stepped;
+        p.layers[1].grain = 2;
+        p.cross = Cross { mode: CrossMode::Pd, modulator: 1, depth: 625 };
         let mut frame_log2 = [0; N_TABLES];
         frame_log2[..4].copy_from_slice(&[11, 8, 9, n % 4 + 8]);
         frame_log2[N_TABLES - 1] = 10;
@@ -535,6 +574,7 @@ mod tests {
         assert!(p.lfos[0].rate <= RATE_MAX && p.lfos[0].phase < 360);
         assert!(p.slots[0].amount.abs() <= p.slots[0].dest.amount_limit());
         assert!(p.mixer.balance >= 0 && p.mixer.balance <= 1000);
+        assert!(p.layers[0].grain <= 3 && p.cross.modulator <= 1 && p.cross.depth <= 1000);
     }
 
     #[test]
@@ -655,8 +695,13 @@ mod tests {
     /// Puts `saved` in flash as `version` would have written it, with these amounts in its bytes.
     fn write_as_version(f: &mut FakeFlash, patch: usize, saved: &Saved, version: u8, amounts: &[i16; N_SLOTS]) {
         let mut body = encode(saved);
-        // Before version 3, four tables' frame lengths ended it.
-        let bytes = if version < 3 { PATCH_BYTES - (N_TABLES - OLD_N_TABLES) - N_LAYERS * (PATH_BYTES + 1) } else { PATCH_BYTES };
+        // Before version 3, four tables' frame lengths ended it; and version 3, the files.
+        let bytes = match version {
+            ..=2 => PATCH_BYTES - VERSION_5_BYTES - VERSION_4_BYTES - (N_TABLES - OLD_N_TABLES) - N_LAYERS * (PATH_BYTES + 1),
+            3 => PATCH_BYTES - VERSION_5_BYTES - VERSION_4_BYTES,
+            4 => PATCH_BYTES - VERSION_5_BYTES,
+            _ => PATCH_BYTES,
+        };
         let first_amount = N_LAYERS * 9 + N_ENVELOPES * 12 + N_LFOS * 7 + 2;
         for (i, a) in amounts.iter().enumerate() {
             body[first_amount + i * 4..first_amount + i * 4 + 2].copy_from_slice(&a.to_le_bytes());
@@ -703,6 +748,34 @@ mod tests {
         assert_eq!(loaded.frame_log2[..4], saved.frame_log2[..4]);
         assert!(loaded.frame_log2[4..].iter().all(|f| *f == 0), "the rest: as they were built");
         assert!(loaded.files.iter().all(|f| f.is_none()));
+    }
+
+    #[test]
+    fn a_patch_from_before_version_4_plays_clean_with_no_grains_and_no_cross_modulation() {
+        let mut f = FakeFlash::new();
+        let saved = a_patch(1);
+        let amounts: [i16; N_SLOTS] = core::array::from_fn(|i| saved.patch.slots[i].amount);
+        write_as_version(&mut f, 3, &saved, 3, &amounts);
+        let mut s = Store::new(&mut f, BASE);
+        let loaded = s.load(3).expect("still a patch");
+        assert_eq!(loaded.files, saved.files, "what version 3 had is still there");
+        assert_eq!(loaded.patch.layers[0].semitones, saved.patch.layers[0].semitones);
+        assert!(loaded.patch.layers.iter().all(|l| l.read == ReadStyle::Clean && l.grain == 0));
+        assert_eq!(loaded.patch.cross, Cross::OFF);
+    }
+
+    #[test]
+    fn a_patch_from_before_version_5_keeps_everything_and_is_in_tune() {
+        let mut f = FakeFlash::new();
+        let saved = a_patch(20);
+        assert_ne!(saved.patch.layers[1].fine, 0);
+        let amounts: [i16; N_SLOTS] = core::array::from_fn(|i| saved.patch.slots[i].amount);
+        write_as_version(&mut f, 3, &saved, 4, &amounts);
+        let mut s = Store::new(&mut f, BASE);
+        let loaded = s.load(3).expect("still a patch");
+        assert_eq!(loaded.patch.cross, saved.patch.cross, "what version 4 had is still there");
+        assert_eq!(loaded.patch.layers[1].fine, 0);
+        assert_eq!(loaded.patch.layers[1].read, saved.patch.layers[1].read);
     }
 
     #[test]

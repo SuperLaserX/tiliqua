@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = FM SOLID
+ABOUT = DX-STYLE PICK. GATE 1, CV 1
+
+# Two sines, the classic digital bass of the eighties: a bright pick that falls away to a pure tone.
+# Only the carrier is heard; the modulator's envelope is the pick.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 500 MS
+SUSTAIN = 60%
+RELEASE = 80 MS
+D CURVE = 40
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 180 MS
+SUSTAIN = 0%
+RELEASE = 180 MS
+D CURVE = 70
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 1%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > X DEPTH = 20%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

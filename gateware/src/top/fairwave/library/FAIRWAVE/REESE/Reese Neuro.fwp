@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = REESE NEURO
+ABOUT = DETUNED FM, MOVING. GATE 1, CV 1
+
+# One saw frequency-modulates the other, a few cents off: the tearing, slowly turning drum and bass kind.
+# The modulator is in the mix too. LFO 1 moves how hard it pushes.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+FINE = -6
+POS = 40%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+FINE = 6
+POS = 48%
+
+[ENV 1]
+ATTACK = 5 MS
+DECAY = 300 MS
+SUSTAIN = 85%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.27 HZ
+SHAPE = SINE
+POLAR = UNI
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 1%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > X DEPTH = 6%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 65%

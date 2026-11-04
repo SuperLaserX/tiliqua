@@ -1,0 +1,41 @@
+FAIRWAVE PATCH 1
+NAME  = GLASS BELL
+ABOUT = STRUCK AND RINGING. GATE 1, CV 1
+
+# High, sparse harmonics, the brightness falling away as a struck bell's does.
+[OSC 1]
+TABLE = TABLES/GLASS.WAV
+TUNE = 12
+POS = 10%
+
+[OSC 2]
+TABLE = TABLES/GLASS.WAV
+TUNE = 19
+FINE = 4
+POS = 6%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 1200 MS
+SUSTAIN = 0%
+RELEASE = 500 MS
+D CURVE = 70
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 500 MS
+SUSTAIN = 0%
+RELEASE = 300 MS
+D CURVE = 70
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 22%
+ENV 2 > POS 2 = 18%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

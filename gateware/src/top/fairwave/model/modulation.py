@@ -6,9 +6,10 @@ Once per output sample, in this order:
     INPUTS      the CVs are smoothed; the gates pass Schmitt triggers
     ENVELOPES   two DAHDSRs, which can loop
     LFOS        three
-    MATRIX      twelve slots add source x amount onto nine destinations' base values
-    FINISH      the destinations become the layers' increment, position, tilt and level;
-                the envelopes routed to a layer's VCA multiply its level
+    MATRIX      twelve slots add source x amount onto ten destinations' base values
+    FINISH      the destinations become the layers' increment, position, tilt and level, and the
+                depth of one layer's modulation of the other; the envelopes routed to a layer's
+                VCA multiply its level
     (the oscillators compute a sample of each layer: `model/wavescan.py`)
     MIX         the two layers crossfade into a mix; each output picks what it carries
 
@@ -18,7 +19,8 @@ Number formats:
                 its resolution through the matrix: 0.06 mV, or 0.075 cents at 1 V/oct
     level, t    U1.16: ONE is full. An envelope's top and an LFO's peak are 5 V as sources.
     pitch       Q.16 octaves above C4
-    position    U1.16, of the table; tilt: Q2.16, tables per cycle
+    position    Q.16, of the table, up to 8 tables either way: what is past the table's ends is
+                the oscillator's edge mode to deal with; tilt: Q2.16, tables per cycle
     amount      18 bits signed: the slot adds (source * amount) >> 14
 
 Every shift is arithmetic (rounds down), as in the gateware.
@@ -30,6 +32,8 @@ about times in milliseconds.
 
 from dataclasses import dataclass, field
 
+from .wavescan import Cross
+
 FS = 48000
 C4_HZ = 261.62558
 
@@ -40,11 +44,12 @@ UNITY_LEVEL = 0x9C40            # a layer at 100%: table full scale becomes 5 V 
 
 # Sources, as a slot names them.
 NONE, CV1, CV2, ENV1, ENV2, LFO1, LFO2, LFO3 = range(8)
-# Destinations: four per layer, and the mix's balance.
+# Destinations: four per layer, the mix's balance, and the cross modulation's depth.
 PITCH, POS, SHIFT, LEVEL = range(4)
 LAYER_DESTS = 4
 BALANCE = 8
-N_DESTS = 9
+CROSS = 9
+N_DESTS = 10
 N_SLOTS = 12
 AMOUNT_SHIFT = 14
 
@@ -72,6 +77,10 @@ CV_FLOOR = VOLT * 150 // 1000
 # Pitch stops here: octaves below C4, and up to just under Nyquist at 48 kHz.
 PITCH_MIN = -12 << 16
 PITCH_MAX = (6 << 16) + 0x8000
+# Both go through a multiplier's 18 bits. Position loses two bits for its range: that is still a
+# 256th of a frame on a table of 64.
+POS_SHIFT = 2
+WIDE_MIN, WIDE_MAX = -(1 << 17), (1 << 17) - 1
 
 
 def exp_rom(fs=FS):
@@ -181,6 +190,7 @@ class Lfo:
     phase: int = 0
     held: int = 0
     out: int = 0
+    wrapped: bool = False       # whether a cycle started this sample
 
     def step(self, rising, random17):
         rate, ctrl, amp = self.words
@@ -190,6 +200,7 @@ class Lfo:
         self.phase = total & 0xFFFFFFFF
         if rising & sync:
             self.phase, wrapped = 0, True
+        self.wrapped = wrapped
         if wrapped:
             self.held = random17
         y = lfo_shape(kind, ((self.phase >> 16) + offset) & 0xFFFF, self.held)
@@ -214,6 +225,8 @@ class Modulation:
         self.out_sel = [0] * 4
         self.vca = [0, 0]           # per envelope: the layers it multiplies
         self.patched = 0            # the CV jacks' switches
+        self.cross_word = 0         # how one layer modulates the other (`wavescan.py`)
+        self.grain = [0, 0]         # per layer: 1 to 3, the LFO whose cycles restart it
         self.frames_m1 = [0, 0]
         self.cv_state = [0, 0]
         self.gates = 0
@@ -221,9 +234,12 @@ class Modulation:
         self.sources = [0] * 8
         self.inc = [0, 0]
         self.pos = [0, 0]
+        self.pos_fraction = [0, 0]  # the position, of the table: what the screens are told
+        self.restart = [False, False]
         self.shift = [0, 0]
         self.level = [0, 0]
         self.balance = 0
+        self.depth = 0
 
     def write(self, addr, data):
         at, index = addr & 0xF0, addr & 0x0F
@@ -240,10 +256,16 @@ class Modulation:
             self.base[index] = d - (1 << 26) if d & (1 << 25) else d
 
     def routing(self, word):
-        """Four outputs' selections (4 bits each), two VCA masks, the CV jacks' switches."""
+        """Four outputs' selections (4 bits each), two VCA masks, the CV jacks' switches, and the
+        cross modulation's mode."""
         self.out_sel = [(word >> (4 * i)) & 15 for i in range(4)]
         self.vca = [(word >> 16) & 3, (word >> 18) & 3]
         self.patched = (word >> 20) & 3
+        self.cross_word = (word >> 22) & 15
+
+    def ctrl(self, layer, word):
+        """The part of a layer's `ctrl` register that concerns the modulation."""
+        self.grain[layer] = (word >> 4) & 3
 
     def inputs(self, adc):
         """`adc`: the four input channels, in DAC counts."""
@@ -283,9 +305,13 @@ class Modulation:
             octave = p >> 16
             self.inc[i] = (v << octave if octave >= 0 else v >> -octave) & 0xFFFFFFFF
 
-            self.pos[i] = clamp(self.acc[at + POS], 0, ONE) * self.frames_m1[i]
-            self.shift[i] = (clamp(self.acc[at + SHIFT], -(1 << 17), (1 << 17) - 1)
-                             * self.frames_m1[i]) >> 10
+            # A grain's position is the one it started with: a window's worth of the same frame.
+            g = self.grain[i]
+            self.restart[i] = g != 0 and self.lfos[g - 1].wrapped
+            if g == 0 or self.restart[i]:
+                self.pos_fraction[i] = clamp(self.acc[at + POS] >> POS_SHIFT, WIDE_MIN, WIDE_MAX)
+                self.pos[i] = (self.pos_fraction[i] * self.frames_m1[i]) << POS_SHIFT
+            self.shift[i] = (clamp(self.acc[at + SHIFT], WIDE_MIN, WIDE_MAX) * self.frames_m1[i]) >> 10
 
             q = clamp(self.acc[at + LEVEL], 0, ONE)
             for e, env in enumerate(self.envs):
@@ -293,6 +319,7 @@ class Modulation:
                     q = (q * env.level) >> 16
             self.level[i] = (q * UNITY_LEVEL) >> 16
         self.balance = clamp(self.acc[BALANCE], 0, ONE)
+        self.depth = clamp(self.acc[CROSS], 0, WIDE_MAX)
 
     def step(self, adc):
         """Everything up to the oscillators, for the next sample."""
@@ -325,3 +352,10 @@ class Modulation:
             layer.pos = self.pos[i]
             layer.shift = self.shift[i]
             layer.level = self.level[i]
+            if self.restart[i]:
+                layer.phase = 0
+
+    def cross(self):
+        """How one layer modulates the other, this sample."""
+        w = self.cross_word
+        return Cross(ring=w & 1, pm=(w >> 1) & 1, lock=(w >> 2) & 1, modulator=(w >> 3) & 1, depth=self.depth)

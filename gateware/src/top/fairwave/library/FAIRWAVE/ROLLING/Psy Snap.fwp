@@ -1,0 +1,37 @@
+FAIRWAVE PATCH 1
+NAME  = PSY SNAP
+ABOUT = ROLLS ABOUT 145 BPM, GATE RESTARTS
+
+# A tight psytrance roll: a sixteenth note's snap of filter, then silence till the next.
+# The envelope loops on its own, so it plays with nothing patched. A gate on gate 1 restarts it: send it
+# sixteenths and the sequencer is in charge of the groove. The period is attack + decay + release.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 22%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 5%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 64 MS
+SUSTAIN = 0%
+RELEASE = 38 MS
+D CURVE = 40
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 46%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 28%

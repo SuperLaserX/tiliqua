@@ -1,0 +1,44 @@
+FAIRWAVE PATCH 1
+NAME  = VOWEL LEAD
+ABOUT = A VOICE SINGING. GATE 1, CV 1
+
+# A built-in table of a voice's vowels, moved by vibrato and a slow LFO. Best in the middle of the keyboard.
+[OSC 1]
+TABLE = VOWELS
+TUNE = 0
+POS = 40%
+EDGE = MIRROR
+
+[OSC 2]
+TABLE = VOWELS
+TUNE = 0
+FINE = 7
+POS = 40%
+EDGE = MIRROR
+
+[ENV 1]
+ATTACK = 25 MS
+DECAY = 300 MS
+SUSTAIN = 85%
+RELEASE = 200 MS
+VCA = BOTH
+
+[LFO 1]
+RATE = 5.4 HZ
+SHAPE = SINE
+
+[LFO 2]
+RATE = 0.3 HZ
+SHAPE = SINE
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > PITCH 1 = 0.5%
+LFO 1 > PITCH 2 = 0.5%
+LFO 2 > POS 1 = 35%
+LFO 2 > POS 2 = -35%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

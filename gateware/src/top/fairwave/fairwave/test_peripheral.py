@@ -6,7 +6,7 @@ from amaranth.sim import Simulator
 from model import modulation as mod
 from model import wavescan as osc
 from model.modulation import FULL, LOOP_FREE, ONE, Modulation
-from model.wavescan import WRAP, Layer
+from model.wavescan import MIRROR, WRAP, Layer
 
 from .peripheral import WaveScanPeripheral
 from .psram_model import PsramModel
@@ -32,7 +32,7 @@ def table_reg(frames=A_TABLE, frame_log2=FRAME_LOG2, base=0):
 
 
 def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, frames=(A_TABLE, A_TABLE),
-        edge=(0, 0), script=None):
+        edge=(0, 0), script=None, max_level=(0, 0), styles=(0, 0), grain=(0, 0)):
     """Writes the registers while the DAC is stalled, then runs `n` samples and checks all four
     outputs against the models."""
     dut = WaveScanPeripheral()
@@ -43,7 +43,8 @@ def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, 
     sim.add_testbench(psram.bench(dut.bus), background=True)
 
     m = Modulation()
-    layers = [Layer(frame_log2=FRAME_LOG2, frames=frames[i], edge=edge[i]) for i in range(2)]
+    layers = [Layer(frame_log2=FRAME_LOG2, frames=frames[i], edge=edge[i], max_level=max_level[i],
+                    stepped=styles[i] & 1, raw=styles[i] >> 1) for i in range(2)]
     # The sample stalled at the output was computed from the reset state: silent, at C4.
     m.step([0, 0, 0, 0])
     for i in range(2):
@@ -53,9 +54,13 @@ def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, 
     async def bench(ctx):
         csr = Csr(dut)
         ctx.set(dut.i.valid, 1)
+        # (the first sample comes from the reset state: nothing written may land part way through it)
+        while not ctx.get(dut.o.valid):
+            await ctx.tick()
         for i in range(2):
-            await csr.write(ctx, f"l{i}_table", table_reg(frames[i]))
-            await csr.write(ctx, f"l{i}_ctrl", edge[i])
+            await csr.write(ctx, f"l{i}_table", layers[i].table_reg())
+            await csr.write(ctx, f"l{i}_ctrl", layers[i].ctrl_reg(grain[i]))
+            m.ctrl(i, layers[i].ctrl_reg(grain[i]))
             m.frames_m1[i] = frames[i] - 1
         await csr.write(ctx, "routing", routing)
         m.routing(routing)
@@ -79,7 +84,7 @@ def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, 
                 await ctx.tick()
             m.step(adc)
             m.apply(layers)
-            l1, l2 = osc.sample(layers[0], mem), osc.sample(layers[1], mem)
+            l1, l2 = osc.both(layers, mem, m.cross())
             want = m.mix(l1, l2)
             got = [s16(ctx.get(dut.o.payload[ch].as_value())) for ch in range(4)]
             assert got == want, f"sample {s}: got {got}, models {want}"
@@ -200,7 +205,7 @@ def test_the_monitors_show_where_each_layer_is_reading():
     m = extra["model"]
     assert m.pos[0] != 0 and m.shift[1] < 0, "the test means something"
     for i in range(2):
-        assert extra[f"scan{i}"] & 0xFFFF == (m.pos[i] >> 10) & 0xFFFF
+        assert extra[f"scan{i}"] & 0xFFFF == (m.pos_fraction[i] >> 2) & 0xFFFF
         assert extra[f"scan{i}"] >> 16 == (m.shift[i] >> 2) & 0xFFFF
 
 
@@ -243,3 +248,97 @@ def test_the_table_register_changes_a_tables_shape_at_once():
     late = [s16(s) for s in samples[2:]]
     scale = mod.UNITY_LEVEL / 65536
     assert all(lo * scale - 1 <= s <= hi * scale + 1 for s in late), f"{late} not within frame 3's [{lo}, {hi}]"
+
+
+def test_the_monitor_tells_a_position_past_the_ends_as_it_is():
+    writes = [(0x30 + mod.POS, -ONE // 2), (0x30 + mod.LEVEL, ONE), (0x34 + mod.POS, 5 * ONE), (0x34 + mod.LEVEL, ONE)]
+
+    async def script(ctx, csr, extra):
+        extra["scan0"] = await csr.read(ctx, "scan0")
+        extra["scan1"] = await csr.read(ctx, "scan1")
+
+    extra = run(writes, table_mem(), 8, edge=(WRAP, MIRROR), script=script)
+    assert s16(extra["scan0"] & 0xFFFF) == -1 << 11, "half a table back, in Q4.12"
+    assert s16(extra["scan1"] & 0xFFFF) == 5 << 12
+
+
+def test_an_lfo_takes_position_round_the_table_past_its_ends():
+    # The bug this replaces: the matrix stopped position at 0 and 100%, so wrap and mirror did what
+    # clamp does. Here it goes well past both, and the audio has to follow the model through it.
+    writes = (playing() + lfo_writes(0, kind=mod.TRI, r=(1 << 32) // 40)
+              + [slot(0, mod.LFO1, mod.POS, 53687), slot(1, mod.LFO1, 4 + mod.POS, 53687)])
+    extra = {}
+
+    async def script(ctx, csr, e):
+        extra["model"] = e["model"]
+    run(writes, table_mem(), 48, edge=(WRAP, MIRROR), script=script)
+    assert extra["model"].acc[mod.POS] != 0
+
+
+def test_position_past_the_ends_reads_other_frames_than_clamp():
+    # Over 100%, where clamp sits on the last frame, wrap comes round to the first.
+    frames = morph_table(A_TABLE, 1 << FRAME_LOG2)
+    mem = osc.pack_frames(frames)
+    writes = [(0x30 + mod.POS, ONE * 3 // 2), (0x30 + mod.LEVEL, ONE), (0x34 + mod.POS, ONE * 3 // 2),
+              (0x34 + mod.LEVEL, ONE)]
+    out = {}
+
+    async def script(ctx, csr, e):
+        out.update(e)
+    run(writes, mem, 8, edge=(WRAP, 0), script=script)
+    m = out["model"]
+    assert m.pos[0] == m.pos[1] and m.pos[0] >> 16 == 4, "past the last of four frames"
+    assert osc.frame_coords(Layer(frames=A_TABLE, edge=WRAP, pos=m.pos[0]))[0] == 0
+    assert osc.frame_coords(Layer(frames=A_TABLE, edge=0, pos=m.pos[0]))[0] == A_TABLE - 1
+
+
+def levels_table():
+    return osc.pack_table(morph_table(A_TABLE, 1 << FRAME_LOG2))
+
+
+def test_levels_through_the_registers():
+    # Pitch high enough for the upper levels, and a CV moving it through them.
+    writes = playing() + [(0x30 + mod.PITCH, 3 * ONE), (0x34 + mod.PITCH, 5 * ONE),
+                          slot(0, mod.CV1, mod.PITCH, 33554)]
+    run(writes, levels_table(), 24, adc_of=lambda s: [s * 2000 - 20000, 0, 0, 0],
+        routing=ROUTING_DEFAULT | 3 << 20, max_level=(5, 3))
+
+
+def test_reading_styles_through_the_registers():
+    writes = playing(pos=ONE * 3 // 8) + [(0x30 + mod.PITCH, 2 * ONE), (0x34 + mod.PITCH, 2 * ONE)]
+    run(writes, table_mem(), 12, styles=(1, 3))
+
+
+def cross_writes(depth):
+    return playing() + [(0x34 + mod.PITCH, 7 * ONE // 12), (0x30 + mod.CROSS, depth)]
+
+
+def test_every_mode_of_cross_modulation_through_the_registers():
+    for word in (0b0001, 0b0010, 0b0110, 0b1001, 0b1010, 0b1110):
+        run(cross_writes(osc.DEPTH_FULL // 3), table_mem(), 12, routing=ROUTING_DEFAULT | word << 22)
+
+
+def test_an_envelope_on_the_cross_depth_shapes_it_at_audio_rate():
+    writes = (cross_writes(0) + env_writes(0, delay=1, attack=6, hold=1, decay=6, release=6)
+              + [slot(0, mod.ENV1, mod.CROSS, 21990)])
+    run(writes, table_mem(), 24, adc_of=lambda s: [0, 0, 20000 if 1 <= s < 18 else 0, 0],
+        routing=ROUTING_DEFAULT | 0b0010 << 22)
+
+
+def test_cross_modulation_reaches_the_mix():
+    writes = cross_writes(osc.DEPTH_FULL) + [(0x30 + mod.BALANCE, ONE)]
+    routing = mod.OUT_MIX | mod.OUT_L1 << 4 | mod.OUT_L2 << 8 | mod.OUT_OFF << 12 | 0b0001 << 22
+    run(writes, table_mem(), 12, routing=routing)
+
+
+def test_a_grain_restarts_a_layer_through_the_registers():
+    writes = (playing() + lfo_writes(0, kind=mod.TRI, r=(1 << 32) // 6, uni=1)
+              + lfo_writes(1, kind=mod.SQUARE, r=(1 << 32) // 4)
+              + [(0x30 + mod.LEVEL, 0), slot(0, mod.LFO1, mod.LEVEL, 13422), slot(1, mod.LFO2, 4 + mod.POS, 3000)])
+    extra = run(writes, table_mem(), 30, grain=(1, 2), edge=(WRAP, WRAP))
+    assert extra["model"].grain == [1, 2]
+
+
+def test_grains_under_cross_modulation():
+    writes = cross_writes(osc.DEPTH_FULL // 2) + lfo_writes(0, r=(1 << 32) // 5)
+    run(writes, table_mem(), 24, grain=(0, 1), routing=ROUTING_DEFAULT | 0b0110 << 22)

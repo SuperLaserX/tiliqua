@@ -1,0 +1,50 @@
+FAIRWAVE PATCH 1
+NAME  = GRAIN DRIFT
+ABOUT = SLOW GRAINS. PLAYS BY ITSELF
+
+# Each oscillator is one stream of grains. Every cycle of its LFO the oscillator restarts and takes up a new
+# place in the table, holding it for that grain, and the same LFO, on LEVEL, fades the grain in and out.
+# The two rates differ so the streams drift over each other. LFO 3 walks the place through the table.
+[OSC 1]
+TABLE = VOWELS
+TUNE = -12
+POS = 50%
+GRAIN = LFO 1
+LEVEL = 0%
+
+[OSC 2]
+TABLE = FM BELL
+TUNE = 0
+POS = 50%
+GRAIN = LFO 2
+LEVEL = 0%
+
+[LFO 1]
+RATE = 2.6 HZ
+SHAPE = SINE
+POLAR = UNI
+PHASE = 270
+
+[LFO 2]
+RATE = 3.6 HZ
+SHAPE = SINE
+POLAR = UNI
+PHASE = 270
+
+[LFO 3]
+RATE = 0.12 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 100%
+LFO 2 > LEVEL 2 = 100%
+LFO 3 > POS 1 = 40%
+LFO 3 > POS 2 = -30%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

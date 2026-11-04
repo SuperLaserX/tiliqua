@@ -39,9 +39,9 @@ pub struct Monitor {
     /// How far through its stage each envelope is, and through its cycle each LFO: 0 to 255.
     pub progress: [u8; N_ENVELOPES],
     pub lfo_phase: [u8; N_LFOS],
-    /// Where each oscillator is reading, modulation and all: frames in Q10.6, and frames a cycle
-    /// in Q11.4.
-    pub scan: [(u16, i16); N_LAYERS],
+    /// Where each oscillator is reading, modulation and all: position in Q4.12 of the table, past
+    /// its ends if the modulation takes it there, and frames a cycle in Q11.4.
+    pub scan: [(i16, i16); N_LAYERS],
 }
 
 // The parameter port's map (`model/modulation.py`).
@@ -80,11 +80,11 @@ impl Engine {
         if changed!(table[1]) {
             self.regs.l1_table().write(|w| unsafe { w.bits(new.table[1]) });
         }
-        if changed!(edge[0]) {
-            self.regs.l0_ctrl().write(|w| unsafe { w.bits(new.edge[0] as u8) });
+        if changed!(ctrl[0]) {
+            self.regs.l0_ctrl().write(|w| unsafe { w.bits(new.ctrl[0] as u8) });
         }
-        if changed!(edge[1]) {
-            self.regs.l1_ctrl().write(|w| unsafe { w.bits(new.edge[1] as u8) });
+        if changed!(ctrl[1]) {
+            self.regs.l1_ctrl().write(|w| unsafe { w.bits(new.ctrl[1] as u8) });
         }
         for e in 0..N_ENVELOPES {
             for w in 0..8 {
@@ -135,7 +135,7 @@ impl Engine {
             gates: ((c >> 22) & 3) as u8,
             progress: [e as u8, (e >> 8) as u8],
             lfo_phase: [(e >> 16) as u8, (e >> 24) as u8, (c >> 24) as u8],
-            scan: s.map(|w| (w as u16, (w >> 16) as u16 as i16)),
+            scan: s.map(|w| (w as u16 as i16, (w >> 16) as u16 as i16)),
         }
     }
 

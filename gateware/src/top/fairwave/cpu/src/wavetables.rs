@@ -345,6 +345,32 @@ pub const SET: [Spec; 9] = [
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `FAIRWAVE_TABLES_OUT=folder cargo test dump_the_built_in_tables`: the tables made at boot as files,
+    /// for `tools/render_patch.py`, as a sound on them can't otherwise be played off the hardware.
+    #[test]
+    fn dump_the_built_in_tables() {
+        let Ok(out) = std::env::var("FAIRWAVE_TABLES_OUT") else { return };
+        let out = std::path::Path::new(&out);
+        std::fs::create_dir_all(out).unwrap();
+        let write = |name: &str, table: &[i16], len: usize| {
+            let bytes: std::vec::Vec<u8> = table.iter().flat_map(|s| s.to_le_bytes()).collect();
+            std::fs::write(out.join(std::format!("{name}.raw")), bytes).unwrap();
+            std::fs::write(out.join(std::format!("{name}.len")), std::format!("{len}")).unwrap();
+        };
+        let mut morph = std::vec![0i16; 2048 * 31];
+        crate::wavegen::harmonic_morph(&mut morph, 2048);
+        write("MORPH 2048", &morph, 2048);
+        let mut pulse = std::vec![0i16; 256 * 16];
+        crate::wavegen::naive_pulse(&mut pulse, 256);
+        write("PULSE 256", &pulse, 256);
+        for spec in &SET {
+            let len = 1usize << spec.frame_log2;
+            let mut table = std::vec![0i16; len * spec.frames as usize];
+            (spec.make)(&mut table, len);
+            write(spec.name, &table, len);
+        }
+    }
     use std::vec;
     use std::vec::Vec;
 

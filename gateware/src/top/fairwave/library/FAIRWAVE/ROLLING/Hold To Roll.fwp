@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = HOLD TO ROLL
+ABOUT = ROLLS WHILE GATE 1 IS HIGH
+
+# LOOP = GATED: a held gate rolls, and it stops when the gate falls, so a sequencer can write fills with
+# long notes. Silent with no gate.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 22%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 5%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 64 MS
+SUSTAIN = 0%
+RELEASE = 38 MS
+D CURVE = 40
+R CURVE = 0
+LOOP = GATED
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 46%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 28%

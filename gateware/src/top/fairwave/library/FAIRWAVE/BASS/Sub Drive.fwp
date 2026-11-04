@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = SUB DRIVE
+ABOUT = CLEAN SUB, CV 2 DRIVES. GATE 1
+
+# A sub to feel more than hear: nearly a pure sine, with the envelope and CV 2 driving a little edge
+# into it so small speakers can find it.
+[OSC 1]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 4%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 4%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 400 MS
+SUSTAIN = 100%
+RELEASE = 50 MS
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 90 MS
+SUSTAIN = 0%
+RELEASE = 90 MS
+D CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 22%
+ENV 2 > POS 2 = 22%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

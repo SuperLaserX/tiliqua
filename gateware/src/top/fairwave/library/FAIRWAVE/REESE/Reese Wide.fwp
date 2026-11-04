@@ -1,0 +1,40 @@
+FAIRWAVE PATCH 1
+NAME  = REESE WIDE
+ABOUT = ONE SAW EACH SIDE. GATE 1, CV 1
+
+# Each saw on its own output, for a stereo pair: out 0 and out 1. Mono them and it phases hard.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+FINE = -14
+POS = 52%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+FINE = 14
+POS = 52%
+
+[ENV 1]
+ATTACK = 5 MS
+DECAY = 300 MS
+SUSTAIN = 85%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[LFO 2]
+RATE = 0.23 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+LFO 2 > POS 1 = 8%
+LFO 2 > POS 2 = 8%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

@@ -1,0 +1,38 @@
+FAIRWAVE PATCH 1
+NAME  = DNB ROLLER
+ABOUT = SUSTAINED ROLL, 174 BPM EIGHTHS
+
+# Not notes but a held sub with a Reese opening and closing over it in eighth notes: the drum and bass
+# kind of rolling. No envelope closes it, so it plays by itself. LFO 1 restarts on gate 1, to stay on the beat.
+[OSC 1]
+TABLE = TABLES/REESE.WAV
+TUNE = -24
+EDGE = WRAP
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 6%
+
+[LFO 1]
+RATE = 5.8 HZ
+SHAPE = SINE
+POLAR = UNI
+PHASE = 270
+SYNC = GATE 1
+
+[LFO 3]
+RATE = 0.6 HZ
+SHAPE = SAW UP
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 3 > POS 1 = 50.5%
+LFO 1 > BALANCE = -70%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 85%

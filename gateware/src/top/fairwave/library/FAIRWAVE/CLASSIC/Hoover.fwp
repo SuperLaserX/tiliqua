@@ -1,0 +1,53 @@
+FAIRWAVE PATCH 1
+NAME  = HOOVER
+ABOUT = THE RAVE HOOVER. GATE 1, CV 1
+
+# After the Alpha Juno's mentasm: pulse and saw well apart, swooping up into each note and sagging out.
+[OSC 1]
+TABLE = TABLES/PWM.WAV
+TUNE = -12
+FINE = -18
+POS = 45%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -12
+FINE = 18
+POS = 85%
+
+[ENV 1]
+ATTACK = 30 MS
+DECAY = 400 MS
+SUSTAIN = 85%
+RELEASE = 300 MS
+R CURVE = 30
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 190 MS
+SUSTAIN = 0%
+RELEASE = 10 MS
+D CURVE = 50
+
+[LFO 1]
+RATE = 5.1 HZ
+SHAPE = SINE
+
+[LFO 2]
+RATE = 1.2 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = -20%
+ENV 2 > PITCH 2 = -20%
+LFO 1 > PITCH 1 = 0.5%
+LFO 1 > PITCH 2 = 0.5%
+LFO 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

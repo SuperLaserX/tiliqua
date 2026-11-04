@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = DONK
+ABOUT = RING-MOD PLUCK, OFFBEATS. GATE 1
+
+# The hard house and bounce bass: a short pluck with a metallic knock from ring modulation, pitch dropping fast.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = 7
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -12
+POS = 30%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 120 MS
+SUSTAIN = 0%
+RELEASE = 40 MS
+D CURVE = 60
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 40 MS
+SUSTAIN = 0%
+RELEASE = 40 MS
+D CURVE = 70
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 40%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 8%
+ENV 2 > PITCH 2 = 8%
+ENV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

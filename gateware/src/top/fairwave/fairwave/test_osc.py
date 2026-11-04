@@ -9,7 +9,7 @@ import pytest
 from amaranth.sim import Simulator
 
 from model import wavescan as model
-from model.wavescan import CLAMP, MIRROR, WRAP, Layer
+from model.wavescan import CLAMP, DEPTH_FULL, MIRROR, WRAP, Cross, Layer
 
 from .osc import WaveScanEngine
 from .psram_model import PsramModel
@@ -41,9 +41,12 @@ def set_params(ctx, dut, i, layer):
     ctx.set(p.shift, layer.shift)
     ctx.set(p.level, layer.level)
     ctx.set(p.edge, layer.edge)
+    ctx.set(p.max_level, layer.max_level)
+    ctx.set(p.stepped, layer.stepped)
+    ctx.set(p.raw, layer.raw)
 
 
-def run_engine(layers, mem, n, psram=None, on_sample=None):
+def run_engine(layers, mem, n, psram=None, on_sample=None, cross=None):
     """The engine's first `n` samples of each layer, and the longest computation."""
     dut = WaveScanEngine(n_layers=len(layers))
     psram = psram or PsramModel()
@@ -62,6 +65,12 @@ def run_engine(layers, mem, n, psram=None, on_sample=None):
                 on_sample(s, state)
             for i, layer in enumerate(state):
                 set_params(ctx, dut, i, layer)
+            if cross:
+                ctx.set(dut.cross.ring, cross.ring)
+                ctx.set(dut.cross.pm, cross.pm)
+                ctx.set(dut.cross.lock, cross.lock)
+                ctx.set(dut.cross.modulator, cross.modulator)
+                ctx.set(dut.cross.depth, cross.depth)
             ctx.set(dut.o.ready, 1)
             while True:
                 await ctx.tick()
@@ -84,9 +93,9 @@ def run_engine(layers, mem, n, psram=None, on_sample=None):
     return got, results[0]
 
 
-def compare(layers, mem, n=64, psram=None, on_sample=None):
-    expected = model.render(copy.deepcopy(layers), mem, n, on_sample=on_sample)
-    got, worst = run_engine(layers, mem, n, psram=psram, on_sample=on_sample)
+def compare(layers, mem, n=64, psram=None, on_sample=None, cross=None):
+    expected = model.render(copy.deepcopy(layers), mem, n, on_sample=on_sample, cross=cross)
+    got, worst = run_engine(layers, mem, n, psram=psram, on_sample=on_sample, cross=cross)
     for i, (e, g) in enumerate(zip(expected, got)):
         for s, (x, y) in enumerate(zip(e, g)):
             assert x == y, f"layer {i} sample {s}: model {x}, engine {y}"
@@ -237,3 +246,127 @@ def test_random_settings():
             pos=rnd.randrange(0, frames << 16), shift=rnd.randrange(-(1 << 13), 1 << 13),
             level=rnd.randrange(1, 0x18000), edge=rnd.choice((CLAMP, WRAP, MIRROR)))
         compare([layer], mem, n=16)
+
+
+@pytest.mark.parametrize("edge", [CLAMP, WRAP, MIRROR])
+@pytest.mark.parametrize("pos", [-(7 << 16) - 0x4000, -1, (9 << 16) + 0xC000, 8184 << 16, -(8184 << 16)])
+def test_a_position_past_the_ends(edge, pos):
+    layers, mem = single(5, 256, inc=1 << 28, pos=pos, shift=3 << 6, edge=edge)
+    compare(layers, mem, n=20)
+
+
+def test_the_furthest_position_and_tilt_of_the_largest_table():
+    layers, mem = single(1024, 256, inc=1 << 29, pos=(8184 << 16), shift=(1 << 17) - 1, edge=WRAP)
+    compare(layers, mem, n=12)
+    layers, mem = single(1024, 256, inc=1 << 29, pos=-(8184 << 16), shift=-(1 << 17), edge=MIRROR)
+    compare(layers, mem, n=12)
+
+
+@pytest.mark.parametrize("stepped,raw", [(1, 0), (0, 1), (1, 1)])
+@pytest.mark.parametrize("edge", [CLAMP, WRAP, MIRROR])
+def test_reading_styles(stepped, raw, edge):
+    layers, mem = single(5, 256, inc=INC * 3, pos=(2 << 16) + 0x6000, shift=1 << 6, edge=edge, stepped=stepped, raw=raw)
+    compare(layers, mem, n=24)
+
+
+def table_with_levels(frames, length):
+    return model.pack_table(morph_table(frames, length))
+
+
+@pytest.mark.parametrize("length", [256, 512, 1024, 2048])
+def test_every_level_of_every_frame_length_reads_the_right_samples(length):
+    log2 = int(math.log2(length))
+    mem = table_with_levels(3, length)
+    layers = [Layer(frame_log2=log2, frames=3, max_level=log2 - 3, pos=(1 << 16) + 0x8000)]
+
+    # Up through the octaves, so each sample is at another level.
+    def climb(s, state):
+        state[0].inc = 1 << (19 + s // 2) | (s * 1234567 & 0xFFFFF)
+    expected, _ = compare(layers, mem, n=26, on_sample=climb)
+    assert any(expected[0])
+    seen = set()
+    probe = Layer(frame_log2=log2, frames=3, max_level=log2 - 3)
+    for s in range(26):
+        seen.add(model.mip_level(probe, 1 << (19 + s // 2) | (s * 1234567 & 0xFFFFF)))
+    assert seen == set(range(log2 - 3 + 1)), f"{seen}: every level there is"
+
+
+def test_a_level_stops_at_what_the_register_says():
+    mem = table_with_levels(2, 256)
+    layers = [Layer(frame_log2=8, frames=2, max_level=2, inc=1 << 31, pos=0x8000)]
+    compare(layers, mem, n=16)
+
+
+def test_the_most_frames_and_the_longest_frame_read_a_level():
+    # (not a table you could fill in a test: just where it reads)
+    mem = {}
+    layers = [Layer(table_base=0xF000, frame_log2=11, frames=1024, max_level=8, inc=1 << 29, pos=1023 << 16)]
+    psram = PsramModel()
+    compare(layers, mem, n=8, psram=psram)
+
+
+def test_levels_under_contention():
+    mem = table_with_levels(4, 512)
+    layers = [Layer(frame_log2=9, frames=4, max_level=6, inc=(1 << 27) + 123457, pos=0x18000, edge=WRAP)]
+    psram = PsramModel(contention=0.8, busy=(40, 150), gaps=0.2, seed=5)
+    _, worst = compare(layers, mem, n=24, psram=psram)
+    assert worst < 1250, f"{worst} clocks would miss the 48 kHz deadline"
+
+
+def two_layers(length_a=1024, length_b=256, **kw):
+    a = morph_table(4, length_a, seed=1)
+    b = morph_table(8, length_b, seed=2)
+    base_b = 4 * length_a * 2 // 256
+    mem = model.pack_frames(a) | model.pack_frames(b, base_word=base_b << 6)
+    return [
+        Layer(frame_log2=int(math.log2(length_a)), frames=4, inc=INC, pos=2 << 16, level=0x9C40, **kw),
+        Layer(table_base=base_b, frame_log2=int(math.log2(length_b)), frames=8, inc=INC * 3, pos=0x18000,
+              level=0x9C40, shift=1 << 6),
+    ], mem
+
+
+@pytest.mark.parametrize("modulator", [0, 1])
+@pytest.mark.parametrize("depth", [DEPTH_FULL // 8, DEPTH_FULL, (1 << 17) - 1])
+def test_fm(modulator, depth):
+    layers, mem = two_layers()
+    expected, _ = compare(layers, mem, n=24, cross=Cross(pm=1, modulator=modulator, depth=depth))
+    plain = model.render(copy.deepcopy(layers), mem, 24)
+    assert expected[1 - modulator] != plain[1 - modulator], "it should change the carrier"
+    assert expected[modulator] == plain[modulator], "and only the carrier"
+
+
+@pytest.mark.parametrize("modulator", [0, 1])
+def test_phase_distortion(modulator):
+    layers, mem = two_layers()
+    cross = Cross(pm=1, lock=1, modulator=modulator, depth=DEPTH_FULL // 4)
+    expected, _ = compare(layers, mem, n=24, cross=cross)
+    plain = model.render(copy.deepcopy(layers), mem, 24)
+    assert expected[modulator] != plain[modulator], "the modulator follows the carrier's phase"
+
+
+@pytest.mark.parametrize("modulator", [0, 1])
+@pytest.mark.parametrize("depth", [0, DEPTH_FULL // 2, DEPTH_FULL, (1 << 17) - 1])
+def test_ring(modulator, depth):
+    layers, mem = two_layers()
+    compare(layers, mem, n=24, cross=Cross(ring=1, modulator=modulator, depth=depth))
+
+
+def test_a_silent_carrier_stays_silent_and_a_silent_modulator_does_nothing_to_fm():
+    layers, mem = two_layers()
+    layers[1].level = 0
+    psram = PsramModel()
+    expected, _ = compare(layers, mem, n=8, psram=psram, cross=Cross(ring=1, depth=DEPTH_FULL))
+    assert expected[1] == [0] * 8
+    layers, mem = two_layers()
+    layers[0].level = 0
+    compare(layers, mem, n=8, cross=Cross(pm=1, depth=DEPTH_FULL))
+
+
+def test_cross_modulation_with_levels_and_the_worst_sample_still_fits():
+    a = morph_table(8, 256, seed=1)
+    mem = model.pack_table(a)
+    layers = [Layer(frame_log2=8, frames=8, max_level=5, inc=(1 << 26) | 1, pos=0x18000, edge=WRAP, level=0x9C40)
+              for _ in range(2)]
+    layers[1].inc = (1 << 27) | 1
+    _, worst = compare(layers, mem, n=16, cross=Cross(ring=1, modulator=1, depth=DEPTH_FULL))
+    assert worst < 450, f"{worst} clocks a sample"

@@ -1,0 +1,39 @@
+FAIRWAVE PATCH 1
+NAME  = FM ROLL
+ABOUT = FM PLUCKS. ABOUT 145 BPM
+
+# Two near-sines, the modulator's depth falling with each note: a woody, knocking roll.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 0%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 64 MS
+SUSTAIN = 0%
+RELEASE = 38 MS
+D CURVE = 50
+R CURVE = 0
+LOOP = FREE
+VCA = OSC 2
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 1%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > X DEPTH = 16%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

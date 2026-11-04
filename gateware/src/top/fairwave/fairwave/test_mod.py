@@ -15,13 +15,14 @@ def rate(samples):
     return (-(-(1 << 32) // samples)) & 0xFFFFFFFF
 
 
-def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None):
+def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None, grain=(0, 0)):
     """Drives the gateware and the model with the same writes and inputs, and compares every
     source and result after each of `n` samples. Returns the longest run in clocks."""
     dut = ModEngine()
     m = Modulation()
     m.routing(routing)
     m.frames_m1 = [frames[0] - 1, frames[1] - 1]
+    m.grain = list(grain)
     sim = Simulator(dut)
     sim.add_clock(1 / 60e6)
     longest = [0]
@@ -39,6 +40,7 @@ def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None):
         for i in range(2):
             ctx.set(dut.vca[i], (routing >> (16 + 2 * i)) & 3)
             ctx.set(dut.frames_m1[i], frames[i] - 1)
+            ctx.set(dut.grain[i], grain[i])
         for addr, data in writes:
             await write(ctx, addr, data)
         for s in range(n):
@@ -70,9 +72,12 @@ def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None):
             for i in range(2):
                 assert ctx.get(mat.inc[i]) == m.inc[i], f"sample {s}: inc {i}"
                 assert ctx.get(mat.pos[i]) == m.pos[i], f"sample {s}: pos {i}"
+                assert ctx.get(mat.pos_fraction[i]) == m.pos_fraction[i] >> 2, f"sample {s}: pos fraction {i}"
+                assert ctx.get(mat.restart) >> i & 1 == m.restart[i], f"sample {s}: restart {i}"
                 assert ctx.get(mat.shift[i]) == m.shift[i], f"sample {s}: shift {i}"
                 assert ctx.get(mat.level[i]) == m.level[i], f"sample {s}: level {i}"
             assert ctx.get(mat.balance) == m.balance, f"sample {s}: balance"
+            assert ctx.get(mat.depth) == m.depth, f"sample {s}: depth"
             assert ctx.get(dut.gates) == m.gates, f"sample {s}: gates"
             for i in range(2):
                 assert ctx.get(mat.sources[1 + i]) == m.sources[1 + i], f"sample {s}: cv {i}"
@@ -266,3 +271,49 @@ def test_random_patches():
         def adc(s):
             return [(s * 700) % 16000 - 8000, 3000 - s * 50, pattern[s // 3 % 16], pattern[s // 5 % 16]]
         run(writes, adc, 60, routing=rnd.getrandbits(22) & ~0xFFFF, frames=(rnd.randint(1, 64), rnd.randint(1, 64)))
+
+
+def test_position_past_both_ends_of_the_table():
+    writes = lfo_writes(0, kind=model.TRI, r=(1 << 32) // 16) + [
+        (0x30 + model.POS, ONE // 2), slot(0, model.LFO1, model.POS, 40000),
+        (0x34 + model.POS, ONE), slot(1, model.LFO1, 4 + model.POS, -40000),
+    ]
+    run(writes, lambda s: [0, 0, 0, 0], 24, frames=(5, 64))
+
+
+def test_position_stops_at_its_range_at_both_ends():
+    writes = [(0x30 + model.POS, 1 << 24), (0x34 + model.POS, -(1 << 24))]
+    run(writes, lambda s: [0, 0, 0, 0], 3, frames=(1024, 1024))
+
+
+def test_cross_depth_as_a_destination():
+    writes = lfo_writes(0, kind=model.SAW_UP, r=(1 << 32) // 12) + [
+        (0x30 + model.CROSS, 50000), slot(0, model.LFO1, model.CROSS, 21990)]
+    run(writes, lambda s: [0, 0, 0, 0], 16)
+
+
+def test_cross_depth_stops_at_its_range_at_both_ends():
+    for base in (1 << 22, -(1 << 22)):
+        run([(0x30 + model.CROSS, base)], lambda s: [0, 0, 0, 0], 3)
+
+
+def test_a_grain_holds_its_position_until_the_next():
+    writes = lfo_writes(1, r=(1 << 32) // 5) + lfo_writes(2, kind=model.TRI, r=(1 << 32) // 7) + [
+        (0x30 + model.POS, ONE // 4), slot(0, model.LFO3, model.POS, 8000),
+        (0x34 + model.POS, ONE // 3), slot(1, model.LFO3, 4 + model.POS, -8000),
+    ]
+    run(writes, lambda s: [0, 0, 0, 0], 24, frames=(16, 16), grain=(2, 0))
+
+
+def test_every_lfo_can_be_a_grains_clock_and_a_gate_can_start_one():
+    writes = (lfo_writes(0, r=(1 << 32) // 3) + lfo_writes(1, r=(1 << 32) // 4) + lfo_writes(2, r=1 << 8, sync=1)
+              + [(0x30 + model.POS, ONE // 4), (0x34 + model.POS, ONE // 4)])
+    for grain in ((1, 2), (3, 1), (2, 3)):
+        run(writes, gate_at(0, (6, 8), (14, 18)), 20, frames=(9, 9), grain=grain)
+
+
+def test_a_run_stays_short_with_all_of_it():
+    # What the stages take, with every destination in use: the rest of the 1250 is the oscillators'.
+    writes = lfo_writes(0, kind=model.SINE, r=1 << 26) + [slot(i, model.LFO1, i % 10, 1000) for i in range(12)]
+    longest = run(writes, lambda s: [0, 0, 0, 0], 8, frames=(64, 64), grain=(1, 2))
+    assert longest < 240, f"{longest} clocks"

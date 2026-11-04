@@ -1,0 +1,44 @@
+FAIRWAVE PATCH 1
+NAME  = SQUARE HOLLOW
+ABOUT = WOODY SQUARE. GATE 1, CV 1
+
+# Odd harmonics only: hollow and clarinet-woody, sitting under things rather than on them.
+[OSC 1]
+TABLE = TABLES/SQRLP.WAV
+TUNE = -24
+FINE = -3
+POS = 30%
+
+[OSC 2]
+TABLE = TABLES/SQRLP.WAV
+TUNE = -24
+FINE = 3
+POS = 22%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 220 MS
+SUSTAIN = 45%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 140 MS
+SUSTAIN = 0%
+RELEASE = 140 MS
+D CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 35%
+ENV 2 > POS 2 = 35%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

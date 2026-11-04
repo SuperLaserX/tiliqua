@@ -1,0 +1,45 @@
+FAIRWAVE PATCH 1
+NAME  = REESE TABLE
+ABOUT = PHASING INSIDE ONE TABLE. GATE 1
+
+# Each oscillator's table holds two saws slipping past each other, so a saw LFO on POS, wrapping, is a
+# detuned pair by itself: it beats at the LFO's rate on any note. Two of them is four saws, near enough.
+[OSC 1]
+TABLE = TABLES/REESE.WAV
+TUNE = -24
+FINE = -3
+EDGE = WRAP
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/REESE.WAV
+TUNE = -24
+FINE = 3
+EDGE = WRAP
+POS = 25%
+
+[ENV 1]
+ATTACK = 5 MS
+DECAY = 300 MS
+SUSTAIN = 85%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.7 HZ
+SHAPE = SAW UP
+
+[LFO 2]
+RATE = 0.46 HZ
+SHAPE = SAW DN
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 50.5%
+LFO 2 > POS 2 = 50.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

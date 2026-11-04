@@ -18,7 +18,7 @@ pub const RATE_MAX: u8 = 107;
 pub const N_ENVELOPES: usize = 2;
 pub const N_LFOS: usize = 3;
 pub const N_SLOTS: usize = 12;
-pub const N_DESTS: usize = 9;
+pub const N_DESTS: usize = 10;
 
 /// Fractions in the gateware: U1.16, this is 1.
 pub const ONE: i64 = 1 << 16;
@@ -257,6 +257,7 @@ pub enum Dest {
     Shift2 = 6,
     Level2 = 7,
     Balance = 8,
+    Cross = 9,
 }
 
 impl Dest {
@@ -270,7 +271,8 @@ impl Dest {
             5 => Dest::Position2,
             6 => Dest::Shift2,
             7 => Dest::Level2,
-            _ => Dest::Balance,
+            8 => Dest::Balance,
+            _ => Dest::Cross,
         }
     }
 
@@ -285,6 +287,7 @@ impl Dest {
             Dest::Shift2 => "SHIFT 2",
             Dest::Level2 => "LEVEL 2",
             Dest::Balance => "BALANCE",
+            Dest::Cross => "X DEPTH",
         }
     }
 
@@ -311,9 +314,15 @@ impl Slot {
     pub const EMPTY: Slot = Slot { source: Source::None, dest: Dest::Pitch1, amount: 0 };
 
     /// The gateware's amount: it adds (source * amount) >> 14, with sources at 16000 a volt
-    /// and pitch in Q.16 octaves.
-    pub const fn amount_word(&self) -> i32 {
-        let scale: i64 = if self.dest.is_pitch() { 67_108_864 } else { 13_421_773 };
+    /// and pitch in Q.16 octaves. `am`: whether the cross modulation is AM, which is ring modulation
+    /// at half the depth (`model/wavescan.py`).
+    pub const fn amount_word(&self, am: bool) -> i32 {
+        let scale: i64 = match self.dest {
+            Dest::Pitch1 | Dest::Pitch2 => 67_108_864,
+            Dest::Cross if am => 21_990_233 / 2,
+            Dest::Cross => 21_990_233,
+            _ => 13_421_773,
+        };
         let limit = self.dest.amount_limit() as i64;
         let a = self.amount as i64;
         let a = if a > limit { limit } else if a < -limit { -limit } else { a };
@@ -322,8 +331,8 @@ impl Slot {
         ((a * scale + half) / 200_000) as i32
     }
 
-    pub const fn word(&self) -> u32 {
-        (self.amount_word() as u32 & 0x3_FFFF) | (self.source as u32) << 18 | (self.dest as u32) << 21
+    pub const fn word(&self, am: bool) -> u32 {
+        (self.amount_word(am) as u32 & 0x3_FFFF) | (self.source as u32) << 18 | (self.dest as u32) << 21
     }
 }
 
@@ -514,22 +523,31 @@ mod tests {
     fn a_full_pitch_slot_is_an_octave_a_volt_to_a_hundredth_of_a_cent() {
         let s = Slot { source: Source::Cv1, dest: Dest::Pitch1, amount: 200 };
         // A volt is 16000 at the source; an octave is 65536.
-        let octave = (16000i64 * s.amount_word() as i64) as f64 / 16384.0 / 65536.0;
+        let octave = (16000i64 * s.amount_word(false) as i64) as f64 / 16384.0 / 65536.0;
         assert!(((octave - 1.0) * 1200.0).abs() < 0.01, "{octave}");
     }
 
     #[test]
     fn a_full_slot_elsewhere_is_the_whole_range_at_5_volts() {
         let s = Slot { source: Source::Env1, dest: Dest::Position1, amount: 200 };
-        let range = (80000i64 * s.amount_word() as i64) as f64 / 16384.0 / 65536.0;
+        let range = (80000i64 * s.amount_word(false) as i64) as f64 / 16384.0 / 65536.0;
         assert!((range - 1.0).abs() < 1e-4, "{range}");
     }
 
     #[test]
+    fn a_full_slot_on_the_cross_depth_is_all_of_it_at_5_volts_and_half_for_am() {
+        let s = Slot { source: Source::Env1, dest: Dest::Cross, amount: 200 };
+        let depth = 80000i64 * s.amount_word(false) as i64 >> 14;
+        assert!((depth - crate::patch::DEPTH_FULL as i64).abs() < 8, "{depth}");
+        let am = 80000i64 * s.amount_word(true) as i64 >> 14;
+        assert!((am - crate::patch::DEPTH_FULL as i64 / 2).abs() < 8, "{am}");
+    }
+
+    #[test]
     fn the_amount_stays_in_its_bits_at_every_limit() {
-        for dest in [Dest::Pitch1, Dest::Level2] {
+        for dest in [Dest::Pitch1, Dest::Level2, Dest::Cross] {
             for a in [i16::MIN, -800, -390, 0, 390, 800, i16::MAX] {
-                let w = Slot { source: Source::Cv1, dest, amount: a }.amount_word();
+                let w = Slot { source: Source::Cv1, dest, amount: a }.amount_word(false);
                 assert!((-(1 << 17)..(1 << 17)).contains(&w), "{dest:?} {a}: {w}");
             }
         }
@@ -538,7 +556,7 @@ mod tests {
     #[test]
     fn slot_words_land_where_the_gateware_reads_them() {
         let s = Slot { source: Source::Lfo2, dest: Dest::Balance, amount: -200 };
-        let w = s.word();
+        let w = s.word(false);
         assert_eq!(w & 0x3_FFFF, (-13422i32 as u32) & 0x3_FFFF);
         assert_eq!((w >> 18) & 7, 6);
         assert_eq!((w >> 21) & 15, 8);
@@ -583,7 +601,8 @@ mod tests {
         assert_eq!(LoopMode::Free.next(1), LoopMode::Off);
         assert_eq!(Shape::Sine.next(-1), Shape::Random);
         assert_eq!(Source::None.next(-1), Source::Lfo3);
-        assert_eq!(Dest::Balance.next(1), Dest::Pitch1);
+        assert_eq!(Dest::Cross.next(1), Dest::Pitch1);
+        assert_eq!(Dest::Balance.next(1), Dest::Cross);
         assert_eq!(OutSel::Lfo3.next(1), OutSel::Off);
     }
 }

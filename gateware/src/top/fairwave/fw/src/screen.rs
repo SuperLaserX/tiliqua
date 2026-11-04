@@ -10,18 +10,21 @@ use tiliqua_hal::embedded_graphics::prelude::*;
 use tiliqua_lib::color::HI8;
 
 use fairwave_cpu::browser::{BrowserCursor, PreviewRow};
+use fairwave_cpu::cross::{self, Picture};
 use fairwave_cpu::curve::{self, Polyline};
 use fairwave_cpu::disk::Entry;
 use fairwave_cpu::geometry::{polar, Walk};
 use fairwave_cpu::layout::*;
 use fairwave_cpu::modulation::{Dest, Envelope, Lfo, Slot, Source, N_ENVELOPES, N_SLOTS};
 use fairwave_cpu::nav::{Nav, Page};
-use fairwave_cpu::pages::{self, EnvRow, LfoRow, MixRow, ModCursor, PatchAction, PatchCursor, RouteCol, WaveRow, TAB_NAMES};
-use fairwave_cpu::patch::{Cursor, Layer, Patch, Row, N_LAYERS};
+use fairwave_cpu::pages::{self, CrossRow, EnvRow, LfoRow, MixRow, ModCursor, PatchAction, PatchCursor, RouteCol, WaveRow,
+                          TAB_NAMES};
+use fairwave_cpu::patch::{grain_name, Cross, Cursor, Layer, Patch, Row, N_LAYERS};
+use fairwave_cpu::presets;
 use fairwave_cpu::store::N_PATCHES;
 use fairwave_cpu::table::Table;
 use fairwave_cpu::text;
-use fairwave_cpu::wave::{Line, Marks, Scan, Surface, POINTS, TRACE_CHOICES, YS};
+use fairwave_cpu::wave::{value_on, Line, Marks, Scan, Surface, POINTS, TRACE_CHOICES, YS};
 
 use crate::engine::Monitor;
 use crate::glyphs::{self, Face};
@@ -98,7 +101,8 @@ pub struct PatchesView {
     /// Whether there is anywhere to keep patches.
     pub available: bool,
     pub used: [bool; N_PATCHES],
-    /// The patch last loaded or saved, and whether anything has changed since.
+    /// The patch last loaded or saved (from `N_PATCHES` up, the factory bank's), and whether
+    /// anything has changed since.
     pub current: Option<usize>,
     pub edited: bool,
     /// What just happened.
@@ -149,6 +153,10 @@ pub struct View {
     pub wave_layer: usize,
     pub wave_table: Table,
     pub wave_line: Line,
+    pub cross_cursor: pages::Cursor,
+    /// What each oscillator plays, and where it is reading.
+    pub layer_tables: [Table; N_LAYERS],
+    pub lines: [Line; N_LAYERS],
     pub browser: BrowserView,
     /// The tables' names, by index.
     pub table_names: [String<11>; crate::tables::MAX_TABLES],
@@ -235,10 +243,19 @@ fn cell_text(row: Row, l: &Layer, names: &[String<11>], tables: &[Table]) -> Str
         Row::Tune => {
             core::fmt::write(&mut s, format_args!("{:+} st", l.semitones)).ok();
         }
+        Row::Fine => {
+            core::fmt::write(&mut s, format_args!("{:+} ct", l.fine)).ok();
+        }
         Row::Position => s = text::permille(l.position as i32),
         Row::Shift => s = text::thousandths(l.shift as i32),
         Row::Edge => {
             s.push_str(l.edge.name()).ok();
+        }
+        Row::Read => {
+            s.push_str(l.read.name()).ok();
+        }
+        Row::Grain => {
+            s.push_str(grain_name(l.grain)).ok();
         }
         Row::Level => {
             core::fmt::write(&mut s, format_args!("{}%", l.level)).ok();
@@ -265,8 +282,8 @@ type BayLine = ((i32, i32), (i32, i32), HI8);
 type Mark = Option<(i32, i32, i32, HI8)>;
 
 // The most text and gauges any screen shows.
-const MAX_NAMES: usize = 16;
-const MAX_VALUES: usize = 16;
+const MAX_NAMES: usize = 18;
+const MAX_VALUES: usize = 20;
 const MAX_BARS: usize = 6;
 
 /// What is on screen.
@@ -296,6 +313,9 @@ pub struct Screen {
     playhead: Option<i32>,
     /// The bay as drawn.
     bay: [Option<BayLine>; N_SLOTS],
+    /// The Cross Mod screen's picture, and what it was drawn from.
+    picture: Option<Picture>,
+    picture_of: Option<(Cross, [Line; N_LAYERS], [Table; N_LAYERS])>,
     /// The Browser's rows, and where it is on the drive.
     rows: [Label<BROWSE_ROW_CHARS>; BROWSE_ROWS],
     path: Label<40>,
@@ -333,6 +353,8 @@ impl Screen {
             curve_lfo: None,
             playhead: None,
             bay: [None; N_SLOTS],
+            picture: None,
+            picture_of: None,
             rows: core::array::from_fn(|_| Label::new()),
             path: Label::new(),
             surface: Surface::new(unsafe {
@@ -806,6 +828,96 @@ impl Screen {
         self.footer(d, view, "pitch: 100% = 1 V/oct   others: 5 V = all");
     }
 
+    // ---- Cross Mod ----
+
+    fn enter_cross<D: DrawTarget<Color = HI8>>(&mut self, d: &mut D) {
+        self.page.place(Face::Big, Spot::centre(0, CROSS_TITLE_Y));
+        for (r, row) in CrossRow::ALL.iter().enumerate() {
+            self.place_cell(r, &cross_cell(*row));
+        }
+        self.note.place(Face::Text, Spot::centre(0, CROSS_HELP_Y));
+        self.path.place(Face::Text, cross_role(0));
+        self.help.place(Face::Text, cross_role(1));
+        self.place_footer(CROSS_STATUS_Y, CROSS_HINT_Y);
+        self.track(d, &CROSS_DEPTH);
+        // The zero line under each.
+        let (x, y, w, h) = CROSS_RESULT;
+        self.line(d, (x, y + h / 2), (x + w, y + h / 2), theme::RIM);
+        for at in CROSS_SHAPE_X {
+            let mid = CROSS_SHAPE_Y + CROSS_SHAPE_H / 2;
+            self.line(d, (at, mid), (at + CROSS_SHAPE_W, mid), theme::RIM);
+        }
+    }
+
+    /// A cycle across a box: heights in pixels from its top.
+    fn trace<D: DrawTarget<Color = HI8>>(&self, d: &mut D, (x, y, w): (i32, i32, i32), ys: &[i16], color: HI8) {
+        let last = ys.len() as i32 - 1;
+        for k in 0..last {
+            let (a, b) = (ys[k as usize] as i32, ys[k as usize + 1] as i32);
+            self.line(d, (x + k * w / last, y + a), (x + (k + 1) * w / last, y + b), color);
+        }
+    }
+
+    /// Brings the picture up to what the oscillators are reading, if it has changed enough to see.
+    fn set_picture<D: DrawTarget<Color = HI8>>(&mut self, d: &mut D, view: &View) {
+        let c = view.patch.cross;
+        let (m, n) = (c.modulator as usize & 1, 1 - (c.modulator as usize & 1));
+        let tables = view.layer_tables;
+        let same = self.picture_of.is_some_and(|(cross, lines, shown)| {
+            cross == c && shown == tables
+                && !(0..N_LAYERS).any(|i| view.lines[i].moved_from(&lines[i], tables[i].frames as u32))
+        });
+        if same {
+            return;
+        }
+        let read = |i: usize| {
+            let table = tables[i];
+            let line = view.lines[i];
+            let get = reader(&table);
+            move |phase: u32| value_on(&line, &table, phase, &get)
+        };
+        let new = cross::picture(&c, read(m), read(n), CROSS_SHAPE_H, CROSS_RESULT.3);
+        let boxes = [(CROSS_SHAPE_X[0], CROSS_SHAPE_Y, CROSS_SHAPE_W), (CROSS_SHAPE_X[1], CROSS_SHAPE_Y, CROSS_SHAPE_W),
+                     (CROSS_RESULT.0, CROSS_RESULT.1, CROSS_RESULT.2)];
+        if let Some(old) = self.picture {
+            self.trace(d, boxes[0], &old.modulator, HI8::BLACK);
+            self.trace(d, boxes[1], &old.carrier, HI8::BLACK);
+            self.trace(d, boxes[2], &old.result, HI8::BLACK);
+        }
+        self.trace(d, boxes[0], &new.modulator, theme::DIM);
+        self.trace(d, boxes[1], &new.carrier, theme::DIM);
+        self.trace(d, boxes[2], &new.result, theme::POSITIVE);
+        self.picture = Some(new);
+        self.picture_of = Some((c, view.lines, tables));
+    }
+
+    /// The Cross Mod screen: what the mode makes of a cycle, the two oscillators, and its settings.
+    fn draw_cross<D: DrawTarget<Color = HI8>>(&mut self, d: &mut D, view: &View) {
+        let (cx, cy) = (self.cx, self.cy);
+        self.page.set(d, cx, cy, Page::Cross.name(), theme::TEXT);
+        let c = &view.cross_cursor;
+        let mut mark = None;
+        for (r, row) in CrossRow::ALL.iter().enumerate() {
+            let value = pages::cross_text(&view.patch, *row);
+            self.setting(d, r, r, row.name(), value.as_str(), c.at == r, c.editing, &mut mark);
+        }
+        self.set_mark(d, mark);
+        let cross = &view.patch.cross;
+        let roles = if cross.modulator == 0 {
+            ["MODULATOR OSC 1", "CARRIER OSC 2"]
+        } else {
+            ["MODULATOR OSC 2", "CARRIER OSC 1"]
+        };
+        self.path.set(d, cx, cy, roles[0], theme::DIM);
+        self.help.set(d, cx, cy, roles[1], theme::DIM);
+        self.note.set(d, cx, cy, pages::cross_help(cross.mode), theme::TEXT);
+        let on_it = CrossRow::ALL[c.at] == CrossRow::Depth;
+        let lit = CROSS_DEPTH.segment(cross.depth as i32, 1000);
+        self.set_bar(d, 0, &CROSS_DEPTH, (0, lit), if on_it { theme::SELECTED } else { theme::POSITIVE });
+        self.set_picture(d, view);
+        self.footer(d, view, MOVE_HINT);
+    }
+
     // ---- Mixer ----
 
     fn enter_mixer<D: DrawTarget<Color = HI8>>(&mut self, d: &mut D) {
@@ -866,34 +978,42 @@ impl Screen {
     /// The Patches screen: the eight in a ring, and what to do with the one picked.
     fn draw_patches<D: DrawTarget<Color = HI8>>(&mut self, d: &mut D, view: &View) {
         let (cx, cy) = (self.cx, self.cy);
-        self.page.set(d, cx, cy, Page::Patches.name(), theme::TEXT);
         let p = &view.patches;
         let c = &view.patch_cursor;
+        let factory = c.is_factory();
+        self.page.set(d, cx, cy, if factory { "FACTORY" } else { Page::Patches.name() }, theme::TEXT);
+        let first = if factory { N_PATCHES } else { 0 };
         for i in 0..N_PATCHES {
             let mut number: String<4> = String::new();
             core::fmt::write(&mut number, format_args!("{}", i + 1)).ok();
-            let color = if i == c.patch {
+            let color = if i == c.in_bank() {
                 theme::SELECTED
-            } else if p.current == Some(i) {
+            } else if p.current == Some(first + i) {
                 theme::WARN
-            } else if p.used[i] {
+            } else if factory || p.used[i] {
                 theme::TEXT
             } else {
                 theme::RIM
             };
             self.values[i].set(d, cx, cy, number.as_str(), color);
         }
-        let (x, w, y) = self.values[c.patch].underline();
+        let (x, w, y) = self.values[c.in_bank()].underline();
         self.set_mark(d, Some((x, w, y, theme::SELECTED)));
 
         let mut name: String<11> = String::new();
-        core::fmt::write(&mut name, format_args!("PATCH {}", c.patch + 1)).ok();
+        if factory {
+            name.push_str(presets::NAMES[c.in_bank()]).ok();
+        } else {
+            core::fmt::write(&mut name, format_args!("PATCH {}", c.patch + 1)).ok();
+        }
         self.hub.set(d, cx, cy, name.as_str(), theme::TITLE);
         let here = p.current == Some(c.patch);
-        let state = if !p.available {
-            "NO STORAGE"
-        } else if here {
+        let state = if here {
             if p.edited { "EDITED" } else { "CURRENT" }
+        } else if factory {
+            "FACTORY"
+        } else if !p.available {
+            "NO STORAGE"
         } else if p.used[c.patch] {
             "SAVED"
         } else {
@@ -1154,6 +1274,8 @@ impl Screen {
         self.curve_lfo = None;
         self.playhead = None;
         self.bay = [None; N_SLOTS];
+        self.picture = None;
+        self.picture_of = None;
         self.bars = [Bar::OFF; MAX_BARS];
         for l in self.heads.iter_mut() {
             l.forget();
@@ -1204,6 +1326,7 @@ impl Screen {
                     Page::Mixer => self.enter_mixer(d),
                     Page::Patches => self.enter_patches(),
                     Page::Wave => self.enter_wave(view),
+                    Page::Cross => self.enter_cross(d),
                     Page::Browser if previewing => self.enter_preview(view),
                     Page::Browser => self.enter_browser(d),
                 }
@@ -1219,6 +1342,7 @@ impl Screen {
                 Page::Mixer => self.draw_mixer(d, view),
                 Page::Patches => self.draw_patches(d, view),
                 Page::Wave => self.draw_wave(d, view),
+                Page::Cross => self.draw_cross(d, view),
                 Page::Browser if previewing => self.draw_preview(d, view),
                 Page::Browser => self.draw_browser(d, view),
             },

@@ -1,0 +1,41 @@
+FAIRWAVE PATCH 1
+NAME  = SAW PLUCK
+ABOUT = FILTER SNAP ON A SAW. GATE 1, CV 1
+
+# The everyday wavetable bass: a saw with an envelope on POS doing what a filter envelope does.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 28%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 10%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 180 MS
+SUSTAIN = 30%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 110 MS
+SUSTAIN = 0%
+RELEASE = 110 MS
+D CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 45%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 30%

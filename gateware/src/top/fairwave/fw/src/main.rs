@@ -24,11 +24,13 @@ use riscv_rt::entry;
 use tiliqua_hal::embedded_graphics::prelude::*;
 
 use fairwave_cpu::browser::{self, BrowserAction, BrowserCursor, DrivePath, Library};
-use fairwave_cpu::disk::{Entry, MAX_ENTRIES};
+use fairwave_cpu::disk::{Entry, HOME_FOLDER, MAX_ENTRIES};
 use fairwave_cpu::nav::{Event, Nav, Page};
-use fairwave_cpu::pages::{self, MixRow, ModCursor, PatchAction, PatchCursor, WaveRow, ROUTE_CELLS};
+use fairwave_cpu::pages::{self, CrossRow, MixRow, ModCursor, PatchAction, PatchCursor, WaveRow, ROUTE_CELLS};
 use fairwave_cpu::patch::{self, adjust, Cursor, Patch, Row, N_LAYERS};
-use fairwave_cpu::store::{Saved, Store, TableFile, N_TABLES, WINDOW_BYTES};
+use fairwave_cpu::patchfile::{self, PatchFile};
+use fairwave_cpu::presets;
+use fairwave_cpu::store::{Saved, Store, TableFile, N_PATCHES, N_TABLES, WINDOW_BYTES};
 use fairwave_cpu::wave::{Line, DEFAULT_TRACES};
 use fairwave_cpu::wav;
 use hal::pmod::EurorackPmod;
@@ -73,6 +75,7 @@ struct App {
     patch_cursor: PatchCursor,
     wave_cursor: pages::Cursor,
     wave_traces: usize,
+    cross_cursor: pages::Cursor,
     /// What the Patches screen has asked for: the main loop does it.
     requested: Option<(PatchAction, usize)>,
     patches: PatchesView,
@@ -137,10 +140,7 @@ impl App {
             BrowserAction::Open(i) => self.browser_open = Some(i),
             BrowserAction::Keep => self.end_preview(true),
             BrowserAction::Discard => self.end_preview(false),
-            BrowserAction::Frame(n) => {
-                let t = self.table_index(self.cursor.layer);
-                self.library.tables[t] = patch::adjust_frame_len(&self.library.tables[t], n, self.library.samples[t]);
-            }
+            BrowserAction::Frame(n) => self.change_frame_len(n),
             BrowserAction::Osc(n) => {
                 if let Some(a) = self.audition.as_mut() {
                     let table = self.patch.layers[a.layer].table;
@@ -154,6 +154,13 @@ impl App {
         }
     }
 
+    /// Reads the table the oscillator showing plays with another frame length.
+    fn change_frame_len(&mut self, detents: i32) {
+        let t = self.table_index(self.cursor.layer);
+        let to = patch::adjust_frame_len(&self.library.tables[t], detents, self.library.samples[t]);
+        self.library.reshape(t, to.frame_log2);
+    }
+
     /// Applies an encoder event to the oscillators screen.
     fn edit_oscillators(&mut self, event: Event) {
         match event {
@@ -161,8 +168,7 @@ impl App {
             Event::Turn(n) if self.cursor.editing => {
                 let row = self.cursor.current_row();
                 if row == Row::Frame {
-                    let t = self.table_index(self.cursor.layer);
-                    self.library.tables[t] = patch::adjust_frame_len(&self.library.tables[t], n, self.library.samples[t]);
+                    self.change_frame_len(n);
                 } else {
                     adjust(&mut self.patch.layers[self.cursor.layer], row, n, self.library.n as u8);
                 }
@@ -203,7 +209,7 @@ impl App {
         let lib = &mut self.library;
         for i in 0..lib.built() {
             if saved.frame_log2[i] != 0 {
-                lib.tables[i] = lib.tables[i].reshaped(saved.frame_log2[i], lib.samples[i]);
+                lib.reshape(i, saved.frame_log2[i]);
             }
         }
         self.missing = [TableFile::NONE; N_LAYERS];
@@ -215,7 +221,9 @@ impl App {
             match lib.find_file(file.path()) {
                 Some(t) => {
                     self.patch.layers[l].table = t as u8;
-                    lib.tables[t] = lib.tables[t].reshaped(file.frame_log2, lib.samples[t]);
+                    if file.frame_log2 != 0 {
+                        lib.reshape(t, file.frame_log2);
+                    }
                 }
                 None => self.missing[l] = *file,
             }
@@ -234,7 +242,7 @@ impl App {
                 return;
             }
             Page::Patches => {
-                let used = self.patches.used[self.patch_cursor.patch];
+                let used = self.patches.used[self.patch_cursor.in_bank()];
                 if let Some(request) = self.patch_cursor.event(event, used) {
                     self.requested = Some(request);
                 }
@@ -244,6 +252,7 @@ impl App {
             Page::Routing => (&mut self.route_cursor, ROUTE_CELLS),
             Page::Mixer => (&mut self.mix_cursor, MixRow::ALL.len()),
             Page::Wave => (&mut self.wave_cursor, WaveRow::ALL.len()),
+            Page::Cross => (&mut self.cross_cursor, CrossRow::ALL.len()),
         };
         match event {
             Event::Click => list.click(),
@@ -255,6 +264,7 @@ impl App {
                     // (the oscillators screen's layer: both follow the same oscillator)
                     Page::Wave => pages::adjust_wave(&mut self.patch, &mut self.cursor.layer, &mut self.wave_traces,
                                                      WaveRow::ALL[at], n, self.library.n as u8),
+                    Page::Cross => pages::adjust_cross(&mut self.patch, CrossRow::ALL[at], n),
                     _ => pages::adjust_mix(&mut self.patch, MixRow::ALL[at], n),
                 }
             }
@@ -262,10 +272,20 @@ impl App {
         }
     }
 
+    /// Whether a patch is still waiting for its tables to be looked for: until they come it would
+    /// only play the wrong one.
+    fn awaiting_tables(&self) -> bool {
+        !self.missing_tried && self.audition.is_none() && self.missing.iter().any(|m| !m.is_none())
+    }
+
     /// Tells the gateware the patch.
     fn apply(&mut self) {
         let tables = core::array::from_fn(|i| self.library.tables[self.table_index(i)]);
-        self.words = self.patch.words(&tables, AUDIO_FS);
+        let mips = core::array::from_fn(|i| self.library.mips[self.table_index(i)]);
+        self.words = self.patch.words(&tables, &mips, AUDIO_FS);
+        if self.awaiting_tables() {
+            self.words.hush();
+        }
         self.engine.apply(&self.words);
     }
 
@@ -414,7 +434,7 @@ fn boot() -> Booted {
 
     let n = library.n;
     let tables = core::array::from_fn(|i| library.tables[(patch.layers[i].table as usize).min(n - 1)]);
-    let words = patch.words(&tables, AUDIO_FS);
+    let words = patch.words(&tables, &[0; N_LAYERS], AUDIO_FS);
     let mut engine = Engine::new(peripherals.WAVESCAN);
     engine.route(words.routing, pmod.jack());
     engine.apply(&words);
@@ -432,6 +452,7 @@ fn boot() -> Booted {
         patch_cursor: PatchCursor { patch: newest.unwrap_or(0), action: None },
         wave_cursor: pages::Cursor::default(),
         wave_traces: DEFAULT_TRACES,
+        cross_cursor: pages::Cursor::default(),
         requested: None,
         patches,
         current: None,
@@ -458,12 +479,29 @@ fn boot() -> Booted {
     Booted { timer, display, fill, fb_words, store }
 }
 
-/// Reads a file to the start of the pool and converts it into a new table in the library.
-fn load_table(drive: &mut Drive, path: &str, name: &str) -> Result<usize, &'static str> {
+/// What a table's loading says when the pool is full.
+const NO_ROOM: &str = "NO ROOM FOR THIS TABLE";
+
+/// Reads a file to the start of the pool, where nothing stays. The bytes are there until the next read.
+fn read_whole(drive: &mut Drive, path: &str) -> Result<&'static [u8], &'static str> {
     let base = PSRAM_BASE + PSRAM_POOL_BASE;
     let staging = unsafe { DmaBuf::from_raw_parts(base as *mut u8, PSRAM_USB_WINDOW) };
     let size = drive.read_file(path, staging).map_err(|e| e.text())?;
-    let file = unsafe { core::slice::from_raw_parts(base as *const u8, size) };
+    Ok(unsafe { core::slice::from_raw_parts(base as *const u8, size) })
+}
+
+/// Reads a patch file.
+fn read_patch(drive: &mut Drive, path: &str) -> Result<PatchFile, &'static str> {
+    let bytes = read_whole(drive, path)?;
+    if bytes.len() > patchfile::MAX_BYTES {
+        return Err("TOO LONG FOR A PATCH");
+    }
+    patchfile::parse(bytes, AUDIO_FS).map_err(|_| "NOT A PATCH THIS CAN READ")
+}
+
+/// Reads a file to the start of the pool and converts it into a new table in the library.
+fn load_table(drive: &mut Drive, path: &str, name: &str) -> Result<usize, &'static str> {
+    let file = read_whole(drive, path)?;
     let w = wav::parse(file).map_err(|_| "NOT A WAV THIS CAN READ")?;
     let shape = browser::shape_of(&w).ok_or("SHORTER THAN A FRAME")?;
     let table = critical_section::with(|cs| {
@@ -472,7 +510,7 @@ fn load_table(drive: &mut Drive, path: &str, name: &str) -> Result<usize, &'stat
         let t = { let App { library, patch, .. } = app; library.make_room(shape, &mut patch.layers) };
         app.apply();
         t
-    }).ok_or("NO ROOM FOR THIS TABLE")?;
+    }).ok_or(NO_ROOM)?;
     wav::convert(file, &w, tables::slice(&table));
     clean_dcache(PSRAM_BASE + table.offset, table.bytes());
     // (the same line the tables made at boot log: `tools/check_sim.py` reads it)
@@ -480,7 +518,7 @@ fn load_table(drive: &mut Drive, path: &str, name: &str) -> Result<usize, &'stat
     let from = TableFile::new(path, table.frame_log2);
     critical_section::with(|cs| {
         APP.borrow_ref_mut(cs).as_mut().unwrap().library.add_loaded(name, table, table.samples(), from)
-    }).ok_or("NO ROOM FOR THIS TABLE")
+    }).ok_or(NO_ROOM)
 }
 
 /// What the Browser shows of the drive, and the work it asks for. All in the main loop: reading
@@ -489,6 +527,8 @@ struct Shelf {
     entries: &'static mut [Entry],
     count: usize,
     path: DrivePath,
+    /// The folder of ours on this drive, if it has one, in short names; else the root.
+    home: String<{ fairwave_cpu::store::PATH_BYTES }>,
     detail: String<40>,
     note: String<40>,
     /// A row to load once the screen has said it is loading.
@@ -506,8 +546,8 @@ impl Shelf {
         let entries = unsafe {
             core::slice::from_raw_parts_mut((PSRAM_BASE + PSRAM_UI_SCRATCH + 0x90000) as *mut Entry, MAX_ENTRIES)
         };
-        Shelf { entries, count: 0, path: DrivePath::default(), detail: String::new(), note: String::new(),
-                load: None, drawn: false, described: None, at: 0, moved_ms: 0 }
+        Shelf { entries, count: 0, path: DrivePath::default(), home: String::new(), detail: String::new(),
+                note: String::new(), load: None, drawn: false, described: None, at: 0, moved_ms: 0 }
     }
 
     fn view(&self, cursor: BrowserCursor, drive: &Drive, preview_name: String<11>) -> BrowserView {
@@ -576,12 +616,96 @@ impl Shelf {
         }
     }
 
+    /// Starts on the drive's folder of ours, if it has one.
+    fn go_home(&mut self, drive: &mut Drive) {
+        self.path.clear();
+        self.home.clear();
+        if let Ok(e) = drive.find(HOME_FOLDER) {
+            if e.is_dir && self.path.enter(e.short(), e.name()) {
+                self.home.push_str(e.short()).ok();
+            }
+        }
+    }
+
+    /// Where a table a patch file names is: beside the patch, or from our folder. If neither, its own
+    /// name, so that what's missing can be said.
+    fn locate(&self, drive: &mut Drive, name: &str, frame_log2: u8) -> TableFile {
+        for from in [self.path.as_str(), self.home.as_str()] {
+            if let Ok(path) = drive.resolve(from, name) {
+                if drive.find(path.as_str()).is_ok_and(|e| !e.is_dir) {
+                    return TableFile::new(path.as_str(), frame_log2);
+                }
+            }
+        }
+        TableFile::new(name.rsplit('/').next().unwrap_or(name), frame_log2)
+    }
+
+    /// Plays a patch file: its tables follow from the drive, the outputs quiet until they have.
+    fn load_patch_file(&mut self, drive: &mut Drive, path: &str, shown: &str) {
+        let file = match read_patch(drive, path) {
+            Ok(file) => file,
+            Err(why) => {
+                warn!("{}: {}", shown, why);
+                self.set_note(why);
+                return;
+            }
+        };
+        if file.skipped != 0 {
+            warn!("{}: {} lines not understood, the first is line {}", shown, file.skipped, file.first_skipped);
+        }
+        // (the built-in tables by name first: those need no drive)
+        let (built_frames, built_names): ([u8; N_TABLES], [Option<usize>; N_LAYERS]) = critical_section::with(|cs| {
+            let app = APP.borrow_ref(cs);
+            let app = app.as_ref().unwrap();
+            (app.built_frames, core::array::from_fn(|l| app.library.find_built(file.tables[l].as_str())))
+        });
+        let mut saved = Saved { patch: file.patch, frame_log2: built_frames, files: [TableFile::NONE; N_LAYERS] };
+        for l in 0..N_LAYERS {
+            let name = file.tables[l].as_str();
+            if name.is_empty() {
+                continue;
+            }
+            if let Some(t) = built_names[l] {
+                saved.patch.layers[l].table = t as u8;
+                if file.frame_log2[l] != 0 {
+                    saved.frame_log2[t] = file.frame_log2[l];
+                }
+            } else {
+                saved.files[l] = self.locate(drive, name, file.frame_log2[l]);
+                saved.patch.layers[l].table = 0;
+            }
+        }
+        let mut note: String<24> = String::new();
+        write!(note, "LOADED {}", if file.name.is_empty() { shown } else { file.name.as_str() }).ok();
+        critical_section::with(|cs| {
+            let mut app = APP.borrow_ref_mut(cs);
+            let app = app.as_mut().unwrap();
+            app.restore(&saved);
+            // (nothing in flash holds this: saving it is the Patches screen's to do)
+            app.current = None;
+            app.patches.current = None;
+            app.patches.note = note.clone();
+        });
+        info!("patch file {}: {}", path, note.as_str());
+        self.note.clear();
+        if file.skipped != 0 {
+            write!(self.note, "{} LINES NOT UNDERSTOOD", file.skipped).ok();
+        } else {
+            self.note.push_str(note.as_str()).ok();
+        }
+    }
+
     fn load_row(&mut self, drive: &mut Drive, row: usize) {
         let e = self.entries[row];
         let Some(path) = self.path.of(e.short()) else {
             self.set_note("PATH TOO LONG");
             return;
         };
+        if e.is_patch() {
+            self.note.clear();
+            self.load_patch_file(drive, path.as_str(), e.name());
+            return;
+        }
         let name = browser::table_name(e.name());
         self.note.clear();
         match load_table(drive, path.as_str(), name.as_str()) {
@@ -609,7 +733,19 @@ impl Shelf {
         }
         let Some(path) = self.path.of(e.short()) else { return };
         let mut head = [0u8; 1024];
-        let summary = drive.peek(path.as_str(), &mut head).ok().and_then(|(size, got)| {
+        let looked = drive.peek(path.as_str(), &mut head).ok();
+        if e.is_patch() {
+            // (what a patch is about is the first thing in it, as far as anyone is checking)
+            let about = looked.and_then(|(_, got)| patchfile::parse(&head[..got], AUDIO_FS).ok());
+            let text = match &about {
+                Some(f) if !f.about.is_empty() => f.about.as_str(),
+                Some(_) => "A PATCH",
+                None => "NOT A PATCH THIS CAN READ",
+            };
+            self.detail.push_str(text).ok();
+            return;
+        }
+        let summary = looked.and_then(|(size, got)| {
             let w = wav::parse_head(&head[..got], size).ok()?;
             let (len, guessed) = wav::frame_len(&w);
             Some(browser::wav_summary(&w, len, guessed))
@@ -645,26 +781,46 @@ impl Shelf {
         // (a patch keeps the short path; the table goes by the name the Browser would have given it)
         let found = drive.find(file.path()).ok();
         let name = browser::table_name(found.as_ref().map_or(file.short_name(), Entry::name));
-        let result = load_table(drive, file.path(), name.as_str());
-        critical_section::with(|cs| {
+        let mut result = load_table(drive, file.path(), name.as_str());
+        if result == Err(NO_ROOM) {
+            // The other oscillator's table can be in the way, at the top of the pool: both can load
+            // again from the bottom of it.
+            critical_section::with(|cs| {
+                let mut app = APP.borrow_ref_mut(cs);
+                let App { library, patch, missing, .. } = app.as_mut().unwrap();
+                library.let_all_go(&mut patch.layers, missing);
+            });
+            result = load_table(drive, file.path(), name.as_str());
+        }
+        let failed = critical_section::with(|cs| {
             let mut app = APP.borrow_ref_mut(cs);
             let app = app.as_mut().unwrap();
             let mut note: String<24> = String::new();
-            match result {
+            let failed = match result {
                 Ok(t) => {
-                    app.library.tables[t] = app.library.tables[t].reshaped(file.frame_log2, app.library.samples[t]);
+                    if file.frame_log2 != 0 {
+                        app.library.reshape(t, file.frame_log2);
+                    }
                     app.patch.layers[l].table = t as u8;
                     app.missing[l] = TableFile::NONE;
                     write!(note, "LOADED {}", name).ok();
-                    app.apply();
+                    false
                 }
                 Err(_) => {
                     write!(note, "NEEDS {}", file.short_name()).ok();
                     app.missing_tried = true;
+                    true
                 }
-            }
+            };
+            app.apply();
+            let shown = note.clone();
             app.patches.note = note;
+            failed.then_some(shown)
         });
+        if let Some(note) = failed {
+            warn!("{}", note.as_str());
+            self.set_note(note.as_str());
+        }
     }
 
     /// With no drive to look on, says what a loaded patch is missing. It looks when one arrives.
@@ -680,6 +836,7 @@ impl Shelf {
                 write!(note, "NEEDS {}", file.short_name()).ok();
                 app.patches.note = note;
                 app.missing_tried = true;
+                app.apply();
             }
         });
     }
@@ -688,7 +845,7 @@ impl Shelf {
     fn tend(&mut self, drive: &mut Drive, now: u32) {
         match drive.poll(now) {
             Some(DriveEvent::Mounted) => {
-                self.path.clear();
+                self.go_home(drive);
                 self.note.clear();
                 self.relist(drive);
                 critical_section::with(|cs| APP.borrow_ref_mut(cs).as_mut().unwrap().missing_tried = false);
@@ -696,6 +853,7 @@ impl Shelf {
             Some(DriveEvent::Gone) => {
                 self.count = 0;
                 self.path.clear();
+                self.home.clear();
                 self.detail.clear();
                 self.note.clear();
                 self.load = None;
@@ -753,6 +911,20 @@ fn do_patch_request(store: &mut Option<Store<FlashPort>>, action: PatchAction, n
     let mut note: String<24> = String::new();
     match (action, store.as_mut()) {
         (PatchAction::Back, _) => {}
+        (PatchAction::Load, _) if n >= N_PATCHES => {
+            let name = presets::NAMES[n - N_PATCHES];
+            with_app(&mut |app| {
+                let saved = Saved { patch: presets::preset(n - N_PATCHES), frame_log2: app.built_frames,
+                                    files: [TableFile::NONE; N_LAYERS] };
+                app.restore(&saved);
+                app.current = Some(saved);
+                app.patches.current = Some(n);
+            });
+            write!(note, "LOADED {}", name).ok();
+        }
+        (PatchAction::Save | PatchAction::Erase, _) if n >= N_PATCHES => {
+            note.push_str("THE FACTORY BANK STAYS").ok();
+        }
         (PatchAction::Init, _) => {
             with_app(&mut |app| {
                 let saved = Saved { patch: Patch::default(), frame_log2: app.built_frames,
@@ -819,6 +991,30 @@ fn do_patch_request(store: &mut Option<Store<FlashPort>>, action: PatchAction, n
     info!("patches: {}", note.as_str());
 }
 
+/// Makes one frame's worth of band-limited levels, if any table is still short of them. The tables
+/// play as they are until then, and a finished table is told to the engine at once.
+fn make_some_levels() {
+    let job = critical_section::with(|cs| {
+        let mut app = APP.borrow_ref_mut(cs);
+        let app = app.as_mut().unwrap();
+        app.library.next_mip_job(&app.patch.layers)
+    });
+    let Some(job) = job else { return };
+    tables::make_mips(&job.shape, job.frame);
+    let finished = critical_section::with(|cs| {
+        let mut app = APP.borrow_ref_mut(cs);
+        let app = app.as_mut().unwrap();
+        let finished = app.library.mip_done(job);
+        if finished {
+            app.apply();
+        }
+        finished
+    });
+    if finished {
+        info!("levels: table {} at {:#x}", job.table, job.shape.offset);
+    }
+}
+
 /// The main loop: draws from a snapshot of the controls, and logs.
 #[inline(never)]
 fn run(booted: Booted) -> ! {
@@ -855,6 +1051,7 @@ fn run(booted: Booted) -> ! {
             if let Some((action, n)) = requested {
                 do_patch_request(&mut store, action, n);
             }
+            make_some_levels();
             if now.wrapping_sub(last_status_ms) >= STATUS_MS {
                 last_status_ms = now;
                 shown = (draws, draw_ms_max);
@@ -878,14 +1075,20 @@ fn run(booted: Booted) -> ! {
                     app.patches.edited = app.current.is_some_and(|c| c != app.saved());
                     let monitor = app.engine.monitor();
                     let layer = app.cursor.layer;
-                    let (pos, shift) = monitor.scan[layer];
+                    let layer_tables: [_; N_LAYERS] =
+                        core::array::from_fn(|i| app.library.tables[app.table_index(i)]);
+                    let lines: [Line; N_LAYERS] = core::array::from_fn(|i| {
+                        let (pos, shift) = monitor.scan[i];
+                        Line::from_monitor(pos, shift, app.patch.layers[i].edge, layer_tables[i].frames as u32)
+                    });
                     View { nav: app.nav,
                            patch: app.patch, monitor, cursor: app.cursor,
                            mod_cursor: app.mod_cursor, route_cursor: app.route_cursor,
                            mix_cursor: app.mix_cursor, patch_cursor: app.patch_cursor,
                            wave_cursor: app.wave_cursor, wave_traces: app.wave_traces, wave_layer: layer,
-                           wave_table: app.library.tables[app.table_index(layer)],
-                           wave_line: Line::from_monitor(pos, shift, app.patch.layers[layer].edge),
+                           wave_table: layer_tables[layer],
+                           wave_line: lines[layer],
+                           cross_cursor: app.cross_cursor, layer_tables, lines,
                            patches: app.patches.clone(), tables: app.library.tables,
                            table_names: app.library.names.clone(), status: status.clone(),
                            browser: shelf.view(app.browser_cursor, &drive,

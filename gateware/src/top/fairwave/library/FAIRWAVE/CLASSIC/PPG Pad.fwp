@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = PPG PAD
+ABOUT = SLOW TABLE SCAN. PLAYS BY ITSELF
+
+# A long, slowly scanning digital pad, in the stepped way. It needs no gate: nothing closes its VCAs.
+[OSC 1]
+TABLE = TABLES/GLASS.WAV
+TUNE = -12
+FINE = -6
+POS = 30%
+
+[OSC 2]
+TABLE = TABLES/PPG.WAV
+TUNE = 0
+FINE = 6
+READ = STEPS
+POS = 20%
+
+[LFO 1]
+RATE = 0.09 HZ
+SHAPE = TRI
+
+[LFO 2]
+RATE = 0.13 HZ
+SHAPE = SINE
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 30%
+LFO 2 > POS 2 = 18%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

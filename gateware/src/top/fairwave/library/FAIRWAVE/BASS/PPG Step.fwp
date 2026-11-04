@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = PPG STEP
+ABOUT = STEPPED DIGITAL SCAN. GATE 1, CV 1
+
+# The early digital machines: no blending between waves, so a sweep through the table is a run of little
+# jumps, and the stair steps of its short 8-bit waves are in the sound.
+[OSC 1]
+TABLE = TABLES/PPG.WAV
+READ = STEPS
+TUNE = -24
+POS = 10%
+
+[OSC 2]
+TABLE = TABLES/PPG.WAV
+READ = STEPS
+TUNE = -24
+FINE = 7
+POS = 6%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 320 MS
+SUSTAIN = 25%
+RELEASE = 90 MS
+D CURVE = 50
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 420 MS
+SUSTAIN = 0%
+RELEASE = 200 MS
+D CURVE = 30
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 42%
+ENV 2 > POS 2 = 34%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

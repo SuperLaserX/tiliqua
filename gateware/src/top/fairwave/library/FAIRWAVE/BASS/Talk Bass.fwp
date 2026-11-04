@@ -1,0 +1,45 @@
+FAIRWAVE PATCH 1
+NAME  = TALK BASS
+ABOUT = SAYS YOY. GATE 1, CV 1
+
+# A bass saying 'yoy': each note runs through a voice's vowels and back. The vowels sit right around C2
+# and shift up and down with the note, as a filter with key tracking would.
+[OSC 1]
+TABLE = TABLES/TALK.WAV
+TUNE = -24
+POS = 10%
+
+[OSC 2]
+TABLE = TABLES/TALK.WAV
+TUNE = -24
+FINE = 6
+POS = 10%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 300 MS
+SUSTAIN = 80%
+RELEASE = 60 MS
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 110 MS
+HOLD = 20 MS
+DECAY = 150 MS
+SUSTAIN = 0%
+RELEASE = 100 MS
+A CURVE = 0
+D CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 75%
+ENV 2 > POS 2 = 75%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

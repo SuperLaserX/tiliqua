@@ -9,6 +9,8 @@
 //!   arc underneath, left to right as they happen.
 //! - Routing: a patch bay, sources on the left arc and destinations on the right, a line for each
 //!   slot across the middle, and the slot being edited underneath.
+//! - Cross Mod: what the mode makes of a cycle in the dome, the two oscillators' cycles side by side
+//!   under it, the settings on an arc at the bottom and a gauge for the depth at the rim.
 //! - Mixer: a crossfader arc at the top with a layer's level at each end, the outputs on an arc
 //!   at the bottom.
 //! - Wave view: the table as a rhombus across the middle (`crate::wave`), its settings above and
@@ -21,7 +23,7 @@ use crate::geometry::*;
 use crate::modulation::N_SLOTS;
 use crate::nav::Page;
 use crate::browser::PreviewRow;
-use crate::pages::{EnvRow, LfoRow, MixRow, PatchAction, WaveRow, TAB_NAMES};
+use crate::pages::{CrossRow, EnvRow, LfoRow, MixRow, PatchAction, WaveRow, TAB_NAMES};
 use crate::patch::Row;
 use crate::store::N_PATCHES;
 
@@ -130,8 +132,8 @@ impl Arc {
 pub const OSC_BRAND_Y: i32 = -294;
 pub const OSC_TITLE_Y: i32 = -262;
 pub const OSC_HEADER_Y: i32 = -212;
-pub const OSC_TOP: i32 = -170;
-pub const OSC_PITCH: i32 = 42;
+pub const OSC_TOP: i32 = -176;
+pub const OSC_PITCH: i32 = 32;
 /// Values stand this far either side of the centre line.
 pub const OSC_VALUE_X: i32 = 52;
 pub const OSC_VALUE_CHARS: usize = 11;
@@ -265,11 +267,11 @@ pub const ROUTE_TITLE_Y: i32 = -296;
 pub const BAY_RADIUS: i32 = 232;
 /// Sources on the left, destinations on the right: their nodes, on a circle.
 pub const N_BAY_SOURCES: usize = 7;
-pub const N_BAY_DESTS: usize = 9;
+pub const N_BAY_DESTS: usize = 10;
 const BAY_SOURCE_TOP: i32 = -190;
 const BAY_SOURCE_PITCH: i32 = 52;
 const BAY_DEST_TOP: i32 = -196;
-const BAY_DEST_PITCH: i32 = 40;
+const BAY_DEST_PITCH: i32 = 36;
 const BAY_LABEL_GAP: i32 = 9;
 
 /// The bay's half width at `y`, by Newton's square root, in integers.
@@ -319,6 +321,37 @@ pub const ROUTE_FIELD_X: [i32; 3] = [-122, 0, 122];
 pub const ROUTE_ARROW_X: i32 = -72;
 pub const ROUTE_STATUS_Y: i32 = 240;
 pub const ROUTE_HINT_Y: i32 = 262;
+
+// ---- Cross Mod ----
+
+pub const CROSS_TITLE_Y: i32 = -296;
+/// What the carrier becomes: in the same dome as an envelope's shape.
+pub const CROSS_RESULT: (i32, i32, i32, i32) = (CURVE_X, CURVE_Y, CURVE_W, CURVE_H);
+/// The two oscillators' cycles, the modulator on the left.
+pub const CROSS_SHAPE_W: i32 = 150;
+pub const CROSS_SHAPE_H: i32 = 56;
+pub const CROSS_SHAPE_Y: i32 = -86;
+pub const CROSS_SHAPE_X: [i32; 2] = [-170, 20];
+pub const CROSS_ROLE_Y: i32 = -104;
+pub const CROSS_HELP_Y: i32 = 0;
+pub const CROSS_STATUS_Y: i32 = 88;
+pub const CROSS_HINT_Y: i32 = 110;
+/// The depth, along the bottom of the rim.
+pub const CROSS_DEPTH: Arc = Arc { radius: 322, thick: 4, from: 0.64, to: 0.36, segments: 56 };
+
+pub fn cross_cell(row: CrossRow) -> Cell {
+    let ring = |k: usize| on_arc(246.0, 0.60 - 0.1 * k as f32);
+    match row {
+        CrossRow::Mode => ring(0),
+        CrossRow::Modulator => ring(1),
+        CrossRow::Depth => ring(2),
+    }
+}
+
+/// Which of the shape's two boxes a role's name goes over.
+pub const fn cross_role(i: usize) -> Spot {
+    Spot::centre(CROSS_SHAPE_X[i] + CROSS_SHAPE_W / 2, CROSS_ROLE_Y)
+}
 
 // ---- Mixer ----
 
@@ -696,6 +729,29 @@ mod tests {
             arc_on_glass(&mix_level_gauge(layer));
             clear_of_arc(&mix_level_gauge(layer), &rects);
         }
+    }
+
+    #[test]
+    fn the_cross_mod_screen_fits() {
+        let mut rects = Vec::new();
+        rects.push(Spot::centre(0, CROSS_TITLE_Y).rect(BIG, 9));
+        let (x, y, w, h) = CROSS_RESULT;
+        rects.push(Rect { x, y, w: w + 1, h: h + 1 });
+        for i in 0..2 {
+            rects.push(Rect { x: CROSS_SHAPE_X[i], y: CROSS_SHAPE_Y, w: CROSS_SHAPE_W + 1, h: CROSS_SHAPE_H + 1 });
+            // (the role, and the oscillator's name beside it)
+            rects.push(cross_role(i).rect(TEXT, 15));
+        }
+        rects.push(Spot::centre(0, CROSS_HELP_Y).rect(TEXT, 44));
+        for row in CrossRow::ALL {
+            rects.extend(cell_rects(&cross_cell(row), row.name().len(), 6));
+        }
+        for y in [CROSS_STATUS_Y, CROSS_HINT_Y] {
+            rects.push(Spot::centre(0, y).rect(SMALL, 44));
+        }
+        check(&rects);
+        arc_on_glass(&CROSS_DEPTH);
+        clear_of_arc(&CROSS_DEPTH, &rects);
     }
 
     #[test]

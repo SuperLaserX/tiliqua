@@ -1,0 +1,39 @@
+FAIRWAVE PATCH 1
+NAME  = PWM JUNO
+ABOUT = SLOW PULSE WIDTH. GATE 1, CV 1
+
+# Width modulation: an LFO moving a pulse's width, one oscillator each way. A very eighties bass.
+[OSC 1]
+TABLE = TABLES/PWM.WAV
+TUNE = -24
+POS = 30%
+
+[OSC 2]
+TABLE = TABLES/PWM.WAV
+TUNE = -24
+FINE = 5
+POS = 30%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 300 MS
+SUSTAIN = 60%
+RELEASE = 70 MS
+D CURVE = 50
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.6 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 22%
+LFO 1 > POS 2 = -22%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

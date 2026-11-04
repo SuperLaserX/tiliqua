@@ -1,0 +1,37 @@
+FAIRWAVE PATCH 1
+NAME  = REESE SUB
+ABOUT = REESE PLUS A SOLID SUB. GATE 1
+
+# What keeps a Reese's low end from phasing away: one oscillator phases, the other is a sine beneath it.
+[OSC 1]
+TABLE = TABLES/REESE.WAV
+TUNE = -24
+EDGE = WRAP
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 8%
+
+[ENV 1]
+ATTACK = 5 MS
+DECAY = 300 MS
+SUSTAIN = 85%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.9 HZ
+SHAPE = SAW UP
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 50.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 42%

@@ -204,11 +204,23 @@ pub fn shape_of(w: &Wav) -> Option<Shape> {
     (frames > 0).then_some(Shape { frame_log2: len.trailing_zeros() as u8, frames: frames as u16 })
 }
 
+/// A frame of a table that needs its levels made.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct MipJob {
+    pub table: usize,
+    pub shape: Table,
+    pub frame: u16,
+}
+
 /// The tables resident in PSRAM.
 pub struct Library {
     pub tables: [Table; MAX_TABLES],
     /// What each really holds: its frame length can change, its samples can't.
     pub samples: [usize; MAX_TABLES],
+    /// How many band-limited levels each has ready, as it is shaped now: 0 until they are all made.
+    pub mips: [u8; MAX_TABLES],
+    /// How many of its frames have theirs, on the way there.
+    mip_frames: [u16; MAX_TABLES],
     pub names: [String<11>; MAX_TABLES],
     pub files: [TableFile; MAX_TABLES],
     pub n: usize,
@@ -221,6 +233,8 @@ impl Library {
         Library {
             tables: [Table { offset: 0, frame_log2: 8, frames: 1 }; MAX_TABLES],
             samples: [0; MAX_TABLES],
+            mips: [0; MAX_TABLES],
+            mip_frames: [0; MAX_TABLES],
             names: core::array::from_fn(|_| String::new()),
             files: [TableFile::NONE; MAX_TABLES],
             n: 0,
@@ -236,6 +250,8 @@ impl Library {
         let i = self.n;
         self.tables[i] = table;
         self.samples[i] = samples;
+        self.mips[i] = 0;
+        self.mip_frames[i] = 0;
         self.names[i].clear();
         self.names[i].push_str(name).ok();
         self.files[i] = file;
@@ -258,6 +274,12 @@ impl Library {
     /// The table that came from this file, if it's still here.
     pub fn find_file(&self, path: &str) -> Option<usize> {
         (self.built..self.n).find(|i| self.files[*i].path() == path)
+    }
+
+    /// A built-in table by name, as a patch file names one. Case and spaces don't matter there.
+    pub fn find_built(&self, name: &str) -> Option<usize> {
+        let letters = |s: &str| s.bytes().filter(|c| *c != b' ').map(|c| c.to_ascii_uppercase()).collect::<heapless::Vec<u8, 80>>();
+        (0..self.built).find(|i| letters(self.names[*i].as_str()) == letters(name))
     }
 
     /// Room for a table to be loaded. If there isn't any, loaded tables neither layer is playing
@@ -285,6 +307,8 @@ impl Library {
             if kept != i {
                 self.tables[kept] = self.tables[i];
                 self.samples[kept] = self.samples[i];
+                self.mips[kept] = self.mips[i];
+                self.mip_frames[kept] = self.mip_frames[i];
                 self.names[kept] = self.names[i].clone();
                 self.files[kept] = self.files[i];
                 for l in layers.iter_mut() {
@@ -298,7 +322,23 @@ impl Library {
         self.n = kept;
         // The pool goes back to just past whatever is left at the top of it. (The playing table
         // can't move, as the engine is reading it.)
-        let end = self.tables[..self.n].iter().map(|t| t.offset + t.bytes()).max().unwrap_or(0);
+        let end = (0..self.n).map(|i| self.tables[i].offset + self.samples[i] * 4).max().unwrap_or(0);
+        self.pool.rewind_to(end);
+    }
+
+    /// Lets every loaded table go, even one playing: a table at the top of the pool can leave no room
+    /// for a patch's other one. The layers playing one go back on the built-in table 0, and `missing`
+    /// says which file each wants, to load again.
+    pub fn let_all_go(&mut self, layers: &mut [Layer; N_LAYERS], missing: &mut [TableFile; N_LAYERS]) {
+        for (l, layer) in layers.iter_mut().enumerate() {
+            let t = layer.table as usize;
+            if t >= self.built && t < self.n {
+                missing[l] = TableFile { frame_log2: self.tables[t].frame_log2, ..self.files[t] };
+                layer.table = 0;
+            }
+        }
+        self.n = self.built;
+        let end = (0..self.n).map(|i| self.tables[i].offset + self.tables[i].room()).max().unwrap_or(0);
         self.pool.rewind_to(end);
     }
 
@@ -314,6 +354,44 @@ impl Library {
             let table = self.tables[self.n];
             self.pool.rewind_to(table.offset);
         }
+    }
+
+    /// Reads a table with another shape. Its levels were made for the old one, so they go.
+    pub fn reshape(&mut self, i: usize, frame_log2: u8) {
+        let table = self.tables[i].reshaped(frame_log2, self.samples[i]);
+        if table != self.tables[i] {
+            self.tables[i] = table;
+            self.mips[i] = 0;
+            self.mip_frames[i] = 0;
+        }
+    }
+
+    /// Whether a table can have levels as it is shaped now: they go straight after its frames, so
+    /// the frames have to be all it holds.
+    fn can_have_mips(&self, i: usize) -> bool {
+        self.tables[i].samples() == self.samples[i]
+    }
+
+    /// What to make levels for next: the tables playing, as `layers` says, then the rest in turn.
+    pub fn next_mip_job(&self, layers: &[Layer; N_LAYERS]) -> Option<MipJob> {
+        let wanted = |i: usize| i < self.n && self.mips[i] == 0 && self.can_have_mips(i);
+        let playing = layers.iter().map(|l| l.table as usize).find(|i| wanted(*i));
+        let i = playing.or_else(|| (0..self.n).find(|i| wanted(*i)))?;
+        Some(MipJob { table: i, shape: self.tables[i], frame: self.mip_frames[i] })
+    }
+
+    /// A frame's levels are made. True if that finishes its table: they can be read now. (If the
+    /// table has changed shape since the job was given out, it is forgotten.)
+    pub fn mip_done(&mut self, job: MipJob) -> bool {
+        if self.tables[job.table] != job.shape || self.mip_frames[job.table] != job.frame {
+            return false;
+        }
+        self.mip_frames[job.table] += 1;
+        if self.mip_frames[job.table] == job.shape.frames {
+            self.mips[job.table] = crate::mip::levels_of(job.shape.frame_log2);
+            return true;
+        }
+        false
     }
 
     pub const fn is_loaded(&self, i: usize) -> bool {
@@ -484,6 +562,107 @@ mod tests {
         lib.add_loaded(name, t, t.samples(), TableFile::new(name, 8))
     }
 
+    fn levels_library() -> Library {
+        let mut lib = Library::new(Pool::new(0x80_0000, 1 << 22));
+        for (log2, frames, name) in [(9, 2, "A"), (8, 3, "B"), (8, 1, "C")] {
+            let t = lib.pool().alloc(log2, frames).unwrap();
+            lib.add_built(name, t, t.samples());
+        }
+        lib
+    }
+
+    /// Does every job there is, on `layers`' say, and returns the tables' order as they finished.
+    fn finish_all(lib: &mut Library, l: &[Layer; N_LAYERS]) -> std::vec::Vec<usize> {
+        let mut done = std::vec::Vec::new();
+        while let Some(job) = lib.next_mip_job(l) {
+            if lib.mip_done(job) {
+                done.push(job.table);
+            }
+        }
+        done
+    }
+
+    #[test]
+    fn a_table_has_no_levels_until_every_frame_has_them() {
+        let mut lib = levels_library();
+        let l = layers();
+        for f in 0..2 {
+            assert_eq!(lib.mips[0], 0, "not yet: {f}");
+            let job = lib.next_mip_job(&l).unwrap();
+            assert_eq!((job.table, job.frame), (0, f));
+            assert_eq!(lib.mip_done(job), f == 1);
+        }
+        assert_eq!(lib.mips[0], 6, "512 samples down to 8");
+    }
+
+    #[test]
+    fn the_tables_playing_come_first() {
+        let mut lib = levels_library();
+        let mut l = layers();
+        l[0].table = 2;
+        l[1].table = 1;
+        assert_eq!(finish_all(&mut lib, &l), [2, 1, 0]);
+        assert_eq!(lib.mips[..3], [6, 5, 5]);
+        assert_eq!(lib.next_mip_job(&l), None, "all done");
+    }
+
+    #[test]
+    fn a_table_read_with_another_frame_length_needs_its_levels_again() {
+        let mut lib = levels_library();
+        let l = layers();
+        finish_all(&mut lib, &l);
+        lib.reshape(1, 8);
+        assert_eq!(lib.mips[1], 5, "the same shape: nothing to do");
+        lib.reshape(0, 8);
+        assert_eq!(lib.mips[0], 0);
+        assert_eq!(lib.tables[0].frames, 4);
+        let done = finish_all(&mut lib, &l);
+        assert_eq!(done, [0]);
+        assert_eq!(lib.mips[0], 5);
+    }
+
+    #[test]
+    fn a_job_for_a_shape_since_changed_is_forgotten() {
+        let mut lib = levels_library();
+        let l = layers();
+        let job = lib.next_mip_job(&l).unwrap();
+        lib.reshape(0, 8);
+        assert!(!lib.mip_done(job));
+        assert_eq!(lib.next_mip_job(&l).unwrap().frame, 0, "from the first frame, of the new shape");
+    }
+
+    #[test]
+    fn a_table_that_isnt_whole_frames_as_read_gets_no_levels() {
+        let mut lib = levels_library();
+        let l = layers();
+        // Three frames of 256 don't make whole frames of 512: its levels would land on its own samples.
+        lib.reshape(1, 9);
+        assert_eq!(lib.tables[1].samples(), 512);
+        assert_eq!(finish_all(&mut lib, &l), [0, 2]);
+        assert_eq!(lib.mips[1], 0);
+        // Back to what it holds, it can have them.
+        lib.reshape(1, 8);
+        assert_eq!(finish_all(&mut lib, &l), [1]);
+    }
+
+    #[test]
+    fn a_tables_levels_stay_with_it_when_others_are_let_go() {
+        let mut lib = library();
+        let mut l = layers();
+        let a = load(&mut lib, &mut l, "A.WAV").unwrap();
+        let b = load(&mut lib, &mut l, "B.WAV").unwrap();
+        while let Some(job) = lib.next_mip_job(&l) {
+            lib.mip_done(job);
+        }
+        l[0].table = b as u8;
+        let levels = lib.mips[b];
+        assert!(levels > 0);
+        lib.let_go_unused(&mut l);
+        let kept = l[0].table as usize;
+        assert_eq!(kept, a, "it moved down to the first free number");
+        assert_eq!(lib.mips[kept], levels);
+    }
+
     #[test]
     fn a_loaded_table_is_found_again_by_its_file() {
         let mut lib = library();
@@ -493,6 +672,45 @@ mod tests {
         assert_eq!(lib.find_file("A.WAV"), Some(2));
         assert_eq!(lib.find_file("B.WAV"), None);
         assert!(lib.is_loaded(2) && !lib.is_loaded(1));
+    }
+
+    #[test]
+    fn a_built_in_table_is_found_by_its_name_however_a_file_writes_it() {
+        let mut lib = library();
+        let mut l = layers();
+        load(&mut lib, &mut l, "PULSE2.WAV").unwrap();
+        assert_eq!(lib.find_built("PULSE"), Some(1));
+        assert_eq!(lib.find_built("pulse"), Some(1));
+        assert_eq!(lib.find_built("MO RPH"), Some(0));
+        assert_eq!(lib.find_built("PULSE2.WAV"), None, "a loaded one isn't built in");
+        assert_eq!(lib.find_built("NOPE"), None);
+    }
+
+    #[test]
+    fn letting_everything_go_leaves_the_built_in_tables_and_says_what_was_wanted() {
+        // (16 KB each with their levels: room for the built-in one and three more, exactly)
+        let mut lib = Library::new(Pool::new(0x10_0000, 0x1_0000));
+        let t = lib.pool().alloc(8, 16).unwrap();
+        lib.add_built("MORPH", t, t.samples()).unwrap();
+        let mut l = layers();
+        l[0].table = 0;
+        l[1].table = 0;
+        for i in 0..3 {
+            load(&mut lib, &mut l, &format!("{i}.WAV")).unwrap();
+        }
+        // The last in the pool is playing: it can't be moved, and nothing fits over it.
+        l[0].table = 3;
+        assert_eq!(lib.make_room(SMALL, &mut l), None);
+        assert_eq!(l[0].table, 1, "renumbered, as what was below it went");
+        assert_eq!(lib.files[1].path(), "2.WAV");
+
+        let mut missing = [TableFile::NONE; N_LAYERS];
+        lib.let_all_go(&mut l, &mut missing);
+        assert_eq!(lib.n, 1);
+        assert_eq!(l[0].table, 0);
+        assert_eq!(missing[0].path(), "2.WAV");
+        assert!(missing[1].is_none(), "that one was on a built-in table");
+        assert_eq!(lib.make_room(SMALL, &mut l).unwrap().offset, lib.tables[0].offset + lib.tables[0].room(), "it has the room");
     }
 
     #[test]
@@ -534,7 +752,7 @@ mod tests {
         assert_eq!(lib.files[2].path(), "3.WAV");
         // Nothing playing overlaps the new one.
         let t = lib.tables[new];
-        assert!(t.offset >= keep_b.offset + keep_b.bytes());
+        assert!(t.offset >= keep_b.offset + keep_b.room());
     }
 
     #[test]
@@ -551,7 +769,7 @@ mod tests {
         }
         let n = load(&mut lib, &mut l, "NEXT.WAV").unwrap();
         assert_eq!(n, 1, "the three unused went");
-        assert_eq!(lib.tables[1].offset, lib.tables[0].offset + lib.tables[0].bytes());
+        assert_eq!(lib.tables[1].offset, lib.tables[0].offset + lib.tables[0].room());
     }
 
     #[test]

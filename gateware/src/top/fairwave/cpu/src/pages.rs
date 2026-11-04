@@ -11,7 +11,7 @@ use heapless::String;
 
 use crate::modulation::*;
 use crate::nav::Event;
-use crate::patch::{self, Patch, Row, N_LAYERS};
+use crate::patch::{self, CrossMode, Patch, Row, N_LAYERS};
 use crate::store::N_PATCHES;
 use crate::text;
 use crate::wave::TRACE_CHOICES;
@@ -420,6 +420,61 @@ pub fn adjust_wave(patch: &mut Patch, layer: &mut usize, traces: &mut usize, row
     }
 }
 
+/// A row of the Cross Mod screen.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum CrossRow {
+    Mode,
+    Modulator,
+    Depth,
+}
+
+impl CrossRow {
+    pub const ALL: [CrossRow; 3] = [CrossRow::Mode, CrossRow::Modulator, CrossRow::Depth];
+
+    pub const fn name(self) -> &'static str {
+        match self {
+            CrossRow::Mode => "MODE",
+            CrossRow::Modulator => "FROM",
+            CrossRow::Depth => "DEPTH",
+        }
+    }
+}
+
+pub fn adjust_cross(patch: &mut Patch, row: CrossRow, detents: i32) {
+    let c = &mut patch.cross;
+    match row {
+        CrossRow::Mode => c.mode = c.mode.next(detents),
+        CrossRow::Modulator => c.modulator = (c.modulator as i32 + detents).rem_euclid(2) as u8,
+        CrossRow::Depth => c.depth = (c.depth as i32 + detents * 5).clamp(0, 1000) as u16,
+    }
+}
+
+pub fn cross_text(patch: &Patch, row: CrossRow) -> String<11> {
+    let c = &patch.cross;
+    let mut out: String<11> = String::new();
+    match row {
+        CrossRow::Mode => {
+            out.push_str(c.mode.name()).ok();
+        }
+        CrossRow::Modulator => {
+            out.push_str(if c.modulator == 0 { "OSC 1" } else { "OSC 2" }).ok();
+        }
+        CrossRow::Depth => out = text::permille(c.depth as i32),
+    }
+    out
+}
+
+/// What a mode does, in a line.
+pub const fn cross_help(mode: CrossMode) -> &'static str {
+    match mode {
+        CrossMode::Off => "THE OSCILLATORS PLAY APART",
+        CrossMode::Ring => "CARRIER TIMES MODULATOR",
+        CrossMode::Am => "THE MODULATOR SWELLS THE CARRIER",
+        CrossMode::Fm => "THE MODULATOR MOVES THE CARRIER PHASE",
+        CrossMode::Pd => "THE MODULATOR SHAPE BENDS THE CARRIER PHASE",
+    }
+}
+
 /// A row of the Mixer screen.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum MixRow {
@@ -511,10 +566,15 @@ impl PatchAction {
     }
 }
 
+/// The stops on the Patches screen: the user's patches, then the factory bank's.
+pub const PATCH_CHOICES: usize = 2 * N_PATCHES;
+
 /// Where the encoder is on the Patches screen: turning picks a patch; a click offers what can be
-/// done with it, turning picks from those, and a click does it.
+/// done with it, turning picks from those, and a click does it. Turning on past the eighth goes on
+/// to the factory bank.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct PatchCursor {
+    /// Below `N_PATCHES` the user's; from there on, the factory bank's.
     pub patch: usize,
     /// The action highlighted, while they are on offer.
     pub action: Option<usize>,
@@ -523,9 +583,10 @@ pub struct PatchCursor {
 impl PatchCursor {
     /// Takes an event. `used`: whether the patch picked holds anything. Returns what to do.
     pub fn event(&mut self, event: Event, used: bool) -> Option<(PatchAction, usize)> {
+        let used = used || self.is_factory();
         match (self.action, event) {
             (None, Event::Turn(n)) => {
-                self.patch = (self.patch as i32 + n).rem_euclid(N_PATCHES as i32) as usize;
+                self.patch = (self.patch as i32 + n).rem_euclid(PATCH_CHOICES as i32) as usize;
                 None
             }
             (None, Event::Click) => {
@@ -545,6 +606,17 @@ impl PatchCursor {
             }
             (_, Event::Hold) => None,
         }
+    }
+}
+
+impl PatchCursor {
+    pub const fn is_factory(&self) -> bool {
+        self.patch >= N_PATCHES
+    }
+
+    /// Which of its bank's eight.
+    pub const fn in_bank(&self) -> usize {
+        self.patch % N_PATCHES
     }
 }
 
@@ -783,7 +855,7 @@ mod tests {
     fn changing_a_slot_to_pitch_keeps_its_amount_in_range() {
         let mut p = patch();
         let at = 4 * 3; // the fifth slot's source
-        p.slots[4].dest = Dest::Balance;
+        p.slots[4].dest = Dest::Cross;
         p.slots[4].amount = 800;
         adjust_route(&mut p, at + 1, 1);
         assert_eq!(p.slots[4].dest, Dest::Pitch1);
@@ -861,10 +933,59 @@ mod tests {
     fn patches_and_actions_wrap() {
         let mut c = PatchCursor::default();
         c.event(Event::Turn(-1), true);
-        assert_eq!(c.patch, N_PATCHES - 1);
+        assert_eq!(c.patch, PATCH_CHOICES - 1);
         c.event(Event::Click, true);
         c.event(Event::Turn(-1), true);
         assert_eq!(c.action, Some(PatchAction::ALL.len() - 1));
+    }
+
+    #[test]
+    fn turning_on_past_the_eighth_patch_is_the_factory_bank() {
+        let mut c = PatchCursor::default();
+        c.event(Event::Turn(N_PATCHES as i32 - 1), false);
+        assert!(!c.is_factory());
+        c.event(Event::Turn(1), false);
+        assert!(c.is_factory());
+        assert_eq!(c.in_bank(), 0);
+        c.event(Event::Turn(N_PATCHES as i32), false);
+        assert!(!c.is_factory(), "and round again");
+    }
+
+    #[test]
+    fn a_factory_patch_offers_load_first_as_it_always_holds_something() {
+        let mut c = PatchCursor { patch: N_PATCHES + 2, action: None };
+        c.event(Event::Click, false);
+        assert_eq!(PatchAction::ALL[c.action.unwrap()], PatchAction::Load);
+    }
+
+    #[test]
+    fn the_cross_mod_screen_moves_its_settings() {
+        let mut p = patch();
+        adjust_cross(&mut p, CrossRow::Mode, 3);
+        assert_eq!(cross_text(&p, CrossRow::Mode).as_str(), "FM");
+        adjust_cross(&mut p, CrossRow::Mode, 2);
+        assert_eq!(cross_text(&p, CrossRow::Mode).as_str(), "OFF", "and round");
+        assert_eq!(cross_text(&p, CrossRow::Modulator).as_str(), "OSC 1");
+        adjust_cross(&mut p, CrossRow::Modulator, 1);
+        assert_eq!(cross_text(&p, CrossRow::Modulator).as_str(), "OSC 2");
+        adjust_cross(&mut p, CrossRow::Modulator, 1);
+        assert_eq!(p.cross.modulator, 0);
+        adjust_cross(&mut p, CrossRow::Depth, 1);
+        assert_eq!(p.cross.depth, 505, "half a percent a detent");
+        assert_eq!(cross_text(&p, CrossRow::Depth).as_str(), "50.5%");
+        adjust_cross(&mut p, CrossRow::Depth, 1000);
+        assert_eq!(p.cross.depth, 1000);
+        adjust_cross(&mut p, CrossRow::Depth, -1000);
+        assert_eq!(p.cross.depth, 0);
+    }
+
+    #[test]
+    fn every_mode_says_what_it_does_on_one_line() {
+        let mut mode = CrossMode::Off;
+        for _ in 0..5 {
+            assert!(!cross_help(mode).is_empty() && cross_help(mode).len() <= 44, "{mode:?}");
+            mode = mode.next(1);
+        }
     }
 
     #[test]

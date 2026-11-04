@@ -1,0 +1,40 @@
+FAIRWAVE PATCH 1
+NAME  = REESE CLASSIC
+ABOUT = TWO SAWS PHASING. GATE 1, CV 1
+
+# The original: two saws a few cents apart, darkened. CV 2 opens it up.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+FINE = -9
+POS = 45%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+FINE = 9
+POS = 45%
+
+[ENV 1]
+ATTACK = 5 MS
+DECAY = 300 MS
+SUSTAIN = 85%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.16 HZ
+SHAPE = SINE
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+LFO 3 > POS 1 = 6%
+LFO 3 > POS 2 = -6%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

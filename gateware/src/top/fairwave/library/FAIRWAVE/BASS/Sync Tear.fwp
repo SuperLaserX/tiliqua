@@ -1,0 +1,41 @@
+FAIRWAVE PATCH 1
+NAME  = SYNC TEAR
+ABOUT = HARD SYNC SWEEP. GATE 1, CV 1
+
+# An oscillator-sync sweep, torn down from the top of each note, over a sine to hold the low end.
+[OSC 1]
+TABLE = TABLES/SYNC.WAV
+TUNE = -24
+POS = 12%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 15%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 240 MS
+SUSTAIN = 40%
+RELEASE = 60 MS
+D CURVE = 50
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 150 MS
+SUSTAIN = 0%
+RELEASE = 150 MS
+D CURVE = 40
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 60%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 35%

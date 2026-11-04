@@ -7,14 +7,18 @@
 
 pub mod curve;
 pub mod browser;
+pub mod cross;
 pub mod cv;
 pub mod disk;
 pub mod geometry;
 pub mod layout;
+pub mod mip;
 pub mod modulation;
 pub mod nav;
 pub mod pages;
 pub mod patch;
+pub mod patchfile;
+pub mod presets;
 pub mod store;
 pub mod table;
 pub mod text;

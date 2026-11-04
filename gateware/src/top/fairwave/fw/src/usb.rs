@@ -3,12 +3,14 @@
 //! simulation has no USB, so it reads a disk image in PSRAM through the same trait.
 
 use guh_dma::DmaBuf;
+use heapless::String;
 use guh_usb_msc::partition::find_first_fat32_lba;
 use guh_usb_msc::usb_msc::{PartitionView, UsbMsc, UsbMscStatus, BLOCK_BYTES};
 use crate::hal::tusb322::{AccessoryType, AttachedState, TUSB322Driver, TUSB322Mode};
 use log::{info, warn};
 
 use fairwave_cpu::disk::{self, Buffers, DiskError, Entry, ImageDisk};
+use fairwave_cpu::store::PATH_BYTES;
 
 use crate::pac::constants::*;
 use crate::*;
@@ -246,6 +248,11 @@ impl Drive {
     pub fn find(&mut self, path: &str) -> Result<Entry, DiskError> {
         let disk = self.disk.as_mut().ok_or(DiskError::Mount)?;
         disk::find(disk, &self.buffers, path)
+    }
+
+    pub fn resolve(&mut self, from: &str, name: &str) -> Result<String<PATH_BYTES>, DiskError> {
+        let disk = self.disk.as_mut().ok_or(DiskError::Mount)?;
+        disk::resolve(disk, &self.buffers, from, name)
     }
 
     pub fn peek(&mut self, path: &str, head: &mut [u8]) -> Result<(usize, usize), DiskError> {

@@ -1,14 +1,17 @@
-//! A drive's files: listing a directory, looking at a file's start, reading one into memory. Only
-//! ever reads: a drive plugged in here comes out as it went in.
+//! A drive's files: listing a directory, looking at a file's start, reading one into memory, finding
+//! a file a patch names. Only ever reads: a drive plugged in here comes out as it went in.
 //!
 //! All of it goes through guh's `UsbMsc` trait, so it runs the same on a USB drive and on a disk
 //! image (`ImageDisk`), which is how the host tests and the simulation test it.
 
 use fatfs::{FileAttributes, FileSystem, FsOptions, Read};
 use guh_dma::DmaBuf;
+use heapless::String;
 use guh_usb_msc::fat_stream::{FatStream, StreamConfig};
 use guh_usb_msc::usb_msc::{UsbMsc, UsbMscStatus, BLOCK_BYTES};
 use guh_usb_msc::usb_msc_fatfs::UsbMscBlockDevice;
+
+use crate::store::PATH_BYTES;
 
 /// How much of a name is kept: what the browser's rows have room for.
 pub const NAME_BYTES: usize = 27;
@@ -16,6 +19,10 @@ pub const NAME_BYTES: usize = 27;
 pub const SHORT_BYTES: usize = 12;
 /// The most a directory lists.
 pub const MAX_ENTRIES: usize = 256;
+/// The folder the Browser starts in, if a drive has one: a user's sounds can have a home of their own.
+pub const HOME_FOLDER: &str = "FAIRWAVE";
+/// A patch file's extension. (`patchfile.rs` is what's in one.)
+const PATCH_EXTENSION: &[u8] = b".fwp";
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DiskError {
@@ -75,6 +82,11 @@ impl Entry {
         self.short() == ".."
     }
 
+    /// Whether it is a patch rather than a table. (A long name's extension is in its short name too.)
+    pub fn is_patch(&self) -> bool {
+        !self.is_dir && has_extension(self.short().as_bytes(), PATCH_EXTENSION)
+    }
+
     /// What to open it by. Always plain ASCII, and short enough for a patch to keep.
     pub fn short(&self) -> &str {
         core::str::from_utf8(&self.short[..self.short_len as usize]).unwrap_or("")
@@ -109,8 +121,13 @@ impl Entry {
     }
 }
 
-fn is_wav(name: &[u8]) -> bool {
-    name.len() > 4 && name[name.len() - 4..].eq_ignore_ascii_case(b".wav")
+fn has_extension(name: &[u8], extension: &[u8]) -> bool {
+    name.len() > extension.len() && name[name.len() - extension.len()..].eq_ignore_ascii_case(extension)
+}
+
+/// Whether a file is one the Browser can open.
+fn can_open(name: &[u8]) -> bool {
+    has_extension(name, b".wav") || has_extension(name, PATCH_EXTENSION)
 }
 
 /// The buffers reading needs: `windows` the file system reads through, `fat_cache` for following a
@@ -121,8 +138,8 @@ pub struct Buffers {
     pub fat_cache: &'static DmaBuf,
 }
 
-/// Lists a directory (`""` is the root), sorted, into `out`: only the directories and `.wav` files,
-/// as nothing else can be opened, and nothing hidden. Returns how many.
+/// Lists a directory (`""` is the root), sorted, into `out`: only the directories, `.wav` files and
+/// patch files, as nothing else can be opened, and nothing hidden. Returns how many.
 pub fn list<M: UsbMsc>(disk: &mut M, buffers: &Buffers, dir: &str, out: &mut [Entry]) -> Result<usize, DiskError> {
     let device = UsbMscBlockDevice::new(disk, buffers.windows).map_err(|_| DiskError::Mount)?;
     let fs = FileSystem::new(device, FsOptions::new()).map_err(|_| DiskError::Mount)?;
@@ -158,17 +175,17 @@ pub fn list<M: UsbMsc>(disk: &mut M, buffers: &Buffers, dir: &str, out: &mut [En
                     continue;
                 }
                 let mut ascii = [0u8; 5];
-                let tail = units.len().saturating_sub(4);
+                let tail = units.len().saturating_sub(ascii.len());
                 for (a, u) in ascii.iter_mut().zip(&units[tail..]) {
                     *a = *u as u8;
                 }
-                if !e.is_dir && !ascii[..4].eq_ignore_ascii_case(b".wav") {
+                if !e.is_dir && !can_open(&ascii[..units.len().min(ascii.len())]) {
                     continue;
                 }
                 e.set_name(units.iter().copied());
             }
             None => {
-                if !e.is_dir && !is_wav(short) {
+                if !e.is_dir && !can_open(short) {
                     continue;
                 }
                 e.set_name(short.iter().map(|b| *b as u16));
@@ -181,7 +198,8 @@ pub fn list<M: UsbMsc>(disk: &mut M, buffers: &Buffers, dir: &str, out: &mut [En
     Ok(n)
 }
 
-/// A file by its path in short names, which is all a patch keeps, with the name it shows by.
+/// A file or folder by its path, with the name it shows by. The last part can be either of its names:
+/// a patch keeps short ones, and a user writes long ones.
 pub fn find<M: UsbMsc>(disk: &mut M, buffers: &Buffers, path: &str) -> Result<Entry, DiskError> {
     let device = UsbMscBlockDevice::new(disk, buffers.windows).map_err(|_| DiskError::Mount)?;
     let fs = FileSystem::new(device, FsOptions::new()).map_err(|_| DiskError::Mount)?;
@@ -191,7 +209,10 @@ pub fn find<M: UsbMsc>(disk: &mut M, buffers: &Buffers, path: &str) -> Result<En
     for item in opened.iter() {
         let item = item.map_err(|_| DiskError::Read)?;
         let short = item.short_file_name_as_bytes();
-        if !short.eq_ignore_ascii_case(file.as_bytes()) || short.len() > SHORT_BYTES {
+        let by_long = item.long_file_name_as_ucs2_units().is_some_and(|units| {
+            units.len() == file.len() && units.iter().zip(file.bytes()).all(|(u, b)| *u < 128 && (*u as u8).eq_ignore_ascii_case(&b))
+        });
+        if !(by_long || short.eq_ignore_ascii_case(file.as_bytes())) || short.len() > SHORT_BYTES {
             continue;
         }
         let mut e = Entry::EMPTY;
@@ -206,6 +227,33 @@ pub fn find<M: UsbMsc>(disk: &mut M, buffers: &Buffers, path: &str) -> Result<En
         return Ok(e);
     }
     Err(DiskError::NotFound)
+}
+
+/// Where a file a patch names really is, as a path of short names, which is what a patch keeps:
+/// `name` taken from the folder `from`. It can go through folders, by either of their names, and back
+/// up out of them with `..`.
+pub fn resolve<M: UsbMsc>(disk: &mut M, buffers: &Buffers, from: &str, name: &str) -> Result<String<PATH_BYTES>, DiskError> {
+    let mut path: String<PATH_BYTES> = String::new();
+    path.push_str(from).map_err(|_| DiskError::NotFound)?;
+    for part in name.split('/').filter(|p| !p.is_empty() && *p != ".") {
+        if part == ".." {
+            let up = path.rfind('/').unwrap_or(0);
+            path.truncate(up);
+            continue;
+        }
+        let mut wanted: String<{ PATH_BYTES + 64 }> = String::new();
+        if !path.is_empty() {
+            wanted.push_str(path.as_str()).map_err(|_| DiskError::NotFound)?;
+            wanted.push('/').map_err(|_| DiskError::NotFound)?;
+        }
+        wanted.push_str(part).map_err(|_| DiskError::NotFound)?;
+        let found = find(disk, buffers, wanted.as_str())?;
+        if !path.is_empty() {
+            path.push('/').map_err(|_| DiskError::NotFound)?;
+        }
+        path.push_str(found.short()).map_err(|_| DiskError::NotFound)?;
+    }
+    Ok(path)
 }
 
 /// A file's size, and its first bytes into `head`: enough to see what shape a table is.
@@ -662,6 +710,58 @@ mod tests {
         }
     }
 
+    /// `FAIRWAVE_LIBRARY_DISK_OUT=disk.img cargo test make_the_simulations_library_disk`: a drive laid out
+    /// as `library/FAIRWAVE` is, with as much of it as fits in the simulation's window of PSRAM.
+    #[test]
+    fn make_the_simulations_library_disk() {
+        let library = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../library/FAIRWAVE");
+        let read = |path: &str| std::fs::read(library.join(path)).unwrap();
+        let mut b = Builder::new(true);
+        let root = b.root();
+        b.add_file(root, "Not In Here.wav", &a_table_file(4, 1024, "pcm16", 1, false), false, 0);
+        // (in lower case on purpose: a drive's folder can be named any way)
+        let home = b.add_dir(root, "fairwave");
+        let tables = b.add_dir(home, "TABLES");
+        for table in ["SAWLP.WAV", "SUBDRV.WAV", "REESE.WAV"] {
+            b.add_file(tables, table, &read(&std::format!("TABLES/{table}")), false, 0);
+        }
+        for (folder, files) in [
+            ("BASS", ["FM Solid.fwp"].as_slice()),
+            ("CLASSIC", ["Grain Drift.fwp"].as_slice()),
+            ("REESE", ["Reese Classic.fwp", "Reese Over Sub.fwp"].as_slice()),
+            ("ROLLING", ["Psy Snap.fwp"].as_slice()),
+        ] {
+            let dir = b.add_dir(home, folder);
+            for file in files {
+                b.add_file(dir, file, &read(&std::format!("{folder}/{file}")), false, 0);
+            }
+        }
+        // What goes wrong: a table that isn't there, a file that isn't a patch, and slips in one that is.
+        let wrong = b.add_dir(home, "ZTEST");
+        b.add_file(wrong, "A Missing Table.fwp", b"FAIRWAVE PATCH 1\nNAME = NO TABLE\n[OSC 1]\nTABLE = TABLES/NOPE.WAV\n", false, 0);
+        b.add_file(wrong, "B Not A Patch.fwp", b"Dear diary, today I wrote a file with the wrong extension.\n", false, 0);
+        b.add_file(wrong, "C Slips.fwp", b"FAIRWAVE PATCH 1\nNAME = SLIPS\n[OSC 1]\nTUNE = -12\nFLAVOUR = STRAWBERRY\nEDGE = SIDEWAYS\n", false, 0);
+        let image = b.build();
+        assert!(image.len() < 0x30_0000, "{} bytes", image.len());
+        assert!(b.capacity() < 70000, "{} blocks", b.capacity());
+        let image: &'static [u8] = std::vec::Vec::leak(image);
+        let mut disk = ImageDisk::new(image, 70000);
+        let buffers = buffers();
+        let lba = find_first_fat32_lba(&mut disk, buffers.windows[0]);
+        let mut view = PartitionView::new(disk, lba);
+        let home = find(&mut view, &buffers, HOME_FOLDER).unwrap();
+        assert!(home.is_dir);
+        let mut out = [Entry::EMPTY; 16];
+        let n = list(&mut view, &buffers, home.short(), &mut out).unwrap();
+        assert_eq!(names(&out[..n]), ["..", "BASS", "CLASSIC", "REESE", "ROLLING", "TABLES", "ZTEST"]);
+        let n = list(&mut view, &buffers, "FAIRWAVE/ROLLING", &mut out).unwrap();
+        assert_eq!(names(&out[..n]), ["..", "Psy Snap.fwp"]);
+        assert!(out[1].is_patch());
+        if let Ok(path) = std::env::var("FAIRWAVE_LIBRARY_DISK_OUT") {
+            std::fs::write(path, image).unwrap();
+        }
+    }
+
     #[test]
     fn a_directory_lists_folders_first_then_wavs_sorted_and_nothing_else() {
         for partition in [true, false] {
@@ -712,6 +812,69 @@ mod tests {
         path.push_str(file.short()).unwrap();
         assert_eq!(find(&mut disk, &buffers, path.as_str()).unwrap().name(), "Inside.WAV");
         assert_eq!(find(&mut disk, &buffers, "NOPE.WAV"), Err(DiskError::NotFound));
+    }
+
+    #[test]
+    fn a_file_is_found_by_either_of_its_names_in_any_case() {
+        let b = a_drive(true);
+        let (mut disk, buffers) = mounted(&b);
+        let by_long = find(&mut disk, &buffers, "zebra PAD.wav").unwrap();
+        assert_eq!(by_long.name(), "zebra pad.wav");
+        assert_eq!(find(&mut disk, &buffers, by_long.short()).unwrap(), by_long);
+        assert_eq!(find(&mut disk, &buffers, "basic.wav").unwrap().name(), "BASIC.WAV");
+        assert_eq!(find(&mut disk, &buffers, "zebra").map(|e| e.name().len()), Err(DiskError::NotFound));
+    }
+
+    #[test]
+    fn a_patchs_table_is_found_from_where_the_patch_is() {
+        let mut b = Builder::new(true);
+        let root = b.root();
+        let home = b.add_dir(root, "fairwave");
+        let basses = b.add_dir(home, "Long Basses");
+        let tables = b.add_dir(home, "TABLES");
+        b.add_file(tables, "SAWLP.WAV", &bytes(100, 1), false, 0);
+        b.add_file(basses, "Next To It.wav", &bytes(100, 2), false, 0);
+        b.add_file(root, "TOP.WAV", &bytes(100, 3), false, 0);
+        let (mut disk, buffers) = mounted(&b);
+
+        let home = find(&mut disk, &buffers, HOME_FOLDER).unwrap();
+        assert!(home.is_dir, "a folder's short name is in capitals however it was written");
+        assert_eq!(home.name(), "fairwave");
+
+        let from_home = resolve(&mut disk, &buffers, "FAIRWAVE", "tables/sawlp.wav").unwrap();
+        assert_eq!(from_home.as_str(), "FAIRWAVE/TABLES/SAWLP.WAV");
+        let folder = resolve(&mut disk, &buffers, "FAIRWAVE", "Long Basses").unwrap();
+        assert!(folder.as_str().starts_with("FAIRWAVE/LONG"), "{folder}");
+        let beside = resolve(&mut disk, &buffers, folder.as_str(), "Next To It.wav").unwrap();
+        assert!(beside.as_str().starts_with(folder.as_str()) && beside.len() <= PATH_BYTES, "{beside}");
+        assert_eq!(find(&mut disk, &buffers, beside.as_str()).unwrap().name(), "Next To It.wav");
+        let up = resolve(&mut disk, &buffers, folder.as_str(), "../TABLES/SAWLP.WAV").unwrap();
+        assert_eq!(up.as_str(), "FAIRWAVE/TABLES/SAWLP.WAV");
+        let top = resolve(&mut disk, &buffers, "FAIRWAVE", "../TOP.WAV").unwrap();
+        assert_eq!(top.as_str(), "TOP.WAV");
+        assert_eq!(resolve(&mut disk, &buffers, "FAIRWAVE", "NOPE.WAV"), Err(DiskError::NotFound));
+    }
+
+    #[test]
+    fn a_drive_without_the_home_folder_doesnt_have_one() {
+        let b = a_drive(true);
+        let (mut disk, buffers) = mounted(&b);
+        assert_eq!(find(&mut disk, &buffers, HOME_FOLDER), Err(DiskError::NotFound));
+    }
+
+    #[test]
+    fn a_patch_file_lists_with_the_tables_and_says_what_it_is() {
+        let mut b = Builder::new(true);
+        let root = b.root();
+        b.add_file(root, "REESE.FWP", &bytes(30, 1), false, 0);
+        b.add_file(root, "Rolling Snap.fwp", &bytes(30, 2), false, 0);
+        b.add_file(root, "BASIC.WAV", &bytes(30, 3), false, 0);
+        b.add_file(root, "wrong.fwp.txt", &bytes(30, 4), false, 0);
+        let (mut disk, buffers) = mounted(&b);
+        let mut out = [Entry::EMPTY; 8];
+        let n = list(&mut disk, &buffers, "", &mut out).unwrap();
+        assert_eq!(names(&out[..n]), ["BASIC.WAV", "REESE.FWP", "Rolling Snap.fwp"]);
+        assert_eq!(out[..n].iter().map(Entry::is_patch).collect::<Vec<_>>(), [false, true, true]);
     }
 
     #[test]

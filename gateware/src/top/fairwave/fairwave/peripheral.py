@@ -8,17 +8,20 @@ Once per output sample, paced by the DAC's FIFO:
 
 Registers, per layer 0x20 apart:
 
-    0x00 table    base (16, in units of 256 bytes), frame_log2 (2, less 8), frames_m1 (10)
-    0x04 ctrl     edge (2)
+    0x00 table    base (16, in units of 256 bytes), frame_log2 (2, less 8), frames_m1 (10),
+                  max_level (4): the band-limited levels there are to read, 0 until they are made
+    0x04 ctrl     edge (2), stepped (1), raw (1), grain (2): the LFO whose cycles restart it
 
 and:
 
     0x40 param_addr     where the next `param_data` goes (`model/modulation.py`, `write`)
     0x44 param_data
     0x48 routing        four outputs' selections (4 bits each), the two envelopes' VCA masks
-                        (2 bits each), the CV jacks' switches (2 bits)
+                        (2 bits each), the CV jacks' switches (2 bits), how one layer modulates the
+                        other (ring, pm, lock, modulator: `model/wavescan.py`)
     0x50 mon0 to 0x5C mon3              what the modulation is doing, for the screens
-    0x60 scan0, 0x64 scan1              where each layer is reading: pos in Q10.6, shift in Q11.4
+    0x60 scan0, 0x64 scan1              where each layer is reading: pos in Q4.12 of the table,
+                                        shift in Q11.4 frames
     0x80 stats          the longest sample's computation in clocks since it was last read,
                         and a count of samples
 
@@ -48,9 +51,13 @@ class WaveScanPeripheral(wiring.Component):
         base: csr.Field(csr.action.W, unsigned(16))
         frame_log2: csr.Field(csr.action.W, unsigned(2))
         frames_m1: csr.Field(csr.action.W, unsigned(10))
+        max_level: csr.Field(csr.action.W, unsigned(4))
 
     class Ctrl(csr.Register, access="w"):
         edge: csr.Field(csr.action.W, unsigned(2))
+        stepped: csr.Field(csr.action.W, unsigned(1))
+        raw: csr.Field(csr.action.W, unsigned(1))
+        grain: csr.Field(csr.action.W, unsigned(2))
 
     class ParamAddr(csr.Register, access="w"):
         addr: csr.Field(csr.action.W, unsigned(8))
@@ -62,6 +69,7 @@ class WaveScanPeripheral(wiring.Component):
         outs: csr.Field(csr.action.W, unsigned(16))
         vca: csr.Field(csr.action.W, unsigned(4))
         patched: csr.Field(csr.action.W, unsigned(2))
+        cross: csr.Field(csr.action.W, unsigned(4))
 
     class Monitor(csr.Register, access="r"):
         a: csr.Field(csr.action.R, unsigned(16))
@@ -101,6 +109,10 @@ class WaveScanPeripheral(wiring.Component):
             "phase": data.ArrayLayout(unsigned(32), 2),
             "lfo_phase": data.ArrayLayout(unsigned(32), 3),
             "env_level": data.ArrayLayout(unsigned(32), 2),
+            "max_level": data.ArrayLayout(unsigned(16), 2),
+            "lfo_held": data.ArrayLayout(signed(32), 3),
+            "lfsr": unsigned(32),
+            "pos": data.ArrayLayout(signed(32), 2),
         }))
         regs = csr.Builder(addr_width=8, data_width=8)
         self._layers = []
@@ -146,23 +158,37 @@ class WaveScanPeripheral(wiring.Component):
             table_base = Signal(16, name=f"table_base{i}")
             frame_log2 = Signal(2, name=f"frame_log2{i}")
             frames_m1 = Signal(10, name=f"frames_m1{i}")
+            max_level = Signal(4, name=f"max_level{i}")
             edge = Signal(2, name=f"edge{i}")
+            stepped = Signal(name=f"stepped{i}")
+            raw = Signal(name=f"raw{i}")
+            grain = Signal(2, name=f"grain{i}")
             held(r["table"].f.base, table_base)
             held(r["table"].f.frame_log2, frame_log2)
             held(r["table"].f.frames_m1, frames_m1)
+            held(r["table"].f.max_level, max_level)
             held(r["ctrl"].f.edge, edge)
+            held(r["ctrl"].f.stepped, stepped)
+            held(r["ctrl"].f.raw, raw)
+            held(r["ctrl"].f.grain, grain)
             p = engine.layers[i]
             m.d.comb += [
                 p.table_base.eq(table_base),
                 p.frame_log2.eq(frame_log2),
                 p.frames_m1.eq(frames_m1),
+                p.max_level.eq(max_level),
                 p.edge.eq(edge),
+                p.stepped.eq(stepped),
+                p.raw.eq(raw),
                 p.inc.eq(mod.matrix.inc[i]),
                 p.pos.eq(mod.matrix.pos[i]),
                 p.shift.eq(mod.matrix.shift[i]),
                 p.level.eq(mod.matrix.level[i]),
                 mod.frames_m1[i].eq(frames_m1),
+                mod.grain[i].eq(grain),
+                self.trace.max_level[i].eq(max_level),
             ]
+        m.d.comb += engine.restart.eq(mod.matrix.restart)
 
         # The parameter port.
         param_addr = Signal(8)
@@ -176,11 +202,20 @@ class WaveScanPeripheral(wiring.Component):
         outs_sel = Signal(16)
         vca = Signal(4)
         patched = Signal(2)
+        cross = Signal(4)
         routing = self._routing.f
         held(routing.outs, outs_sel)
         held(routing.vca, vca)
         held(routing.patched, patched)
-        m.d.comb += [mod.vca[0].eq(vca[:2]), mod.vca[1].eq(vca[2:]), mod.patched.eq(patched)]
+        held(routing.cross, cross)
+        m.d.comb += [
+            mod.vca[0].eq(vca[:2]), mod.vca[1].eq(vca[2:]), mod.patched.eq(patched),
+            engine.cross.ring.eq(cross[0]),
+            engine.cross.pm.eq(cross[1]),
+            engine.cross.lock.eq(cross[2]),
+            engine.cross.modulator.eq(cross[3]),
+            engine.cross.depth.eq(mod.matrix.depth),
+        ]
 
         # The newest input samples; a run uses what is here when it starts.
         m.d.comb += self.i.ready.eq(1)
@@ -263,7 +298,7 @@ class WaveScanPeripheral(wiring.Component):
             self._mon3.f.lfo1.r_data.eq(mod.lfos.phase[1][24:]),
         ]
         for i, scan in enumerate(self._scan):
-            m.d.comb += [scan.f.pos.r_data.eq(mod.matrix.pos[i][10:26]),
+            m.d.comb += [scan.f.pos.r_data.eq(mod.matrix.pos_fraction[i]),
                          scan.f.shift.r_data.eq(mod.matrix.shift[i][2:18])]
 
         stats = self._stats.f
@@ -284,6 +319,9 @@ class WaveScanPeripheral(wiring.Component):
         for i in range(2):
             m.d.comb += [self.trace.phase[i].eq(engine.phase[i]),
                          self.trace.env_level[i].eq(mod.envelopes.level[i])]
+            m.d.comb += self.trace.pos[i].eq(mod.matrix.pos[i])
         for i in range(3):
-            m.d.comb += self.trace.lfo_phase[i].eq(mod.lfos.phase[i])
+            m.d.comb += [self.trace.lfo_phase[i].eq(mod.lfos.phase[i]),
+                         self.trace.lfo_held[i].eq(mod.lfos.held[i])]
+        m.d.comb += self.trace.lfsr.eq(mod.lfos.lfsr)
         return m

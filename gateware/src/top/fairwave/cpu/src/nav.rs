@@ -16,6 +16,7 @@ pub enum Event {
 pub enum Page {
     Oscillators,
     Wave,
+    Cross,
     Envelopes,
     Routing,
     Mixer,
@@ -24,9 +25,10 @@ pub enum Page {
 }
 
 impl Page {
-    pub const ALL: [Page; 7] = [
+    pub const ALL: [Page; 8] = [
         Page::Oscillators,
         Page::Wave,
+        Page::Cross,
         Page::Envelopes,
         Page::Routing,
         Page::Mixer,
@@ -38,6 +40,7 @@ impl Page {
         match self {
             Page::Oscillators => "OSCILLATORS",
             Page::Wave => "WAVE VIEW",
+            Page::Cross => "CROSS MOD",
             Page::Envelopes => "ENVELOPES",
             Page::Routing => "ROUTING",
             Page::Mixer => "MIXER",
@@ -117,7 +120,7 @@ mod tests {
     fn a_click_goes_to_the_highlighted_screen() {
         let mut nav = Nav::default();
         nav.handle(Event::Hold);
-        nav.handle(Event::Turn(2));
+        nav.handle(Event::Turn(3));
         assert_eq!(nav.picking(), Some(Page::Envelopes));
         assert_eq!(nav.page(), Page::Oscillators, "not until the click");
         nav.handle(Event::Click);
@@ -143,7 +146,7 @@ mod tests {
         assert_eq!(nav.picking(), Some(Page::Patches));
         nav.handle(Event::Turn(1));
         assert_eq!(nav.picking(), Some(Page::Oscillators));
-        nav.handle(Event::Turn(-15));
+        nav.handle(Event::Turn(-17));
         assert_eq!(nav.picking(), Some(Page::Patches));
         nav.handle(Event::Click);
         nav.handle(Event::Hold);

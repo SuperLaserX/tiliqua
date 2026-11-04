@@ -1,0 +1,35 @@
+FAIRWAVE PATCH 1
+NAME  = TRIPLET GALLOP
+ABOUT = ROLLS IN TRIPLETS, ABOUT 142 BPM
+
+# Eighth-note triplets instead of sixteenths: the rolling gallop under a slower groove.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 20%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 6%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 90 MS
+SUSTAIN = 0%
+RELEASE = 49 MS
+D CURVE = 45
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 44%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 30%

@@ -1,0 +1,45 @@
+FAIRWAVE PATCH 1
+NAME  = SYNC LEAD
+ABOUT = SCREAMING SYNC. GATE 1, CV 1
+
+# The early eighties lead: hard sync swept up as the note opens, and a slow vibrato on top.
+[OSC 1]
+TABLE = TABLES/SYNC.WAV
+TUNE = 0
+POS = 20%
+
+[OSC 2]
+TABLE = TABLES/SYNC.WAV
+TUNE = 0
+FINE = 5
+POS = 28%
+
+[ENV 1]
+ATTACK = 4 MS
+DECAY = 500 MS
+SUSTAIN = 70%
+RELEASE = 150 MS
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 80 MS
+DECAY = 700 MS
+SUSTAIN = 20%
+RELEASE = 200 MS
+
+[LFO 1]
+RATE = 5.2 HZ
+SHAPE = SINE
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 55%
+ENV 2 > POS 2 = 55%
+LFO 1 > PITCH 1 = 0.4%
+LFO 1 > PITCH 2 = 0.4%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

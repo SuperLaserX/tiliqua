@@ -4,8 +4,9 @@ bit for bit.
     ModEngine     the inputs (CV smoothing, gate triggers), then in turn:
       Envelopes   two DAHDSRs, which can loop
       Lfos        three
-      ModMatrix   twelve slots onto nine destinations, then each destination's arithmetic:
-                  increment (table and shift), position, tilt, level through the VCAs
+      ModMatrix   twelve slots onto ten destinations, then each destination's arithmetic:
+                  increment (table and shift), position, tilt, level through the VCAs, and the
+                  depth of one layer's modulation of the other
 
 Each takes its turn through its own multiplier, and has its parameters in its own small
 memory, written by the parameter port and read once a sample. So a sample costs at most about
@@ -21,10 +22,11 @@ from amaranth.lib import data, wiring
 from amaranth.lib.memory import Memory
 from amaranth.lib.wiring import In, Out
 
-from model.modulation import (AMOUNT_SHIFT, ATTACK, BALANCE, CV_FLOOR, CV_FRAC, CV_SHIFT, DECAY, DELAY, FS, FULL,
+from model.modulation import (AMOUNT_SHIFT, ATTACK, BALANCE, CROSS, CV_FLOOR, CV_FRAC, CV_SHIFT, DECAY, DELAY, FS, FULL,
                               GATE_HIGH, GATE_LOW, HOLD, IDLE, LAYER_DESTS, LEVEL, LOOP_FREE, LOOP_OFF, N_DESTS,
-                              N_SLOTS, ONE, PITCH, PITCH_MAX, PITCH_MIN, POS, RELEASE, SAW_DOWN, SAW_UP, SHIFT, SINE,
-                              SQUARE, SUSTAIN, TRI, UNITY_LEVEL, W_CTRL, W_CURVES, W_SUSTAIN, exp_rom)
+                              N_SLOTS, ONE, PITCH, PITCH_MAX, PITCH_MIN, POS, POS_SHIFT, RELEASE, SAW_DOWN, SAW_UP,
+                              SHIFT, SINE, SQUARE, SUSTAIN, TRI, UNITY_LEVEL, W_CTRL, W_CURVES, W_SUSTAIN, WIDE_MAX,
+                              WIDE_MIN, exp_rom)
 
 
 def parameter_port(addr_width):
@@ -262,6 +264,11 @@ class Lfos(wiring.Component):
             "rising": In(2),
             "out": Out(data.ArrayLayout(signed(18), self.N)),
             "phase": Out(data.ArrayLayout(unsigned(32), self.N)),
+            # Which started a cycle this sample.
+            "wrapped": Out(self.N),
+            # For the simulation's harness.
+            "held": Out(data.ArrayLayout(signed(17), self.N)),
+            "lfsr": Out(23),
             **parameter_port(4),
         })
 
@@ -288,6 +295,9 @@ class Lfos(wiring.Component):
 
         # PRBS23, a step per LFO.
         lfsr = Signal(23, init=1)
+        m.d.comb += self.lfsr.eq(lfsr)
+        for k in range(self.N):
+            m.d.comb += self.held[k].eq(helds[k])
 
         ctrl = Signal(22)
         offset = ctrl[:16]
@@ -345,6 +355,7 @@ class Lfos(wiring.Component):
             with m.State("RATE"):
                 m.d.sync += lfsr.eq(Cat(lfsr[22] ^ lfsr[17], lfsr[:22]))
                 m.d.sync += phase.eq(Mux(fire, 0, total))
+                m.d.sync += self.wrapped.bit_select(i, 1).eq(fire | total[32])
                 with m.If(fire | total[32]):
                     m.d.sync += held.eq(lfsr[:17])
                 m.d.comb += word.eq(2)
@@ -404,11 +415,18 @@ class ModMatrix(wiring.Component):
             "frames_m1": In(data.ArrayLayout(unsigned(10), 2)),
             "env_level": In(data.ArrayLayout(unsigned(17), 2)),
             "vca": In(data.ArrayLayout(unsigned(2), 2)),
+            # Per layer: 1 to 3, the LFO whose cycles restart it; and which LFOs just did.
+            "grain": In(data.ArrayLayout(unsigned(2), 2)),
+            "wrapped": In(3),
+            "restart": Out(2),
             "inc": Out(data.ArrayLayout(unsigned(32), 2)),
-            "pos": Out(data.ArrayLayout(unsigned(26), 2)),
+            "pos": Out(data.ArrayLayout(signed(30), 2)),
+            # The position as a fraction of the table: Q4.12.
+            "pos_fraction": Out(data.ArrayLayout(signed(16), 2)),
             "shift": Out(data.ArrayLayout(signed(18), 2)),
             "level": Out(data.ArrayLayout(unsigned(17), 2)),
             "balance": Out(17),
+            "depth": Out(17),
             "slot_en": In(1),
             "base_en": In(1),
             "wr_addr": In(4),
@@ -450,25 +468,35 @@ class ModMatrix(wiring.Component):
         env = Signal(1)
         results = {
             "inc": [Signal(32, name=f"inc{i}") for i in range(2)],
-            "pos": [Signal(26, name=f"pos{i}") for i in range(2)],
+            "pos": [Signal(signed(30), name=f"pos{i}") for i in range(2)],
+            "fraction": [Signal(signed(16), name=f"pos_fraction{i}") for i in range(2)],
             "shift": [Signal(signed(18), name=f"shift{i}") for i in range(2)],
             "level": [Signal(17, name=f"level{i}") for i in range(2)],
         }
         balance = Signal(17)
+        depth = Signal(17)
         for i in range(2):
             m.d.comb += [
                 self.inc[i].eq(results["inc"][i]),
                 self.pos[i].eq(results["pos"][i]),
+                self.pos_fraction[i].eq(results["fraction"][i]),
                 self.shift[i].eq(results["shift"][i]),
                 self.level[i].eq(results["level"][i]),
             ]
-        m.d.comb += self.balance.eq(balance)
+            # (a grain's position is the one it started with: `grain` is 0 for no grain)
+            choices = Cat(C(0, 1), self.wrapped)
+            m.d.comb += self.restart[i].eq(choices.bit_select(self.grain[i], 1))
+        m.d.comb += [self.balance.eq(balance), self.depth.eq(depth)]
+        grain_on = Array(self.grain[i] != 0 for i in range(2))[layer]
+        restarting = self.restart.bit_select(layer, 1)
 
         at = Mux(layer, LAYER_DESTS, 0)
         frames_m1 = Array(self.frames_m1[i] for i in range(2))[layer]
         env_level = Array(self.env_level[i] for i in range(2))[env]
         env_routed = Array(self.vca[i] for i in range(2))[env].bit_select(layer, 1)
         fraction = clamp(acc_rd.data, 0, ONE)
+        wide = clamp(acc_rd.data, WIDE_MIN, WIDE_MAX)
+        position = clamp(acc_rd.data >> POS_SHIFT, WIDE_MIN, WIDE_MAX)
 
         sources = Array(self.sources[i] for i in range(8))
 
@@ -557,7 +585,7 @@ class ModMatrix(wiring.Component):
                 m.next = "POS"
 
             with m.State("POS"):
-                m.d.sync += [a.eq(fraction), b.eq(frames_m1)]
+                m.d.sync += [a.eq(position), b.eq(frames_m1)]
                 m.next = "POS_WAIT"
 
             with m.State("POS_WAIT"):
@@ -565,8 +593,12 @@ class ModMatrix(wiring.Component):
                 m.next = "POS_DONE"
 
             with m.State("POS_DONE"):
-                m.d.sync += Array(results["pos"])[layer].eq(prod)
-                m.d.sync += [a.eq(clamp(acc_rd.data, -(1 << 17), (1 << 17) - 1)), b.eq(frames_m1)]
+                with m.If(~grain_on | restarting):
+                    m.d.sync += [
+                        Array(results["pos"])[layer].eq(prod << POS_SHIFT),
+                        Array(results["fraction"])[layer].eq(a >> 2),
+                    ]
+                m.d.sync += [a.eq(wide), b.eq(frames_m1)]
                 m.next = "SHIFT_WAIT"
 
             with m.State("SHIFT_WAIT"):
@@ -621,6 +653,11 @@ class ModMatrix(wiring.Component):
 
             with m.State("BALANCE"):
                 m.d.sync += balance.eq(fraction)
+                m.d.comb += acc_rd.addr.eq(CROSS)
+                m.next = "DEPTH"
+
+            with m.State("DEPTH"):
+                m.d.sync += depth.eq(clamp(acc_rd.data, 0, WIDE_MAX))
                 m.d.comb += self.done.eq(1)
                 m.next = "IDLE"
 
@@ -629,8 +666,8 @@ class ModMatrix(wiring.Component):
 
 class ModEngine(wiring.Component):
     """The inputs, and each stage in turn. `start` a run with `adc` (the four input channels,
-    held through it); `done` pulses when `inc`, `pos`, `shift` and `level` hold the next
-    sample's parameters."""
+    held through it); `done` pulses when `inc`, `pos`, `shift`, `level`, `depth` and `restart` hold
+    the next sample's parameters."""
 
     def __init__(self, fs=FS):
         self.envelopes = Envelopes()
@@ -644,6 +681,7 @@ class ModEngine(wiring.Component):
             "gates": Out(2),
             "frames_m1": In(data.ArrayLayout(unsigned(10), 2)),
             "vca": In(data.ArrayLayout(unsigned(2), 2)),
+            "grain": In(data.ArrayLayout(unsigned(2), 2)),
             "wr_en": In(1),
             "wr_addr": In(8),
             "wr_data": In(32),
@@ -690,9 +728,10 @@ class ModEngine(wiring.Component):
             env.rising.eq(rising),
             lfo.rising.eq(rising),
         ]
+        m.d.comb += mat.wrapped.eq(lfo.wrapped)
         for i in range(2):
             m.d.comb += [mat.frames_m1[i].eq(self.frames_m1[i]), mat.vca[i].eq(self.vca[i]),
-                         mat.env_level[i].eq(env.level[i])]
+                         mat.grain[i].eq(self.grain[i]), mat.env_level[i].eq(env.level[i])]
         sources = [C(0, signed(18)), cv[0], cv[1], env.out[0], env.out[1], lfo.out[0], lfo.out[1], lfo.out[2]]
         for i, s in enumerate(sources):
             m.d.comb += mat.sources[i].eq(s)

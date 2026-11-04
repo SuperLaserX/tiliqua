@@ -31,6 +31,16 @@ impl Table {
         self.samples() * 2
     }
 
+    /// What it takes in PSRAM: the band-limited levels sit after it, and take as much again.
+    pub const fn room(&self) -> usize {
+        self.bytes() * 2
+    }
+
+    /// Where a frame's row of levels is, in samples from the table's start.
+    pub const fn mip_row(&self, frame: u16) -> usize {
+        (self.frames as usize + frame as usize) << self.frame_log2
+    }
+
     /// The same samples read with another frame length, as near a whole number of frames
     /// as fits. `total` is how many samples the table really holds: a file's frame length
     /// may have been a guess, and this undoes it without touching PSRAM.
@@ -40,11 +50,13 @@ impl Table {
         Table { offset: self.offset, frame_log2: log2, frames }
     }
 
-    /// The engine's `table` register. One register, so a table changes atomically.
-    pub const fn reg(&self) -> u32 {
+    /// The engine's `table` register. One register, so a table changes atomically. `max_level` is
+    /// how many of its band-limited levels are there to read.
+    pub const fn reg(&self, max_level: u8) -> u32 {
         ((self.offset / ALIGN) as u32)
             | ((self.frame_log2 - MIN_FRAME_LOG2) as u32) << 16
             | ((self.frames - 1) as u32) << 18
+            | (max_level as u32) << 28
     }
 }
 
@@ -78,10 +90,10 @@ impl Pool {
             return None;
         }
         let table = Table { offset, frame_log2, frames };
-        if offset + table.bytes() > self.end {
+        if offset + table.room() > self.end {
             return None;
         }
-        self.next = offset + table.bytes();
+        self.next = offset + table.room();
         Some(table)
     }
 }
@@ -93,13 +105,15 @@ mod tests {
     #[test]
     fn the_register_packs_address_and_shape() {
         let t = Table { offset: 0x40_0000, frame_log2: 11, frames: 64 };
-        assert_eq!(t.reg() & 0xFFFF, 0x4000);
-        assert_eq!((t.reg() >> 16) & 3, 3);
-        assert_eq!(t.reg() >> 18, 63);
+        assert_eq!(t.reg(0) & 0xFFFF, 0x4000);
+        assert_eq!((t.reg(0) >> 16) & 3, 3);
+        assert_eq!(t.reg(0) >> 18, 63);
+        assert_eq!(t.reg(8) >> 28, 8);
+        assert_eq!(t.reg(8) & 0xFFF_FFFF, t.reg(0));
         let short = Table { offset: 0x100, frame_log2: 8, frames: 1 };
-        assert_eq!(short.reg(), 1);
+        assert_eq!(short.reg(0), 1);
         let most = Table { offset: 0xFFFF00, frame_log2: 8, frames: 1024 };
-        assert_eq!(most.reg(), 0xFFFF | 1023 << 18);
+        assert_eq!(most.reg(0), 0xFFFF | 1023 << 18);
     }
 
     #[test]
@@ -131,9 +145,9 @@ mod tests {
         let a = p.alloc(8, 3).unwrap();
         assert_eq!(a.offset, 0x40_0100, "aligned up");
         let b = p.alloc(11, 2).unwrap();
-        assert_eq!(b.offset, a.offset + 1536);
+        assert_eq!(b.offset, a.offset + 2 * 1536);
         let c = p.alloc(8, 1).unwrap();
-        assert_eq!(c.offset, b.offset + 8192);
+        assert_eq!(c.offset, b.offset + 2 * 8192);
     }
 
     #[test]
@@ -148,8 +162,8 @@ mod tests {
 
     #[test]
     fn the_pool_refuses_what_doesnt_fit() {
-        let mut p = Pool::new(0, 2048);
-        assert!(p.alloc(10, 1).is_some());
+        let mut p = Pool::new(0, 4096);
+        assert!(p.alloc(10, 1).is_some(), "2 KB and the same for its levels");
         assert_eq!(p.alloc(8, 1), None);
     }
 

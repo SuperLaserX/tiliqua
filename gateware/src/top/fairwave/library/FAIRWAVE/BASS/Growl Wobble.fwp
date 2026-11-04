@@ -1,0 +1,40 @@
+FAIRWAVE PATCH 1
+NAME  = GROWL WOBBLE
+ABOUT = LFO WOBBLE, RESTARTS. GATE 1, CV 1
+
+# The wobble: an LFO through a table that goes from a mutter to a tearing 'wow'. The gate restarts it, so
+# each note starts closed. Change LFO 1's rate for the speed of the wub: 2.4 HZ is an eighth at 144 BPM.
+[OSC 1]
+TABLE = TABLES/GROWL.WAV
+TUNE = -24
+POS = 8%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 18%
+
+[ENV 1]
+ATTACK = 3 MS
+DECAY = 200 MS
+SUSTAIN = 100%
+RELEASE = 40 MS
+VCA = BOTH
+
+[LFO 1]
+RATE = 2.4 HZ
+SHAPE = SINE
+POLAR = UNI
+PHASE = 270
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 80%
+CV 2 > POS 1 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 30%

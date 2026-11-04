@@ -45,22 +45,23 @@ pub struct Coords {
 /// What an oscillator is reading, as it has it. `frame(phi) = pos + shift * phi`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Line {
-    /// Q10.16 frames.
-    pub pos: u32,
+    /// Q.16 frames, signed: it can be past the table's ends, which is what `edge` is for.
+    pub pos: i32,
     /// Q11.6 frames a cycle.
     pub shift: i32,
     pub edge: Edge,
 }
 
 impl Line {
-    /// From the gateware's monitor register: Q10.6 and Q11.4.
-    pub const fn from_monitor(pos: u16, shift: i16, edge: Edge) -> Line {
-        Line { pos: (pos as u32) << 10, shift: (shift as i32) << 2, edge }
+    /// From the gateware's monitor register: Q4.12 of the table, and Q11.4 frames.
+    pub const fn from_monitor(pos: i16, shift: i16, edge: Edge, frames: u32) -> Line {
+        let span = if frames == 0 { 0 } else { frames as i32 - 1 };
+        Line { pos: (pos as i32 * span) << 4, shift: (shift as i32) << 2, edge }
     }
 
     /// As `frame_coords` in `model/wavescan.py`. `phi` is U0.17: 0x20000 is a whole cycle.
     pub fn coords(&self, phi: u32, frames: u32) -> Coords {
-        let f = self.pos as i32 + ((self.shift as i64 * phi as i64) >> 7) as i32;
+        let f = self.pos + ((self.shift as i64 * phi as i64) >> 7) as i32;
         let n = f >> 16;
         let ff = (f & 0xFFFF) as u32;
         let last = frames as i32 - 1;
@@ -103,6 +104,19 @@ impl Line {
             || far(self.pos as i64, shown.pos as i64, 16)
             || far(self.shift as i64, shown.shift as i64, 6)
     }
+}
+
+/// What a line reads at `phase`, a whole cycle being 2^32, the frames blended as the oscillator
+/// blends them. `read` gives a frame's sample.
+pub fn value_on(line: &Line, table: &Table, phase: u32, read: &impl Fn(u32, usize) -> i16) -> i32 {
+    let c = line.coords(phase >> 15, table.frames as u32);
+    let index = (phase >> (32 - table.frame_log2 as u32)) as usize;
+    let x0 = read(c.f0, index) as i32;
+    if c.blend == 0 || c.f0 == c.f1 {
+        return x0;
+    }
+    let x1 = read(c.f1, index) as i32;
+    x0 + (((x1 - x0) as i64 * c.blend as i64) >> 16) as i32
 }
 
 /// How far back through the table a coordinate is: U1.16 of the way from the first frame to the
@@ -343,7 +357,7 @@ mod tests {
     }
 
     fn line(pos_frames: f64, shift_frames: f64, edge: Edge) -> Line {
-        Line { pos: (pos_frames * 65536.0) as u32, shift: (shift_frames * 64.0) as i32, edge }
+        Line { pos: (pos_frames * 65536.0) as i32, shift: (shift_frames * 64.0) as i32, edge }
     }
 
     #[test]
@@ -353,7 +367,7 @@ mod tests {
         let mut ys = vec![0; YS];
         let mut s = Surface::new(&mut ys);
         s.build(&table(5), 8, &read);
-        let cases: [(Edge, u32, i32, [i32; 16]); 5] = [
+        let cases: [(Edge, i32, i32, [i32; 16]); 5] = [
             (Edge::Clamp, 98304, 0, [-500, -452, -404, -356, -308, -260, -212, -164, -116, -68, -20, 28, 76, 124, 172, 220]),
             (Edge::Clamp, 32768, 144, [-1500, -1312, -1123, -935, -746, -557, -369, -180, 9, 197, 386, 574, 763, 952, 1140, 1329]),
             (Edge::Clamp, 196608, 512, [1000, 1548, 2096, 2144, 2192, 2240, 2288, 2336, 2384, 2432, 2480, 2528, 2576, 2624, 2672, 2720]),
@@ -367,6 +381,38 @@ mod tests {
                 assert_eq!(got, *w, "{edge:?} pos {pos} shift {shift} at vertex {}", n * 8);
             }
         }
+    }
+
+    #[test]
+    fn a_line_past_the_tables_ends_goes_by_the_edge_rule() {
+        // 150% of a table of 5 frames is 6 frames.
+        let at = |edge| Line::from_monitor(3 << 11, 0, edge, 5).coords(0, 5);
+        assert_eq!(at(Edge::Clamp), Coords { f0: 4, f1: 4, blend: 0 });
+        assert_eq!(at(Edge::Wrap), Coords { f0: 1, f1: 2, blend: 0 });
+        assert_eq!(at(Edge::Mirror), Coords { f0: 1, f1: 2, blend: 0xFFFF });
+        // And -25% is a frame before the first.
+        let at = |edge| Line::from_monitor(-(1 << 10), 0, edge, 5).coords(0, 5);
+        assert_eq!(at(Edge::Clamp), Coords { f0: 0, f1: 0, blend: 0 });
+        assert_eq!(at(Edge::Wrap), Coords { f0: 4, f1: 0, blend: 0 });
+        assert_eq!(at(Edge::Mirror), Coords { f0: 0, f1: 1, blend: 0xFFFF });
+    }
+
+    #[test]
+    fn the_monitor_reads_as_the_gateware_says() {
+        let l = Line::from_monitor(1 << 12, -(3 << 4), Edge::Wrap, 33);
+        assert_eq!(l.pos, 32 << 16, "all of the table: its last frame");
+        assert_eq!(l.shift, -(3 << 6));
+        assert_eq!(Line::from_monitor(i16::MIN, 0, Edge::Wrap, 1024).pos, -8184 << 16, "the furthest, and it fits");
+    }
+
+    #[test]
+    fn value_on_blends_as_the_line_says() {
+        let read = |f: u32, i: usize| (f as i32 * 1000 + i as i32) as i16;
+        let t = Table { offset: 0, frame_log2: 8, frames: 5 };
+        let l = Line { pos: 2 << 16 | 0x8000, shift: 0, edge: Edge::Clamp };
+        assert_eq!(value_on(&l, &t, 3 << 24, &read), 2500 + 3);
+        let l = Line { pos: 2 << 16, shift: 0, edge: Edge::Clamp };
+        assert_eq!(value_on(&l, &t, 3 << 24, &read), 2003);
     }
 
     #[test]

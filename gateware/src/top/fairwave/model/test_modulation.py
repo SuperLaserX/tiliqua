@@ -8,6 +8,7 @@ import pytest
 from . import modulation as mod
 from .modulation import (ATTACK, DECAY, DELAY, ENV1, FULL, HOLD, IDLE, LFO1, LOOP_FREE, LOOP_GATED, LOOP_OFF, ONE,
                          RELEASE, SUSTAIN, VOLT, Modulation, shape)
+from .wavescan import Layer
 
 
 def rate(samples):
@@ -347,9 +348,107 @@ def test_tilt_and_position_clamp_at_the_register_limits():
     m.write(0x36, -(1 << 24))
     m.acc = list(m.base)
     m.finish()
-    assert m.pos == [1023 << 16, 0]
+    assert m.pos == [(((1 << 17) - 1) * 1023) << 2, -(1 << 17) * 1023 << 2], "8 tables each way"
     assert m.shift[0] == (((1 << 17) - 1) * 1023) >> 10 < 1 << 17
     assert m.shift[1] == (-(1 << 17) * 1023) >> 10
+
+
+def test_position_goes_past_the_table_for_the_edge_rule_to_deal_with():
+    m = Modulation()
+    m.frames_m1 = [4, 4]
+    m.write(0x31, ONE + ONE // 2)
+    m.write(0x35, -ONE // 4)
+    m.acc = list(m.base)
+    m.finish()
+    assert m.pos == [6 << 16, -(1 << 16)], "150% and -25% of a table's four spans"
+    assert m.pos_fraction == [(ONE + ONE // 2) >> 2, (-ONE // 4) >> 2]
+
+
+def test_an_lfo_can_take_position_past_the_ends():
+    m = Modulation()
+    m.frames_m1 = [4, 4]
+    m.write(0x31, ONE // 2)
+    m.write(0x20, mod.LFO1 << 18 | mod.POS << 21 | 13422 * 2)       # 200%, of a source at 5 V
+    m.lfos[0].words = [1 << 28, mod.SQUARE << 16, FULL]
+    m.step([0, 0, 0, 0])
+    assert m.pos[0] >> 16 == 10, "50% + 200% of four spans"
+
+
+def test_cross_depth_is_a_destination_and_stays_in_18_bits():
+    m = Modulation()
+    m.write(0x30 + mod.CROSS, 50000)
+    m.write(0x20, mod.LFO1 << 18 | mod.CROSS << 21 | 8192)          # half a source
+    m.lfos[0].words = [1 << 28, mod.SQUARE << 16, FULL]
+    m.step([0, 0, 0, 0])
+    assert m.depth == 50000 + FULL // 2
+    m.write(0x30 + mod.CROSS, 1 << 20)
+    m.step([0, 0, 0, 0])
+    assert m.depth == (1 << 17) - 1
+    m.write(0x30 + mod.CROSS, -(1 << 20))
+    m.step([0, 0, 0, 0])
+    assert m.depth == 0
+
+
+def test_the_routing_word_says_how_one_layer_modulates_the_other():
+    m = Modulation()
+    m.write(0x30 + mod.CROSS, 1234)
+    m.step([0, 0, 0, 0])
+    m.routing(0b1010 << 22)
+    c = m.cross()
+    assert (c.ring, c.pm, c.lock, c.modulator, c.depth) == (0, 1, 0, 1, 1234)
+    m.routing(0b0101 << 22)
+    c = m.cross()
+    assert (c.ring, c.pm, c.lock, c.modulator) == (1, 0, 1, 0)
+
+
+def grain_model():
+    m = Modulation()
+    m.frames_m1 = [15, 15]
+    m.ctrl(0, 2 << 4)                       # osc 1 restarts on LFO 2
+    m.lfos[1].words = [(1 << 32) // 8, 0, FULL]
+    m.write(0x31, ONE // 4)
+    return m
+
+
+def test_a_grain_restarts_the_layer_and_holds_its_position():
+    m = grain_model()
+    layers = [Layer(frames=16, phase=0x12345678), Layer(frames=16, phase=0x12345678)]
+    restarts = []
+    for s in range(32):
+        # What the position is moving to, mid-grain: only a new grain may take it up.
+        m.write(0x31, ONE // 4 + s * 100)
+        m.step([0, 0, 0, 0])
+        m.apply(layers)
+        if m.restart[0]:
+            restarts.append(s)
+            assert layers[0].phase == 0, "from the top of the cycle"
+            assert m.pos[0] == ((ONE // 4 + s * 100) >> 2) * 15 << 2
+        else:
+            assert layers[0].phase != 0
+        assert not m.restart[1], "the other is left alone"
+        layers[0].phase = (layers[0].phase + 1 << 20) & 0xFFFFFFFF
+    assert restarts == [7, 15, 23, 31], "once a cycle of the LFO"
+
+
+def test_with_no_grain_position_follows_every_sample():
+    m = Modulation()
+    m.frames_m1 = [15, 15]
+    for s in range(4):
+        m.write(0x31, s * 1000)
+        m.step([0, 0, 0, 0])
+        assert m.pos[0] == ((s * 1000) >> 2) * 15 << 2
+        assert not m.restart[0]
+
+
+def test_a_rising_gate_syncing_the_lfo_starts_a_grain():
+    m = grain_model()
+    m.lfos[1].words = [1 << 8, 1 << 21, FULL]       # slow, restarted by gate 2
+    m.step([0, 0, 0, 0])
+    assert not m.restart[0]
+    m.step([0, 0, 0, 9000])
+    assert m.restart[0]
+    m.step([0, 0, 0, 9000])
+    assert not m.restart[0]
 
 
 def test_level_is_unity_at_100_percent_and_stays_in_range():

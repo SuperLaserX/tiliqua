@@ -13,14 +13,18 @@ PSRAM, and the models play the same patch from the same inputs: any difference i
 somewhere along that path.
 
 Reading the tables back would hide a missing cache flush (model and engine would agree on
-stale memory), so they are first checked to really hold the frames, independently of either.
-The parameters are derived here from the rules in `cpu/src/modulation.rs` and `patch.rs`, not
-read from the firmware, so a mistake in its arithmetic shows too. `--patch` names what the
-simulation's encoder events did to the default patch: see PATCHES.
+stale memory), so they are first checked to really hold the frames, independently of either. Their
+band-limited levels are checked against the model's own making of them, where they were finished.
+The parameters are derived here from the rules in `cpu/src/modulation.rs`, `patch.rs` and
+`presets.rs`, not read from the firmware, so a mistake in its arithmetic shows too. `--patch` names
+what the simulation's encoder events did to the default patch: see PATCHES, and PRESETS for the factory
+bank's, which take these keys (with `keygap=600000`), for the first of them:
 
-The harness records the inputs each sample used and the phases and levels when it was offered
-(`trace.raw`), so the check starts from the state at a chosen moment: the first rising gate
-after the edits have landed. The CVs' smoothing is replayed from the very start.
+    enc=140000000:HLPRRRRRRRRPP
+
+The harness records the inputs each sample used and the state a model can't work out for itself
+when it was offered (`trace.raw`), so the check starts from the state at a chosen moment: the first
+rising gate after the edits have landed. The CVs' smoothing is replayed from the very start.
 """
 
 import argparse
@@ -35,65 +39,16 @@ sys.path.insert(0, str(HERE.parent))
 import numpy as np  # noqa: E402
 
 from model import modulation as mod  # noqa: E402
-from model.modulation import FULL, ONE, Modulation  # noqa: E402
-from model.wavescan import Layer, pack_frames, sample  # noqa: E402
+from model.modulation import Modulation  # noqa: E402
+from model.patchfile import (CLEAN, FM, PD, RAW, RING, STEPS, a_layer, configure, default_patch, env_words, lfo_words,  # noqa: E402
+                             parse, slot_word)
+from model.wavescan import CLAMP, MIRROR, WRAP, Layer, both, mip_rows, pack_frames  # noqa: E402
 
-FS = 48000
 DUMP_BASE = 0x800000
-RATIO = [65536, 71468, 77936, 84990, 92682, 101070, 110218, 120194]
 
 TRACE = np.dtype([
-    ("adc", "<u2", 4), ("phase", "<u4", 2), ("lfo_phase", "<u4", 3), ("env_level", "<u4", 2)])
-
-
-def time_samples(index):
-    if index == 0:
-        return 1
-    i = index - 1
-    return ((FS // 1000) * RATIO[i % 8] << (i // 8)) >> 16
-
-
-def segment_rate(samples):
-    return ((1 << 32) + samples - 1) // samples & 0xFFFFFFFF
-
-
-def rate_word(index):
-    base = (1 << 48) // 100 // FS
-    return (base * RATIO[index % 8] << (index // 8)) >> 32
-
-
-def curve_bits(curve):
-    return int(-curve * 256 / 100) & 0x3FF
-
-
-def env_words(gate, delay=0, attack=28, hold=0, decay=62, sustain=70, release=67, curves=(0, 50, 50), loop=0):
-    rate = lambda i: segment_rate(time_samples(i))  # noqa: E731
-    return [gate | loop << 2, rate(delay), rate(attack), rate(hold), rate(decay), sustain * ONE // 100,
-            rate(release), sum(curve_bits(c) << (10 * i) for i, c in enumerate(curves))]
-
-
-def lfo_words(rate, shape, unipolar=0, phase=0, level=100, sync=0):
-    return [rate_word(rate), phase * 65536 // 360 | shape << 16 | unipolar << 19 | sync << 20, FULL * level // 100]
-
-
-def slot_word(src, dest, percent):
-    scale = 67108864 if dest in (mod.PITCH, 4 + mod.PITCH) else 13421773
-    half = -50000 if percent < 0 else 50000
-    amount = int((percent * scale + half) / 100000)
-    return (amount & 0x3FFFF) | src << 18 | dest << 21
-
-
-def default_patch():
-    return {
-        "env": [env_words(1), env_words(2)],
-        "lfo": [lfo_words(53, mod.SINE), lfo_words(72, mod.TRI), lfo_words(37, mod.SQUARE)],
-        "slots": [slot_word(mod.CV1, mod.PITCH, 100), slot_word(mod.CV1, 4 + mod.PITCH, 100),
-                  slot_word(mod.CV2, mod.POS, 100), slot_word(mod.CV2, 4 + mod.POS, 100)],
-        "outs": [mod.OUT_L1, mod.OUT_L2, mod.OUT_ENV1, mod.OUT_ENV2],
-        "vca": [0, 0],
-        "balance": 500,
-    }
-
+    ("adc", "<u2", 4), ("phase", "<u4", 2), ("lfo_phase", "<u4", 3), ("env_level", "<u4", 2),
+    ("max_level", "<u2", 2), ("lfo_held", "<i4", 3), ("lfsr", "<u4"), ("pos", "<i4", 2)])
 
 def vca_and_loops(p):
     """Through the screens: envelope 1 closes both VCAs and loops while its gate is high, envelope
@@ -102,7 +57,7 @@ def vca_and_loops(p):
     so what plays after that is the patch as saved. (Without the spaces; with `keygap=600000`
     these take about 4.2 s to play.)
 
-        enc=<after boot>:HRRP P RRRRRRPRP RRPRRRP RRRRRP RP RRRRRRPRRP RRRRRRRP RP RRRRRPRP
+        enc=<after boot>:HRRRP P RRRRRRPRP RRPRRRP RRRRRP RP RRRRRRPRRP RRRRRRRP RP RRRRRPRP
                          HRP RRRRRRRRRRRRPRRRRRP RPRRRRRRP RPRRRRRP
                          HRRRP PP
                          HLLP RRRRRPLLLLLLLLLLLLLLLLLLLLP
@@ -119,7 +74,65 @@ def vca_and_loops(p):
     p["slots"].append(slot_word(mod.LFO1, 4 + mod.SHIFT, 2.5))
 
 
-PATCHES = {"default": lambda p: None, "vca_and_loops": vca_and_loops}
+# The tables made at boot, by number (`fw/src/tables.rs`).
+MORPH, PULSE, VOWELS, FM_BELL, HARMONICS, CRUSH, SWARM = 0, 1, 2, 3, 8, 9, 10
+V_OCT = [slot_word(mod.CV1, mod.PITCH, 100), slot_word(mod.CV1, 4 + mod.PITCH, 100)]
+HEAR_OSC2 = {"outs": [mod.OUT_MIX, mod.OUT_MIX, mod.OUT_ENV1, mod.OUT_ENV2], "balance": 1000}
+
+
+def preset(**kw):
+    def apply(p):
+        p["slots"] = list(V_OCT)
+        p.update(kw)
+        if "depth" in kw:
+            del p["depth_word"]
+    return apply
+
+
+# The factory bank, derived here from what `cpu/src/presets.rs` says each should be, in its own terms.
+PRESETS = [
+    preset(layers=[a_layer(table=VOWELS, edge=WRAP), a_layer(table=VOWELS, edge=MIRROR, semitones=-12)],
+           lfo=[lfo_words(40, mod.TRI, sync=1), lfo_words(72, mod.TRI), lfo_words(37, mod.SQUARE)],
+           slots=V_OCT + [slot_word(mod.LFO1, mod.POS, 150), slot_word(mod.LFO1, 4 + mod.POS, 150)],
+           outs=[mod.OUT_MIX, mod.OUT_L2, mod.OUT_ENV1, mod.OUT_ENV2]),
+    preset(layers=[a_layer(table=MORPH, position=0, semitones=19), a_layer(table=MORPH, position=0)],
+           cross=FM, depth=400, vca=[1, 2],
+           env=[env_words(1, attack=0, decay=62, sustain=0, release=62, curves=(0, 100, 100), loop=mod.LOOP_FREE),
+                env_words(1, attack=0, decay=86, sustain=0, release=86, curves=(0, 100, 100), loop=mod.LOOP_FREE)],
+           **HEAR_OSC2),
+    preset(layers=[a_layer(table=MORPH, position=0, semitones=7), a_layer(table=HARMONICS)],
+           cross=RING, depth=1000,
+           lfo=[lfo_words(46, mod.SINE, sync=1), lfo_words(72, mod.TRI), lfo_words(37, mod.SQUARE)],
+           slots=V_OCT + [slot_word(mod.LFO1, 4 + mod.POS, 50)],
+           **HEAR_OSC2),
+    preset(layers=[a_layer(table=PULSE, semitones=-24), a_layer(table=FM_BELL)],
+           cross=RING, depth=500, am=True,
+           lfo=[lfo_words(53, mod.SINE), lfo_words(72, mod.TRI, sync=2), lfo_words(37, mod.SQUARE)],
+           slots=V_OCT + [slot_word(mod.LFO2, mod.CROSS, 50, am=True), slot_word(mod.CV2, 4 + mod.POS, 100)],
+           **HEAR_OSC2),
+    preset(layers=[a_layer(table=MORPH, position=333), a_layer(table=MORPH, position=0)],
+           cross=PD, depth=80,
+           lfo=[lfo_words(32, mod.SINE, unipolar=1, sync=1), lfo_words(72, mod.TRI), lfo_words(37, mod.SQUARE)],
+           slots=V_OCT + [slot_word(mod.LFO1, mod.CROSS, 40)],
+           **HEAR_OSC2),
+    preset(layers=[a_layer(table=VOWELS, level=0, grain=1, semitones=-12), a_layer(table=FM_BELL, level=0, grain=2)],
+           lfo=[lfo_words(64, mod.SINE, unipolar=1, phase=270), lfo_words(68, mod.SINE, unipolar=1, phase=270),
+                lfo_words(29, mod.TRI)],
+           slots=V_OCT + [slot_word(mod.LFO1, mod.LEVEL, 100), slot_word(mod.LFO2, 4 + mod.LEVEL, 100),
+                          slot_word(mod.LFO3, mod.POS, 40), slot_word(mod.LFO3, 4 + mod.POS, -30),
+                          slot_word(mod.CV2, mod.POS, 50), slot_word(mod.CV2, 4 + mod.POS, 50)],
+           outs=[mod.OUT_MIX, mod.OUT_MIX, mod.OUT_ENV1, mod.OUT_ENV2]),
+    preset(layers=[a_layer(table=SWARM, edge=MIRROR), a_layer(table=SWARM, edge=MIRROR, semitones=7)],
+           lfo=[lfo_words(53, mod.SINE), lfo_words(72, mod.TRI), lfo_words(37, mod.SINE)],
+           slots=V_OCT + [slot_word(mod.LFO3, mod.SHIFT, 50), slot_word(mod.LFO3, 4 + mod.SHIFT, -50)]),
+    preset(layers=[a_layer(table=CRUSH, read=RAW, position=0), a_layer(table=PULSE, read=STEPS, semitones=-12, position=0)],
+           env=[env_words(1, attack=44, decay=44, sustain=0, release=28, curves=(0, 0, 0), loop=mod.LOOP_FREE),
+                env_words(2)],
+           slots=V_OCT + [slot_word(mod.ENV1, mod.POS, 100), slot_word(mod.ENV1, 4 + mod.POS, 100)]),
+]
+
+PATCHES = {"default": lambda p: None, "vca_and_loops": vca_and_loops} | {
+    f"preset{i + 1}": apply for i, apply in enumerate(PRESETS)}
 
 
 def parse_tables(uart):
@@ -137,6 +150,7 @@ def main():
     parser.add_argument("out")
     parser.add_argument("--patch", default="default", choices=PATCHES)
     parser.add_argument("--osc1", help="oscillator 1 plays this table, one loaded from the drive")
+    parser.add_argument("--patch-file", help="what plays is this patch file, loaded from the drive through the Browser")
     parser.add_argument("--settled", type=int, default=0,
                         help="start no earlier than this sample: when the encoder's edits are done")
     args = parser.parse_args()
@@ -151,13 +165,27 @@ def main():
     print(f"{n} audio frames; tables: {tables}")
     assert len(tables) >= 2, "the firmware should have logged two tables"
 
+    patch = default_patch()
+    PATCHES[args.patch](patch)
+    wanted = [None, None]
+    if args.patch_file:
+        f = parse(Path(args.patch_file).read_bytes())
+        assert f.skipped == 0, f"line {f.first_skipped} of {args.patch_file}"
+        patch = f.patch
+        # As the firmware names a table: built in by its own name, else its file's first letters.
+        wanted = [Path(t).stem.upper() if t else None for t in f.tables]
+        print(f"{f.name}: tables {f.tables}")
+
     ok = True
     mem = {}
     layers = []
-    chosen = tables[:2]
-    if args.osc1:
-        chosen[0] = next(t for t in tables if t[0] == args.osc1)
-    for name, frames, length, offset in chosen:
+    for i, spec in enumerate(patch["layers"]):
+        chosen = tables[spec["table"]]
+        if i == 0 and args.osc1:
+            chosen = next(t for t in tables if t[0] == args.osc1)
+        if wanted[i]:
+            chosen = [t for t in tables if t[0].replace(" ", "") == wanted[i].replace(" ", "")][-1]
+        name, frames, length, offset = chosen
         start = (offset - DUMP_BASE) // 2
         body = psram[start:start + frames * length]
         # Every frame must really have reached PSRAM: a dirty cache leaves zeros.
@@ -168,26 +196,26 @@ def main():
             ok = False
         rows = [body[f * length:(f + 1) * length].tolist() for f in range(frames)]
         mem |= pack_frames(rows, base_word=offset // 4)
-        layers.append(Layer(table_base=offset // 256, frame_log2=int(math.log2(length)), frames=frames))
 
-    patch = default_patch()
-    PATCHES[args.patch](patch)
+        # The levels, if the firmware finished them: the model makes them too, and they must agree.
+        logged = re.search(rf"levels: table \d+ at {hex(offset)}\b", uart)
+        if logged:
+            made = psram[start + frames * length:start + 2 * frames * length]
+            want = np.array(mip_rows(rows), dtype=np.int16).reshape(-1)
+            differ = int(np.count_nonzero(made != want))
+            print(f"{name}: levels finished, {differ} of {len(want)} samples differ from the model's")
+            if differ:
+                print(f"  FAIL: first at {int(np.nonzero(made != want)[0][0])}")
+                ok = False
+            mem |= pack_frames([made[f * length:(f + 1) * length].tolist() for f in range(frames)],
+                               base_word=offset // 4 + frames * length // 2)
+        else:
+            print(f"{name}: its levels weren't finished in this run")
+        layers.append(Layer(table_base=offset // 256, frame_log2=int(math.log2(length)), frames=frames,
+                            edge=spec["edge"], stepped=int(spec["read"] >= STEPS), raw=int(spec["read"] == RAW)))
 
     m = Modulation()
-    for i, w in enumerate(patch["env"][0] + patch["env"][1]):
-        m.write(i, w)
-    for k, words in enumerate(patch["lfo"]):
-        for w, value in enumerate(words):
-            m.write(0x10 + k * 4 + w, value)
-    for i, word in enumerate(patch["slots"]):
-        m.write(0x20 + i, word)
-    # The default layers: half way through, no tilt, full level, a table each.
-    for at in (0, 4):
-        m.write(0x30 + at + mod.POS, 500 * ONE // 1000)
-        m.write(0x30 + at + mod.LEVEL, ONE)
-    m.write(0x30 + mod.BALANCE, patch["balance"] * ONE // 1000)
-    m.routing(sum(s << (4 * i) for i, s in enumerate(patch["outs"])) | patch["vca"][0] << 16 | patch["vca"][1] << 18)
-    m.frames_m1 = [layers[0].frames - 1, layers[1].frames - 1]
+    configure(m, patch, layers)
 
     adc = s16(trace["adc"])
 
@@ -212,6 +240,10 @@ def main():
             print(f"envelope {e + 1} runs free of gate 1: compared only after its own first rise")
     for k, lfo in enumerate(m.lfos):
         lfo.phase = int(trace["lfo_phase"][n0 - 1][k])
+        lfo.held = int(trace["lfo_held"][n0 - 1][k])
+    m.lfsr = int(trace["lfsr"][n0 - 1])
+    for i in range(2):
+        m.pos[i] = int(trace["pos"][n0 - 1][i])
     phases = trace["phase"]
 
     # A free envelope with no rising gate yet has an unknown state: its output is checked once
@@ -220,21 +252,42 @@ def main():
     rises2 = np.nonzero(gate2[1:] & ~gate2[:-1])[0] + 1
     rises2 = rises2[rises2 >= n0]
     known_from = {0: n0, 1: int(rises2[0]) if len(rises2) else n0}
-    if patch["env"][1][0] >> 2 & 3 != mod.LOOP_FREE:
+    if patch["env"][1][0] >> 2 & 3 != mod.LOOP_FREE or patch["env"][1][0] & 1:
         known_from[1] = n0
 
     fails = [0, 0, 0, 0]
     first = [None] * 4
+    levels_seen = [set(), set()]
+    switches = []
     for layer, phase in zip(layers, phases[n0]):
         layer.phase = int(phase)
     for i in range(n0, n):
-        if i == known_from[1]:
+        if i == known_from[1] and i != n0:
             # (a free envelope's level until now was unknown here; it restarts from it)
             m.envs[1].level = int(trace["env_level"][i - 1][1])
+        for k, layer in enumerate(layers):
+            layer.max_level = int(trace["max_level"][i][k])
         m.step(adc[i].tolist())
         m.apply(layers)
-        l1, l2 = sample(layers[0], mem), sample(layers[1], mem)
+        for k, layer in enumerate(layers):
+            levels_seen[k].add(layer.max_level)
+        l1, l2 = both(layers, mem, m.cross())
         want = m.mix(l1, l2)
+        # A table's levels come on when the firmware writes its register, and the trace gives the value
+        # as this sample was offered. If that write landed while the sample was being worked out, it
+        # was worked out with the old value: at that one sample either is right, and no other.
+        before = trace["max_level"][i - 1]
+        if (before != trace["max_level"][i]).any():
+            if list(audio[i]) != want:
+                for k, layer in enumerate(layers):
+                    layer.max_level = int(before[k])
+                l1, l2 = both(layers, mem, m.cross())
+                want = m.mix(l1, l2)
+                for k, layer in enumerate(layers):
+                    layer.max_level = int(trace["max_level"][i][k])
+                switches.append((i, "before the write"))
+            else:
+                switches.append((i, "after the write"))
         for c in range(4):
             sel = patch["outs"][c]
             if sel == mod.OUT_ENV2 and i < known_from[1]:
@@ -245,8 +298,11 @@ def main():
                     first[c] = (i, int(audio[i][c]), want[c])
         for layer in layers:
             layer.phase = (layer.phase + layer.inc) & 0xFFFFFFFF
+    print(f"levels available through the run: osc 1 {sorted(levels_seen[0])}, osc 2 {sorted(levels_seen[1])}")
+    for at, when in switches:
+        print(f"levels came on at sample {at}, worked out {when}")
     for c in range(4):
-        name = ["out 1", "out 2", "env out 1", "env out 2"][c]
+        name = ["out 0", "out 1", "out 2", "out 3"][c]
         if fails[c]:
             print(f"{name}: FAIL, {fails[c]} samples differ; first at {first[c][0]}: "
                   f"audio {first[c][1]}, models {first[c][2]}")
