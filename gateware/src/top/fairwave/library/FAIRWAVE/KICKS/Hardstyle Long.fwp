@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = HARDSTYLE LONG
+ABOUT = A LONGER, TONAL TAIL. GATE 1
+
+# The tail is what carries the melody in hardstyle: CV 1 plays it, half a second at a time.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -27
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/HARD.WAV
+TUNE = -27
+POS = 55%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 680 MS
+SUSTAIN = 0%
+RELEASE = 680 MS
+D CURVE = 15
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 30 MS
+SUSTAIN = 0%
+RELEASE = 30 MS
+D CURVE = 75
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 62%
+ENV 2 > PITCH 2 = 62%
+ENV 1 > POS 2 = 36%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 82%

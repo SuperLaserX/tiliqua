@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = NERVOUS MUCH
+ABOUT = SFX FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Nervous Much by Peter Schwartz: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is the other half of its 2 unison voices.
+# Not carried over: modulation processors, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Arcade Dream Pad, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/FC/C7D3F05F.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -8
+POS = 19.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/FC/C7D3F05F.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 8
+POS = 19.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 466.667 MS
+DECAY = 60.000 S
+SUSTAIN = 23%
+RELEASE = 2.740 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 4.041 S
+DECAY = 15.940 S
+SUSTAIN = 22%
+RELEASE = 4.384 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 32.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 100%
+ENV 2 > POS 1 = 60.5%
+ENV 2 > POS 2 = 60.5%
+CV 1 > POS 1 = -33%
+CV 1 > POS 2 = -33%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

@@ -1,0 +1,44 @@
+FAIRWAVE PATCH 1
+NAME  = GRAIN DRIFT
+ABOUT = VOWELS, ON THEIR OWN. BY ITSELF
+
+# The built-in table of vowels in two streams half a cycle apart, the place wandering slowly: a voice that never settles
+# on a word. No gate or CV needed, CV 1 tunes it.
+[OSC 1]
+TABLE = VOWELS
+TUNE = -12
+POS = 30%
+GRAIN = LFO 1
+
+[OSC 2]
+TABLE = VOWELS
+TUNE = -12
+FINE = 7
+POS = 30%
+GRAIN = LFO 1 B
+
+[LFO 1]
+RATE = 2.7 HZ
+SHAPE = SAW UP
+
+[LFO 2]
+RATE = 0.09 HZ
+SHAPE = TRI
+
+[LFO 3]
+RATE = 3.1 HZ
+SHAPE = RANDOM
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > POS 1 = 30%
+LFO 2 > POS 2 = 30%
+LFO 3 > POS 1 = 7%
+LFO 3 > POS 2 = -7%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

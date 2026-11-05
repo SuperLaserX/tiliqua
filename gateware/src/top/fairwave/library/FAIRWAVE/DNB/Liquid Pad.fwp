@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = LIQUID PAD
+ABOUT = WARM CHORDS OVER BREAKS. GATE 1
+
+# A warm minor seventh, open, with a slow chorus: liquid drum and bass's pad.
+[OSC 1]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 8
+POS = 28%
+
+[OSC 2]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 20
+POS = 28%
+
+[ENV 1]
+ATTACK = 800 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 1.6 S
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.8 HZ
+SHAPE = SINE
+LEVEL = 20%
+
+[LFO 2]
+RATE = 0.12 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > PITCH 1 = 0.5%
+LFO 1 > PITCH 2 = -0.5%
+LFO 2 > POS 1 = 12%
+LFO 2 > POS 2 = 12%
+CV 2 > POS 1 = 30%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

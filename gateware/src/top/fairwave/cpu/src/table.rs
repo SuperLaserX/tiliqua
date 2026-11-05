@@ -168,6 +168,21 @@ mod tests {
     }
 
     #[test]
+    fn any_two_of_the_longest_recordings_an_import_makes_fit_beside_the_built_in_tables() {
+        // What the firmware's pool is, less a simulation's patches at the top of it.
+        let mut p = Pool::new(0x80_0000, 0x70_0000 - 0x1_0000);
+        p.alloc(11, 31).unwrap();
+        p.alloc(8, 16).unwrap();
+        for spec in &crate::wavetables::SET {
+            p.alloc(spec.frame_log2, spec.frames).unwrap();
+        }
+        // `MAX_RECORDING` in `tools/import_modwave.py`, in frames of 1024, and one over for lining up a loop.
+        let frames = 760_000u32.div_ceil(1024) as u16 + 1;
+        assert!(p.alloc(10, frames).is_some());
+        assert!(p.alloc(10, frames).is_some());
+    }
+
+    #[test]
     fn nothing_past_the_register_reach() {
         let mut p = Pool::new(0x100_0000, 1 << 24);
         assert_eq!(p.alloc(8, 1), None);

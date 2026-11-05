@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = PD SLOW BEND
+ABOUT = A PAD THAT BENDS OVER. GATE 1
+
+# A pad of saws, read at a phase a talking table bends, slowly: the formants turn without quite becoming words.
+[OSC 1]
+TABLE = TABLES/TALK.WAV
+TUNE = 0
+POS = 50%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -12
+POS = 62%
+
+[ENV 1]
+ATTACK = 900 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 1.8 S
+VCA = OSC 2
+
+[LFO 2]
+RATE = 0.13 HZ
+SHAPE = TRI
+
+[LFO 3]
+RATE = 0.07 HZ
+SHAPE = SINE
+
+[CROSS MOD]
+MODE = PD
+FROM = OSC 1
+DEPTH = 4%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > POS 1 = 45%
+LFO 3 > X DEPTH = 3%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

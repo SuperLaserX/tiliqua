@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = PD RESO
+ABOUT = THE CZ'S RESONANCE. GATE 1, CV 1
+
+# The built-in table CZ RESO as carrier, an envelope moving its resonant peak, and a sine bending it a little as well.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[OSC 2]
+TABLE = CZ RESO
+TUNE = -24
+POS = 15%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 400 MS
+SUSTAIN = 50%
+RELEASE = 100 MS
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 240 MS
+SUSTAIN = 0%
+RELEASE = 100 MS
+D CURVE = 55
+
+[CROSS MOD]
+MODE = PD
+FROM = OSC 1
+DEPTH = 3%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 2 = 60%
+ENV 2 > X DEPTH = 5%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

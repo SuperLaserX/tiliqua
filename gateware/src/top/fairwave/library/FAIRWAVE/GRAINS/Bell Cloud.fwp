@@ -1,0 +1,38 @@
+FAIRWAVE PATCH 1
+NAME  = BELL CLOUD
+ABOUT = GRAINS OF A BELL TABLE. BY ITSELF
+
+# The built-in FM bell table, grains picked at random across it and all of them short: a shimmering cloud.
+[OSC 1]
+TABLE = FM BELL
+TUNE = 0
+FINE = -4
+POS = 40%
+GRAIN = LFO 1
+
+[OSC 2]
+TABLE = FM BELL
+TUNE = 12
+FINE = 4
+POS = 40%
+GRAIN = LFO 1 B
+
+[LFO 1]
+RATE = 8.2 HZ
+SHAPE = SAW UP
+
+[LFO 3]
+RATE = 13 HZ
+SHAPE = RANDOM
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 3 > POS 1 = 22%
+LFO 3 > POS 2 = -22%
+CV 2 > POS 1 = 40%
+CV 2 > POS 2 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

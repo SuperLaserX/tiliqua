@@ -1,0 +1,59 @@
+FAIRWAVE PATCH 1
+NAME  = GLASS ORCH HIT
+ABOUT = SFX FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Glass Orch Hit by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Hit: Orch 3.
+# Oscillator 2 is A's 2, the sample Hit: Orch 5.
+# Not carried over: 2 unison voices, modulation processors, the noise generator.
+# Its effects, which FairWave hasn't got: Glass Orch Hit, Stereo Chorus, Use Your Words.
+[OSC 1]
+TABLE = MODWAVE/T/A6/A493D535.WAV
+READ = SAMPLE
+TUNE = -3
+FINE = -46
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/C0/7EC25A2C.WAV
+READ = SAMPLE
+TUNE = 3
+FINE = -23
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 1.991 S
+SUSTAIN = 28%
+RELEASE = 954.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 0.0%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 48.2%

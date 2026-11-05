@@ -1,0 +1,67 @@
+FAIRWAVE PATCH 1
+NAME  = REZZY MOVER
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Rezzy Mover by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along morph.
+# Not carried over: 2 unison voices, an LFO past the three here, controllers, random and Kaoss Physics, modulation processors, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Changing Patterns, Mindful Motion, Rezzy Mover.
+[OSC 1]
+TABLE = MODWAVE/T/B0/17EA726A.WAV
+READ = CLEAN
+TUNE = 0
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/D7/36A040AC.WAV
+READ = CLEAN
+TUNE = 12
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 32.925 S
+DECAY = 90.000 S
+SUSTAIN = 100%
+RELEASE = 3.633 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 3.323 S
+DECAY = 39.473 S
+SUSTAIN = 100%
+RELEASE = 4.956 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 3.905 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 2.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > POS 2 = 50%
+LFO 1 > POS 1 = 35%
+ENV 2 > POS 1 = -28%
+CV 1 > POS 1 = -25.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 49.5%

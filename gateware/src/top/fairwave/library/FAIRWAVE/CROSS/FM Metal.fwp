@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = FM METAL
+ABOUT = 1:1.41, A STRUCK SHEET. GATE 1
+
+# A ratio that never lines up: everything it makes is out of tune with everything else. Short and deep.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 6
+FINE = -6
+POS = 0%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = 0
+POS = 0%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 680 MS
+SUSTAIN = 0%
+RELEASE = 400 MS
+D CURVE = 65
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 300 MS
+SUSTAIN = 0%
+RELEASE = 300 MS
+D CURVE = 75
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 4%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > X DEPTH = 40%
+CV 2 > PITCH 1 = 20%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

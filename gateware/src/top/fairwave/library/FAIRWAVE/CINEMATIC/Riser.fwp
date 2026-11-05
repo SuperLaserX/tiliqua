@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = RISER
+ABOUT = UP FOR EIGHT SECONDS. HOLD GATE 1
+
+# Eight seconds up three octaves, the filter opening with it. Let go at the top. Layer it over anything.
+[OSC 1]
+TABLE = SWARM
+TUNE = -24
+POS = 30%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+FINE = 9
+POS = 20%
+
+[ENV 1]
+ATTACK = 8 S
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 600 MS
+A CURVE = -40
+R CURVE = 30
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > PITCH 1 = 60%
+ENV 1 > PITCH 2 = 60%
+ENV 1 > POS 1 = 50%
+ENV 1 > POS 2 = 70%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

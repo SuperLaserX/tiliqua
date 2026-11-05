@@ -1,0 +1,67 @@
+FAIRWAVE PATCH 1
+NAME  = FRANFARE
+ABOUT = BRASS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Franfare by Francis Preve: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Brs: Brass Ensemble 5 mf.
+# Oscillator 2 is A's 2, the sample Brs: French Horns mf.
+# Not carried over: controllers, random and Kaoss Physics, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Franfare, Sine2Pad I.
+[OSC 1]
+TABLE = MODWAVE/T/E5/0014341D.WAV
+READ = SAMPLE
+TUNE = -5
+FINE = 25
+POS = 0.0%
+EDGE = WRAP
+LOOP = 37.2%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/1B/1198FE49.WAV
+READ = SAMPLE
+TUNE = -30
+FINE = 15
+POS = 0.0%
+EDGE = WRAP
+LOOP = 40.3%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 74.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 50.0%
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > X DEPTH = 17%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 46.8%

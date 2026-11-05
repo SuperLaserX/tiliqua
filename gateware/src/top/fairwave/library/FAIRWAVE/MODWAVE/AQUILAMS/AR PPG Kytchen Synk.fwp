@@ -1,0 +1,62 @@
+FAIRWAVE PATCH 1
+NAME  = AR PPG KYTCHEN S
+ABOUT = LEAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AR PPG Kytchen Synk by Aquila Rift: AquilaMSPPG.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along morph.
+# Not carried over: 2 unison voices, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 1000ms, Space Vibe, Step Chill Perc.
+[OSC 1]
+TABLE = MODWAVE/T/68/CF5636DF.WAV
+READ = CLEAN
+TUNE = -36
+FINE = 6
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/DA/6A6D948D.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -6
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 160.000 MS
+SUSTAIN = 61%
+RELEASE = 326.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 11.333 S
+SUSTAIN = 50%
+RELEASE = 56.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.195 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+LFO 1 > POS 2 = 50%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 47.0%

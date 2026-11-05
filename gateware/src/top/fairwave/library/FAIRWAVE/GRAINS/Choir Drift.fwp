@@ -1,0 +1,54 @@
+FAIRWAVE PATCH 1
+NAME  = CHOIR DRIFT
+ABOUT = VOICES, TURNING SLOWLY. GATE 1
+
+# Grains of a choir an octave apart, the upper stream quieter for being half of the mix: a held vowel
+# turning into the next one and back.
+[OSC 1]
+TABLE = SAMPLES/WOMEN.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = 27
+POS = 42%
+EDGE = WRAP
+GRAIN = LFO 1
+LOOP = 16.7%
+
+[OSC 2]
+TABLE = SAMPLES/WOMEN.WAV
+READ = SAMPLE
+TUNE = -6
+FINE = 27
+POS = 42%
+EDGE = WRAP
+GRAIN = LFO 1 B
+LOOP = 16.7%
+
+[LFO 1]
+RATE = 3.9 HZ
+SHAPE = SAW UP
+
+[ENV 1]
+ATTACK = 2 S
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 3.5 S
+VCA = BOTH
+
+[LFO 2]
+RATE = 0.04 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+LFO 2 > POS 1 = 34%
+LFO 2 > POS 2 = 34%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+LEVEL 1 = 100%
+LEVEL 2 = 100%

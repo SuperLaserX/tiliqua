@@ -1,0 +1,53 @@
+FAIRWAVE PATCH 1
+NAME  = SCATTER BRASS
+ABOUT = A SECTION IN PIECES. GATE 1
+
+# Fast grains of a brass section, thrown about by a random LFO: every player at a different moment.
+[OSC 1]
+TABLE = SAMPLES/BRASS.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = 24
+POS = 45%
+EDGE = WRAP
+GRAIN = LFO 1
+LOOP = 68.5%
+
+[OSC 2]
+TABLE = SAMPLES/BRASS.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = 24
+POS = 45%
+EDGE = WRAP
+GRAIN = LFO 1 B
+LOOP = 68.5%
+
+[LFO 1]
+RATE = 18.0 HZ
+SHAPE = SAW UP
+
+[ENV 1]
+ATTACK = 60 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 500 MS
+VCA = BOTH
+
+[LFO 3]
+RATE = 17 HZ
+SHAPE = RANDOM
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+LFO 3 > POS 1 = 24%
+LFO 3 > POS 2 = -24%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+LEVEL 1 = 100%
+LEVEL 2 = 100%

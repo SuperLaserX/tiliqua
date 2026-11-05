@@ -1,0 +1,60 @@
+FAIRWAVE PATCH 1
+NAME  = AA ST EVOLUTION
+ABOUT = STRINGS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA ST Evolution by Anton Anru: Korg Modwave - Ambient Worlds Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics.
+[OSC 1]
+TABLE = MODWAVE/T/91/8E59C7DE.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -3
+POS = 37.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/DA/31C2D3C2.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 6
+POS = 37.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 1.489 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 1.959 S
+A CURVE = 0
+D CURVE = 60
+R CURVE = 10
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 3.923 S
+DECAY = 3.792 S
+SUSTAIN = 0%
+RELEASE = 2.568 S
+A CURVE = 0
+D CURVE = 10
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -63%
+CV 1 > POS 2 = -63%
+CV 2 > LEVEL 1 = -31%
+CV 2 > LEVEL 2 = -31%
+CV 2 > POS 1 = 24.5%
+CV 2 > POS 2 = 24.5%
+ENV 2 > POS 1 = 13%
+ENV 2 > POS 2 = 13%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 40.4%

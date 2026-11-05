@@ -1,0 +1,45 @@
+FAIRWAVE PATCH 1
+NAME  = AA PD SERENE
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA PD Serene by Anton Anru: Korg Modwave - Ambient Worlds Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along morph.
+# Oscillator 2 is the other half of its 3 unison voices.
+# Not carried over: controllers, random and Kaoss Physics.
+# Its effects, which FairWave hasn't got: bpm Mband Bounce, bpm Tape 3-Head.
+[OSC 1]
+TABLE = MODWAVE/T/E0/2529FD87.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -2
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/E0/2529FD87.WAV
+READ = CLEAN
+TUNE = -24
+FINE = 2
+POS = 0.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.947 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.855 S
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 100%
+CV 2 > POS 2 = 100%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = ZAP ROLL
+ABOUT = A ZAP ON EACH NOTE, 145 BPM
+
+# Each sixteenth starts an octave and a half up and falls into place: a roll with a laser in it.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 8%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 5%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 64 MS
+SUSTAIN = 0%
+RELEASE = 38 MS
+D CURVE = 50
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > PITCH 1 = 30%
+ENV 1 > POS 1 = 34%
+CV 2 > PITCH 1 = 10%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 30%

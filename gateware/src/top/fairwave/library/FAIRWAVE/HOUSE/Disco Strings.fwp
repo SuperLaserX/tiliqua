@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = DISCO STRINGS
+ABOUT = A STRING SYNTH, SOLINA WAY. GATE 1
+
+# Pulse waves and a slow chorus made of an LFO on each one's pitch: the 70s string machine.
+[OSC 1]
+TABLE = TABLES/PWM.WAV
+TUNE = 0
+FINE = -6
+POS = 15%
+LEVEL = 65%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = 0
+FINE = 6
+POS = 72%
+LEVEL = 75%
+
+[ENV 1]
+ATTACK = 140 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 500 MS
+VCA = BOTH
+
+[LFO 1]
+RATE = 4.7 HZ
+SHAPE = TRI
+LEVEL = 24%
+
+[LFO 2]
+RATE = 0.33 HZ
+SHAPE = SINE
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > PITCH 1 = 0.5%
+LFO 1 > PITCH 2 = -0.5%
+LFO 2 > POS 1 = 12%
+CV 2 > POS 2 = -30%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

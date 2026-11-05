@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = VFX PAN FLUTE SI
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's VFX Pan Flute Sin by Ian dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Wnd_Guru: Pan Flute 3.
+# Not carried over: performance modulators, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: For Mankind Choir, Strings In Memory, bpm Pattern 3.
+[OSC 1]
+TABLE = MODWAVE/T/88/645933D9.WAV
+READ = SAMPLE
+TUNE = -48
+FINE = 15
+POS = 0.0%
+EDGE = WRAP
+LOOP = 51.5%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/88/645933D9.WAV
+TUNE = -48
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 1.200 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 973.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

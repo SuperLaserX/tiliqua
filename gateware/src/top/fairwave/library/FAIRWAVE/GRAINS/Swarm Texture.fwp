@@ -1,0 +1,44 @@
+FAIRWAVE PATCH 1
+NAME  = SWARM TEXTURE
+ABOUT = FAST GRAINS OF SAWS. BY ITSELF
+
+# Fast grains of the swarm table, moving: past 20 a second the grains turn into a tone of their own, a buzz over the
+# note. It's all in LFO 1's rate: slow that down to hear them come apart again.
+[OSC 1]
+TABLE = SWARM
+TUNE = -12
+POS = 50%
+GRAIN = LFO 1
+
+[OSC 2]
+TABLE = SWARM
+TUNE = -12
+FINE = 11
+POS = 50%
+GRAIN = LFO 1 B
+
+[LFO 1]
+RATE = 27 HZ
+SHAPE = SAW UP
+
+[LFO 2]
+RATE = 0.16 HZ
+SHAPE = TRI
+
+[LFO 3]
+RATE = 31 HZ
+SHAPE = RANDOM
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > POS 1 = 28%
+LFO 2 > POS 2 = 28%
+LFO 3 > POS 1 = 10%
+LFO 3 > POS 2 = -10%
+CV 2 > POS 1 = 40%
+CV 2 > POS 2 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

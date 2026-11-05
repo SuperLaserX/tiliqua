@@ -53,6 +53,9 @@ pub enum ReadStyle {
     Stepped = 2,
     /// One frame and one sample: stairs.
     Raw = 3,
+    /// The frames end to end, as one recording: pitch is playback speed, as on a Fairlight. `POS` is where
+    /// it starts when restarted, `SHIFT` where it loops back to, and `EDGE` whether it loops at all.
+    Sample = 4,
 }
 
 impl ReadStyle {
@@ -62,15 +65,17 @@ impl ReadStyle {
             ReadStyle::Plain => "PLAIN",
             ReadStyle::Stepped => "STEPS",
             ReadStyle::Raw => "RAW",
+            ReadStyle::Sample => "SAMPLE",
         }
     }
 
     pub const fn next(self, by: i32) -> ReadStyle {
-        match (self as i32 + by).rem_euclid(4) {
+        match (self as i32 + by).rem_euclid(5) {
             0 => ReadStyle::Clean,
             1 => ReadStyle::Plain,
             2 => ReadStyle::Stepped,
-            _ => ReadStyle::Raw,
+            3 => ReadStyle::Raw,
+            _ => ReadStyle::Sample,
         }
     }
 
@@ -81,14 +86,28 @@ impl ReadStyle {
     const fn raw(self) -> bool {
         matches!(self, ReadStyle::Raw)
     }
+
+    const fn sample(self) -> bool {
+        matches!(self, ReadStyle::Sample)
+    }
 }
 
-/// The name of a grain's clock: the LFO whose cycles restart a layer.
+/// How many settings the `GRAIN` row has.
+pub const GRAIN_CHOICES: u8 = 10;
+
+/// The name of a `GRAIN` setting. An LFO's cycles restart a layer and fade it in and out: a grain. `B` is half
+/// a cycle on, so two streams on one LFO add up to a steady level. `SYNC` restarts with no fade.
 pub const fn grain_name(grain: u8) -> &'static str {
     match grain {
         1 => "LFO 1",
         2 => "LFO 2",
         3 => "LFO 3",
+        4 => "LFO 1 B",
+        5 => "LFO 2 B",
+        6 => "LFO 3 B",
+        7 => "SYNC 1",
+        8 => "SYNC 2",
+        9 => "SYNC 3",
         _ => "OFF",
     }
 }
@@ -108,7 +127,7 @@ pub struct Layer {
     /// In percent.
     pub level: u8,
     pub read: ReadStyle,
-    /// 1 to 3: this LFO's cycles restart the layer and it takes up its position only then. 0: off.
+    /// A setting of `grain_name`. On, its LFO's cycles restart the layer, and it takes up its position only then.
     pub grain: u8,
 }
 
@@ -193,10 +212,17 @@ impl Layer {
         }
     }
 
-    /// The `ctrl` register: edge (2), stepped, raw, grain (2).
+    /// The `ctrl` register: edge (2), stepped, raw, the grain's LFO (2), no fade, half a cycle on, sample.
     const fn ctrl(&self) -> u32 {
+        let (clock, kind) = match self.grain {
+            0 => (0, 0),
+            g => ((g as u32 - 1) % 3 + 1, (g as u32 - 1) / 3),
+        };
         self.edge as u32 | (self.read.stepped() as u32) << 2 | (self.read.raw() as u32) << 3
-            | (self.grain as u32 & 3) << 4
+            | clock << 4
+            | ((kind == 2) as u32) << 6
+            | ((kind == 1) as u32) << 7
+            | (self.read.sample() as u32) << 8
     }
 }
 
@@ -343,7 +369,7 @@ pub fn adjust(layer: &mut Layer, row: Row, detents: i32, tables: u8) {
         }
         Row::Edge => layer.edge = layer.edge.next(detents),
         Row::Read => layer.read = layer.read.next(detents),
-        Row::Grain => layer.grain = (layer.grain as i32 + detents).rem_euclid(4) as u8,
+        Row::Grain => layer.grain = (layer.grain as i32 + detents).rem_euclid(GRAIN_CHOICES as i32) as u8,
         Row::Level => {
             layer.level = (layer.level as i32 + detents).clamp(0, 100) as u8;
         }
@@ -632,13 +658,21 @@ mod tests {
         adjust(&mut l, Row::Read, 1, 2);
         assert_eq!(l.read, ReadStyle::Plain);
         adjust(&mut l, Row::Read, -2, 2);
+        assert_eq!(l.read, ReadStyle::Sample);
+        adjust(&mut l, Row::Read, -1, 2);
         assert_eq!(l.read, ReadStyle::Raw);
         adjust(&mut l, Row::Grain, 1, 2);
         assert_eq!(grain_name(l.grain), "LFO 1");
-        adjust(&mut l, Row::Grain, -2, 2);
-        assert_eq!(grain_name(l.grain), "LFO 3");
+        adjust(&mut l, Row::Grain, 3, 2);
+        assert_eq!(grain_name(l.grain), "LFO 1 B");
+        adjust(&mut l, Row::Grain, 3, 2);
+        assert_eq!(grain_name(l.grain), "SYNC 1");
+        adjust(&mut l, Row::Grain, 2, 2);
+        assert_eq!(grain_name(l.grain), "SYNC 3");
         adjust(&mut l, Row::Grain, 1, 2);
         assert_eq!(grain_name(l.grain), "OFF");
+        adjust(&mut l, Row::Grain, -1, 2);
+        assert_eq!(grain_name(l.grain), "SYNC 3");
     }
 
     #[test]

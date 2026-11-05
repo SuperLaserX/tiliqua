@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = NOISE KICK
+ABOUT = PERCUSSION FROM MODWAVE. GATE 1, C
+
+# From the modwave's Noise Kick by TO: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Drm: Kick Hip 2.
+# On a modwave oscillator 1 plays at one pitch on every key. It does at 0 V here, and CV 1 tunes it.
+# Not carried over: the noise generator.
+# Its effects, which FairWave hasn't got: Noise Kick.
+[OSC 1]
+TABLE = MODWAVE/T/64/9F671210.WAV
+READ = SAMPLE
+TUNE = -13
+FINE = 21
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/64/9F671210.WAV
+TUNE = -13
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 548.000 MS
+SUSTAIN = 0%
+RELEASE = 472.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

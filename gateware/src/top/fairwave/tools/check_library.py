@@ -15,7 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from model import modulation as mod  # noqa: E402
-from model.patchfile import RAW, STEPS, parse, read_wav  # noqa: E402
+from model.patchfile import RAW, SAMPLE, STEPS, grain_bits, parse, read_wav  # noqa: E402
 
 LIBRARY = HERE.parent / "library" / "FAIRWAVE"
 BUILT_IN = {"MORPH 2048", "PULSE 256", "VOWELS", "FM BELL", "CZ RESO", "HARD SYNC", "WAVEFOLD", "PLUCK", "HARMONICS",
@@ -26,7 +26,11 @@ ONE = 1 << 16
 def words_of(f):
     """What the firmware's dump lists, in its order."""
     p = f.patch
-    ctrl = [s["edge"] | int(s["read"] >= STEPS) << 2 | int(s["read"] == RAW) << 3 | s["grain"] << 4 for s in p["layers"]]
+    ctrl = []
+    for s in p["layers"]:
+        grain, hard, half = grain_bits(s["grain"])
+        ctrl.append(s["edge"] | int(s["read"] in (STEPS, RAW)) << 2 | int(s["read"] == RAW) << 3 | grain << 4 | hard << 6
+                    | half << 7 | int(s["read"] == SAMPLE) << 8)
     env = [w for e in p["env"] for w in e]
     lfo = [w for k in p["lfo"] for w in k]
     slots = p["slots"] + [0] * (12 - len(p["slots"]))
@@ -71,8 +75,9 @@ def main():
         for table in f.tables:
             if not table or table in BUILT_IN:
                 continue
-            frames = read_wav((LIBRARY / table).read_bytes())
-            if len(frames) != 64 or len(frames[0]) != 1024:
+            beside = files[path].parent / table
+            frames = read_wav((beside if beside.exists() else LIBRARY / table).read_bytes())
+            if len(frames) > 1024 or len(frames[0]) not in (256, 512, 1024, 2048):
                 print(f"{path}: {table} is {len(frames)} x {len(frames[0])}")
                 bad += 1
     missing = set(files) - seen

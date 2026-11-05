@@ -1,0 +1,41 @@
+FAIRWAVE PATCH 1
+NAME  = 808 BOOM
+ABOUT = A LONG SINE. GATE 1, CV 1 TUNES
+
+# A sine with a little saturation and a short drop, then more than a second of tail. CV 1 plays it as a bass.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -31
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -31
+POS = 7%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 1.4 S
+SUSTAIN = 0%
+RELEASE = 1.4 S
+D CURVE = 35
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 50 MS
+SUSTAIN = 0%
+RELEASE = 50 MS
+D CURVE = 75
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 22%
+ENV 2 > PITCH 2 = 22%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

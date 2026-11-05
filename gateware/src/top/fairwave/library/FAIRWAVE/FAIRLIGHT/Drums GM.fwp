@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = CMI DRUMS GM
+ABOUT = DRUMS. CV 2 PICKS THE HIT
+
+# Fairlight CMI: Fairlight Drums GM. 38 recordings.
+# Plays once from the start on each gate: GRAIN = SYNC 1, with LFO 1 as slow as it goes.
+# POS or CV 2 picks the hit, 5 V reaching the last. They're at: 0% SNREL, 3.6% SNARE, 4.5% SNARER, 6.4% SDAR, 7.1% BIKODRUM, 10.6% BDRUM1 and so on
+[OSC 1]
+TABLE = WAVES/DRUMSGM.WAV
+READ = SAMPLE
+TUNE = -38
+FINE = 21
+POS = 0%
+EDGE = CLAMP
+GRAIN = SYNC 1
+
+[OSC 2]
+TABLE = WAVES/DRUMSGM.WAV
+READ = SAMPLE
+TUNE = -38
+FINE = 28
+POS = 0%
+EDGE = CLAMP
+GRAIN = SYNC 1
+
+[ENV 1]
+ATTACK = 0
+DECAY = 420 MS
+SUSTAIN = 0%
+RELEASE = 60 MS
+D CURVE = 40
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 100%
+CV 2 > POS 2 = 100%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50%

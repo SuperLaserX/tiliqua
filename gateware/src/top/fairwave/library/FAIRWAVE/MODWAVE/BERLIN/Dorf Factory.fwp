@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = DORF FACTORY
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Dorf Factory by Ian Dixon: ID-Berlin.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: layer B oscillator 1, layer B oscillator 2, performance modulators, the noise generator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Modern Compressor, Orange Phase V2 100, Stereo Chorus, Stereo Image 1, The Beast, bpm Pattern 1.
+[OSC 1]
+TABLE = MODWAVE/T/53/D312F784.WAV
+READ = CLEAN
+TUNE = -24
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/A0/294A33B8.WAV
+READ = CLEAN
+TUNE = 0
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 3.299 S
+SUSTAIN = 0%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 376.000 MS
+SUSTAIN = 1%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.019 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 37.5%
+LFO 1 > POS 2 = 37.5%
+ENV 2 > POS 1 = 32%
+ENV 2 > POS 2 = 32%
+CV 1 > POS 1 = -21%
+CV 1 > POS 2 = -21%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 31.9%

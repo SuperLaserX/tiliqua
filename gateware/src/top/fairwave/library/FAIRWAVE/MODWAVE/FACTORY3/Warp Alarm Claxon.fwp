@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = WARP ALARM CLAXO
+ABOUT = SFX FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Warp Alarm Claxon by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is A's 2, its wavetable.
+# Not carried over: controllers, random and Kaoss Physics, performance modulators, the noise generator.
+# Its effects, which FairWave hasn't got: Stereo Chorus, Warp Alarm Claxon.
+[OSC 1]
+TABLE = MODWAVE/T/8A/10DC5D55.WAV
+READ = CLEAN
+TUNE = 2
+FINE = 2
+POS = 93.3%
+
+[OSC 2]
+TABLE = MODWAVE/T/63/D16B5CB6.WAV
+READ = CLEAN
+TUNE = 0
+POS = 64.8%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 9.333 MS
+SUSTAIN = 59%
+RELEASE = 53.333 MS
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 67.6%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100.0%

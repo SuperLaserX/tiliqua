@@ -1,0 +1,66 @@
+FAIRWAVE PATCH 1
+NAME  = THE WATERS
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's The Waters by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample FX: Stream.
+# Oscillator 2 is A's 2, the sample Syn: Atmos 2.
+# Not carried over: controllers, random and Kaoss Physics, modulation processors, performance modulators, the mod wheel's scaling of a modulation, the sub oscillator.
+# Its effects, which FairWave hasn't got: Bass Preserver, Stereo Chorus, bpm Dancing Bands.
+[OSC 1]
+TABLE = MODWAVE/T/14/702D8146.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = 20
+POS = 0.0%
+EDGE = WRAP
+LOOP = 31%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/3C/3A8425B2.WAV
+READ = SAMPLE
+TUNE = -30
+FINE = 24
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 256.000 MS
+SUSTAIN = 57%
+RELEASE = 2.443 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 20
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 29.2%
+
+[LFO 1]
+RATE = 0.250 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > X DEPTH = 46.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 77.1%

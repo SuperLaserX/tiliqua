@@ -1,0 +1,59 @@
+FAIRWAVE PATCH 1
+NAME  = AA KS BLIZZARD
+ABOUT = PIANO/KEYS FROM MODWAVE. GATE 1, C
+
+# From the modwave's AA KS Blizzard by Anton Anru: Korg Modwave - Antmospheric Keys Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, the noise generator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Li'l Pirate Hollow, Vintage Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/E8/B650259E.WAV
+READ = CLEAN
+TUNE = 0
+FINE = -5
+POS = 38.9%
+
+[OSC 2]
+TABLE = MODWAVE/T/53/6E4438A1.WAV
+READ = CLEAN
+TUNE = 12
+FINE = 4
+POS = 38.9%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 3.300 S
+SUSTAIN = 10%
+RELEASE = 1.497 S
+A CURVE = 30
+D CURVE = 100
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 3.253 S
+SUSTAIN = 12%
+RELEASE = 1.544 S
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -65%
+CV 1 > POS 2 = -65%
+CV 2 > POS 1 = 24%
+CV 2 > POS 2 = 24%
+ENV 2 > POS 1 = 22%
+ENV 2 > POS 2 = 22%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 35.6%

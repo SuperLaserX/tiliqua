@@ -1,0 +1,69 @@
+FAIRWAVE PATCH 1
+NAME  = GLOWING EYES
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Glowing Eyes by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: an LFO past the three here, controllers, random and Kaoss Physics, modulation processors, performance modulators.
+# Its effects, which FairWave hasn't got: Glowing Eyes, bpm Mband Bounce.
+[OSC 1]
+TABLE = MODWAVE/T/E9/948121A6.WAV
+READ = CLEAN
+TUNE = 7
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/89/CC40EC36.WAV
+READ = CLEAN
+TUNE = 0
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 724.000 MS
+DECAY = 74.521 S
+SUSTAIN = 36%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 352.000 MS
+SUSTAIN = 50%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 8.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 8.000 HZ
+SHAPE = SQUARE
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+LFO 2 > LEVEL 1 = 74%
+LFO 2 > LEVEL 2 = 74%
+LFO 1 > POS 2 = 39%
+ENV 2 > POS 2 = 19%
+CV 1 > POS 2 = -18.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 60.7%

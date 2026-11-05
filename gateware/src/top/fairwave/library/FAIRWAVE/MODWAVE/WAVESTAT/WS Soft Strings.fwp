@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = WS SOFT STRINGS
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's WS Soft Strings by Ian Dixon: idwavestation.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Syn_WS: SynString.
+# Oscillator 2 is A's 2, the sample Syn_WS: PWM String.
+# Not carried over: 2 unison voices.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/B0/D8024248.WAV
+READ = SAMPLE
+TUNE = -37
+FINE = 26
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/BD/F2A2A55C.WAV
+READ = SAMPLE
+TUNE = -41
+FINE = -34
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0.7%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 960.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

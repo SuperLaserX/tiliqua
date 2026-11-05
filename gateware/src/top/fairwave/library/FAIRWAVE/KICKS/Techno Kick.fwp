@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = TECHNO KICK
+ABOUT = SHORT AND DRIVEN. GATE 1
+
+# Saturated while it's loud and clean as it dies: the envelope on POS is a drive control. Short enough for a fast track.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -28
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -28
+POS = 10%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 210 MS
+SUSTAIN = 0%
+RELEASE = 210 MS
+D CURVE = 50
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 26 MS
+SUSTAIN = 0%
+RELEASE = 26 MS
+D CURVE = 75
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 48%
+ENV 2 > PITCH 2 = 48%
+ENV 1 > POS 2 = 48%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

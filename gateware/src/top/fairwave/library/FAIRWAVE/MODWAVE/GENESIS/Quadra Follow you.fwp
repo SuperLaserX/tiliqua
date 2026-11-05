@@ -1,0 +1,59 @@
+FAIRWAVE PATCH 1
+NAME  = QUADRA FOLLOW YO
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Quadra Follow you by Ian Dixon: Genesis.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, Vintage Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/5E/86537ABC.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -5
+POS = 46.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/DA/02E6A72B.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 8
+POS = 46.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 936.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 90.000 S
+SUSTAIN = 100%
+RELEASE = 3.733 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -76.5%
+CV 1 > POS 2 = -76.5%
+ENV 2 > POS 1 = 8%
+ENV 2 > POS 2 = 8%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

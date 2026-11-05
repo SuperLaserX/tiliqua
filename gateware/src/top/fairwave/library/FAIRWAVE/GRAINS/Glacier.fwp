@@ -1,0 +1,52 @@
+FAIRWAVE PATCH 1
+NAME  = GLACIER
+ABOUT = A LONG WINDING PAD. HOLD GATE 1
+
+# Two streams of grains half a cycle apart, each a fifth of a second of a recording, and the place they read
+# from wandering slowly up and back through it: 40 seconds round. The pitch stays where CV 1 says.
+[OSC 1]
+TABLE = SAMPLES/ATMOLONG.WAV
+READ = SAMPLE
+TUNE = -6
+FINE = 18
+POS = 48%
+EDGE = WRAP
+GRAIN = LFO 1
+
+[OSC 2]
+TABLE = SAMPLES/ATMOLONG.WAV
+READ = SAMPLE
+TUNE = -6
+FINE = 18
+POS = 48%
+EDGE = WRAP
+GRAIN = LFO 1 B
+
+[LFO 1]
+RATE = 5.1 HZ
+SHAPE = SAW UP
+
+[ENV 1]
+ATTACK = 2.5 S
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 4 S
+VCA = BOTH
+
+[LFO 2]
+RATE = 0.025 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+LFO 2 > POS 1 = 42%
+LFO 2 > POS 2 = 42%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+LEVEL 1 = 100%
+LEVEL 2 = 100%

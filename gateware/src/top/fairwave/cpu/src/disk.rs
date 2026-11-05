@@ -725,9 +725,22 @@ mod tests {
         for table in ["SAWLP.WAV", "SUBDRV.WAV", "REESE.WAV"] {
             b.add_file(tables, table, &read(&std::format!("TABLES/{table}")), false, 0);
         }
+        let samples = b.add_dir(home, "SAMPLES");
+        for table in ["HOOVBRI.WAV", "HOOVDRK.WAV", "VOX.WAV"] {
+            b.add_file(samples, table, &read(&std::format!("SAMPLES/{table}")), false, 0);
+        }
+        let fairlight = b.add_dir(home, "FAIRLIGHT");
+        let waves = b.add_dir(fairlight, "WAVES");
+        for table in ["BASS.WAV", "SUSSTRIN.WAV"] {
+            b.add_file(waves, table, &read(&std::format!("FAIRLIGHT/WAVES/{table}")), false, 0);
+        }
+        for file in ["Bass.fwp", "Sus Strings.fwp"] {
+            b.add_file(fairlight, file, &read(&std::format!("FAIRLIGHT/{file}")), false, 0);
+        }
         for (folder, files) in [
             ("BASS", ["FM Solid.fwp"].as_slice()),
-            ("CLASSIC", ["Grain Drift.fwp"].as_slice()),
+            ("CLASSIC", ["Hoover.fwp"].as_slice()),
+            ("GRAINS", ["Freeze.fwp", "Grain Drift.fwp"].as_slice()),
             ("REESE", ["Reese Classic.fwp", "Reese Over Sub.fwp"].as_slice()),
             ("ROLLING", ["Psy Snap.fwp"].as_slice()),
         ] {
@@ -753,13 +766,49 @@ mod tests {
         assert!(home.is_dir);
         let mut out = [Entry::EMPTY; 16];
         let n = list(&mut view, &buffers, home.short(), &mut out).unwrap();
-        assert_eq!(names(&out[..n]), ["..", "BASS", "CLASSIC", "REESE", "ROLLING", "TABLES", "ZTEST"]);
+        // (this builder writes no long name for a name in capitals, so a nine-letter folder shows its short one)
+        assert_eq!(names(&out[..n]), ["..", "BASS", "CLASSIC", "FAIRL~65", "GRAINS", "REESE", "ROLLING", "SAMPLES", "TABLES", "ZTEST"]);
         let n = list(&mut view, &buffers, "FAIRWAVE/ROLLING", &mut out).unwrap();
         assert_eq!(names(&out[..n]), ["..", "Psy Snap.fwp"]);
         assert!(out[1].is_patch());
         if let Ok(path) = std::env::var("FAIRWAVE_LIBRARY_DISK_OUT") {
             std::fs::write(path, image).unwrap();
         }
+    }
+
+    /// `FAIRWAVE_MODWAVE_DISK_OUT=disk.img FAIRWAVE_MODWAVE_PATCHES="BASSPACK/AA BS Dozer.fwp,..." cargo test
+    /// make_the_simulations_modwave_disk`: imported patches and the tables they name, as deep in a drive as
+    /// those go. `library/FAIRWAVE/MODWAVE` can be left out of a checkout, and then this has nothing to do.
+    #[test]
+    fn make_the_simulations_modwave_disk() {
+        let (Ok(patches), Ok(out)) = (std::env::var("FAIRWAVE_MODWAVE_PATCHES"), std::env::var("FAIRWAVE_MODWAVE_DISK_OUT")) else { return };
+        let library = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../library/FAIRWAVE");
+        let mut b = Builder::new(true);
+        let root = b.root();
+        let home = b.add_dir(root, "FAIRWAVE");
+        let modwave = b.add_dir(home, "MODWAVE");
+        let t = b.add_dir(modwave, "T");
+        let mut packs = std::collections::BTreeMap::new();
+        let mut shelves = std::collections::BTreeMap::new();
+        let mut tables = std::collections::BTreeSet::new();
+        for patch in patches.split(',') {
+            let (pack, file) = patch.split_once('/').unwrap();
+            let text = std::fs::read(library.join("MODWAVE").join(patch)).unwrap();
+            let pack = *packs.entry(pack.to_owned()).or_insert_with(|| b.add_dir(modwave, pack));
+            b.add_file(pack, file, &text, false, 0);
+            for line in std::str::from_utf8(&text).unwrap().lines() {
+                let Some(name) = line.strip_prefix("TABLE = ") else { continue };
+                if tables.insert(name.to_owned()) {
+                    let parts: std::vec::Vec<_> = name.split('/').collect();
+                    assert_eq!(parts[..2], ["MODWAVE", "T"]);
+                    let shelf = *shelves.entry(parts[2].to_owned()).or_insert_with(|| b.add_dir(t, parts[2]));
+                    b.add_file(shelf, parts[3], &std::fs::read(library.join(name)).unwrap(), false, 0);
+                }
+            }
+        }
+        let image = b.build();
+        assert!(image.len() < 0x30_0000, "{} bytes", image.len());
+        std::fs::write(out, image).unwrap();
     }
 
     #[test]
@@ -965,5 +1014,151 @@ mod tests {
         let mut out = [Entry::EMPTY; 2];
         let n = list(&mut disk, &buffers, "", &mut out).unwrap();
         assert_eq!(names(&out[..n]), ["Gr?n.wav"]);
+    }
+
+    /// `FAIRWAVE_DRIVE_IMAGE=drive.img cargo test --release a_whole_drive_reads -- --nocapture`: an image of a drive
+    /// as big as a real one, from `tools/make_drive_image.py`, the whole of `library/FAIRWAVE` on it as `FAIRWAVE/`.
+    /// Goes through it as a user would: every folder listed, every patch opened from where it lists, and every table it
+    /// names found as the firmware finds one and read, against the file it came from.
+    #[test]
+    fn a_whole_drive_reads() {
+        use crate::browser::{self, DrivePath};
+        use std::collections::BTreeSet;
+        use std::path::Path;
+        use std::string::{String as Text, ToString};
+
+        let Ok(image) = std::env::var("FAIRWAVE_DRIVE_IMAGE") else { return };
+        let library = Path::new(env!("CARGO_MANIFEST_DIR")).join("../library/FAIRWAVE");
+        let image: &'static [u8] = Vec::leak(std::fs::read(image).unwrap());
+        let start = u32::from_le_bytes(image[446 + 8..446 + 12].try_into().unwrap());
+        let blocks = u32::from_le_bytes(image[446 + 12..446 + 16].try_into().unwrap());
+        let mut whole = ImageDisk::new(image, start + blocks);
+        let buffers = buffers();
+        let lba = find_first_fat32_lba(&mut whole, buffers.windows[0]);
+        let mut disk = PartitionView::new(whole, lba);
+        let to = aligned(0x40_0000);
+        let mut entries = std::vec![Entry::EMPTY; MAX_ENTRIES];
+
+        let home = find(&mut disk, &buffers, HOME_FOLDER).unwrap();
+        let mut at = DrivePath::default();
+        assert!(at.enter(home.short(), home.name()));
+        let home = at.as_str().to_string();
+
+        let mut problems: Vec<Text> = Vec::new();
+        let mut read_ok: BTreeSet<Text> = BTreeSet::new();
+        let (mut folders, mut patches, mut tables) = (0, 0, 0);
+        let mut to_walk = std::vec![(at, library.clone())];
+        while let Some((folder, host)) = to_walk.pop() {
+            folders += 1;
+            let n = match list(&mut disk, &buffers, folder.as_str(), &mut entries) {
+                Ok(n) => n,
+                Err(e) => {
+                    problems.push(std::format!("{}: lists {e:?}", folder.as_str()));
+                    continue;
+                }
+            };
+            // Everything the Browser could open is there to open, as long as a folder isn't too long for it.
+            let there = std::fs::read_dir(&host).unwrap().map(|e| e.unwrap()).filter(|e| {
+                let name = e.file_name().to_string_lossy().to_lowercase();
+                e.path().is_dir() || name.ends_with(".wav") || name.ends_with(".fwp")
+            }).count();
+            if n != (there + 1).min(MAX_ENTRIES) {
+                problems.push(std::format!("{}: lists {n}, and has {there}", folder.as_str()));
+            }
+            for e in &entries[..n] {
+                if e.is_up() {
+                    continue;
+                }
+                if e.is_dir {
+                    let mut inside = folder.clone();
+                    if inside.enter(e.short(), e.name()) {
+                        let name = host_child(&host, e.name());
+                        to_walk.push((inside, name));
+                    } else {
+                        problems.push(std::format!("{}/{}: too deep", folder.as_str(), e.name()));
+                    }
+                    continue;
+                }
+                if !e.is_patch() {
+                    continue;
+                }
+                patches += 1;
+                let Some(path) = folder.of(e.short()) else {
+                    problems.push(std::format!("{}/{}: path too long", folder.as_str(), e.name()));
+                    continue;
+                };
+                let size = match read_file(&mut disk, &buffers, path.as_str(), to, CHUNK_BLOCKS) {
+                    Ok(size) => size,
+                    Err(err) => {
+                        problems.push(std::format!("{}: reads {err:?}", path.as_str()));
+                        continue;
+                    }
+                };
+                let mut text = std::vec![0u8; size];
+                to.read_into(0, &mut text);
+                let file = match crate::patchfile::parse(&text, 48000) {
+                    Ok(file) => file,
+                    Err(_) => {
+                        problems.push(std::format!("{}: doesn't parse", path.as_str()));
+                        continue;
+                    }
+                };
+                for name in file.tables.iter().map(|t| t.as_str()).filter(|t| t.to_lowercase().ends_with(".wav")) {
+                    // As `Shelf::locate`: beside the patch, then from our folder.
+                    let found = [folder.as_str(), home.as_str()].iter().find_map(|from| {
+                        let path = resolve(&mut disk, &buffers, from, name).ok()?;
+                        find(&mut disk, &buffers, path.as_str()).is_ok_and(|e| !e.is_dir).then_some(path)
+                    });
+                    let Some(found) = found else {
+                        problems.push(std::format!("{}: can't find {name}", path.as_str()));
+                        continue;
+                    };
+                    if crate::store::TableFile::new(found.as_str(), 0).is_none() {
+                        problems.push(std::format!("{}: {} doesn't fit a patch", path.as_str(), found.as_str()));
+                        continue;
+                    }
+                    tables += 1;
+                    if !read_ok.insert(found.as_str().to_string()) {
+                        continue;
+                    }
+                    let size = match read_file(&mut disk, &buffers, found.as_str(), to, CHUNK_BLOCKS) {
+                        Ok(size) => size,
+                        Err(err) => {
+                            problems.push(std::format!("{}: reads {err:?}", found.as_str()));
+                            continue;
+                        }
+                    };
+                    let mut got = std::vec![0u8; size];
+                    to.read_into(0, &mut got);
+                    let original = std::fs::read(library.join(name)).or_else(|_| std::fs::read(host.join(name))).unwrap();
+                    if got != original {
+                        let first = got.iter().zip(&original).position(|(a, b)| a != b);
+                        problems.push(std::format!("{}: {size} bytes, should be {}, first differs at {first:?}", found.as_str(), original.len()));
+                        continue;
+                    }
+                    match crate::wav::parse(&got) {
+                        Ok(w) => {
+                            if browser::shape_of(&w).is_none() {
+                                problems.push(std::format!("{}: shorter than a frame", found.as_str()));
+                            }
+                        }
+                        Err(_) => problems.push(std::format!("{}: not a WAV this reads", found.as_str())),
+                    }
+                }
+            }
+        }
+        std::println!("{folders} folders, {patches} patches, {tables} tables found ({} different), {} problems", read_ok.len(), problems.len());
+        for p in problems.iter().take(30) {
+            std::println!("  {p}");
+        }
+        assert!(problems.is_empty());
+    }
+
+    /// The folder on this computer that a folder's name on the drive came from.
+    fn host_child(host: &std::path::Path, shown: &str) -> std::path::PathBuf {
+        std::fs::read_dir(host).unwrap().map(|e| e.unwrap()).find(|e| {
+            let name = e.file_name().to_string_lossy().chars().take(NAME_BYTES).collect::<std::string::String>();
+            e.path().is_dir() && name.eq_ignore_ascii_case(shown)
+        }).unwrap().path()
     }
 }

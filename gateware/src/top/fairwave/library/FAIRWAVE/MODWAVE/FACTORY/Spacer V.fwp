@@ -1,0 +1,63 @@
+FAIRWAVE PATCH 1
+NAME  = SPACER V
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Spacer V by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Vox: Choir Whisper F.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: controllers, random and Kaoss Physics, layer B oscillator 1, layer B oscillator 2, the sub oscillator.
+# Its effects, which FairWave hasn't got: 16ths - 3,4,6, N'importe Noise, Spacer V Mellow, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/51/3DD2619A.WAV
+READ = SAMPLE
+TUNE = -17
+FINE = -38
+POS = 0.0%
+EDGE = WRAP
+LOOP = 22.6%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/5F/A43E2938.WAV
+READ = CLEAN
+TUNE = 0
+POS = 12.6%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 266.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 3.620 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 10.4%
+
+[LFO 1]
+RATE = 0.256 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 2 = 74.5%
+LFO 1 > LEVEL 2 = 30%
+CV 1 > POS 2 = -21%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100.0%

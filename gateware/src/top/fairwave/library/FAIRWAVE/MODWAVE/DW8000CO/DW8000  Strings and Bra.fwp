@@ -1,0 +1,63 @@
+FAIRWAVE PATCH 1
+NAME  = DW8000  STRINGS
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's DW8000  Strings and Bras by Ian Dixon: IDDW8000Colllection.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, a table made along cutoff.
+# Oscillator 2 is B's 2, a table made along cutoff.
+# Not carried over: layer A oscillator 1, layer A oscillator 2.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, Super Chorus, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/A3/F1C8D533.WAV
+READ = CLEAN
+TUNE = -12
+POS = 14.9%
+
+[OSC 2]
+TABLE = MODWAVE/T/A3/F1C8D533.WAV
+READ = CLEAN
+TUNE = -12
+POS = 14.9%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 28.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 453.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 89.333 MS
+DECAY = 22.667 S
+SUSTAIN = 0%
+RELEASE = 4.867 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 70.5%
+ENV 2 > POS 2 = 70.5%
+CV 1 > POS 1 = -25%
+CV 1 > POS 2 = -25%
+LFO 1 > PITCH 2 = 0.5%
+CV 2 > PITCH 1 = 0.5%
+CV 2 > PITCH 2 = 0.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

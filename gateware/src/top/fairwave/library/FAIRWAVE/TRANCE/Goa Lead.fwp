@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = GOA LEAD
+ABOUT = SQUELCH AND A SLOW SWEEP. GATE 1
+
+# Goa's: a resonant saw with a very slow LFO on the filter, so a held line turns into a riff by itself. A little FM.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 12
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/ACIDLP.WAV
+TUNE = 0
+POS = 30%
+
+[ENV 1]
+ATTACK = 3 MS
+DECAY = 300 MS
+SUSTAIN = 85%
+RELEASE = 200 MS
+VCA = OSC 2
+
+[LFO 2]
+RATE = 0.2 HZ
+SHAPE = TRI
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 2%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > POS 2 = 28%
+CV 2 > POS 2 = 30%
+CV 2 > X DEPTH = 5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

@@ -1,0 +1,62 @@
+FAIRWAVE PATCH 1
+NAME  = FLUTE FX 2.0
+ABOUT = WOODWIND FROM MODWAVE. GATE 1, CV 
+
+# From the modwave's Flute FX 2.0 by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, the sample Wnd: Nay.
+# Oscillator 2 is B's 2, the sample FX: Rainstick.
+# Not carried over: layer A oscillator 1, layer A oscillator 2, the mod wheel's scaling of a modulation, the sub oscillator.
+# Its effects, which FairWave hasn't got: 16ths - 3,4,6, Flute Mordent, Flutter Magic.
+[OSC 1]
+TABLE = MODWAVE/T/C8/CD7B7119.WAV
+READ = SAMPLE
+TUNE = -38
+FINE = 30
+POS = 0.0%
+EDGE = WRAP
+LOOP = 72.4%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/3A/695D2366.WAV
+READ = SAMPLE
+TUNE = -5
+FINE = 36
+POS = 0.0%
+EDGE = WRAP
+LOOP = 40.3%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 3.549 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 3.112 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 1]
+RATE = 0.375 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > PITCH 2 = 17%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 71.0%

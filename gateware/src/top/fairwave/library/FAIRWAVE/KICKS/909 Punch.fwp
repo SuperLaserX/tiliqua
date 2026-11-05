@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = 909 PUNCH
+ABOUT = PUNCHY, WITH A CLICK. GATE 1
+
+# Some saturation for the body, and osc 1, a saw on envelope 2's very short level, as the click of the beater.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = 12
+POS = 100%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -27
+POS = 24%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 300 MS
+SUSTAIN = 0%
+RELEASE = 300 MS
+D CURVE = 55
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 32 MS
+SUSTAIN = 0%
+RELEASE = 32 MS
+D CURVE = 75
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 42%
+ENV 2 > PITCH 2 = 42%
+ENV 1 > POS 2 = 14%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 84%

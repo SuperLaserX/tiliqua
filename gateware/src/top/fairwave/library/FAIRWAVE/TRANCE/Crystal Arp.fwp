@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = CRYSTAL ARP
+ABOUT = GLASS, FOR ARPEGGIOS. GATE 1, CV 1
+
+# Sparse high harmonics, a quick touch of FM for the tick, and the level gone in under half a second.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 12
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/GLASS.WAV
+TUNE = 12
+POS = 55%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 430 MS
+SUSTAIN = 0%
+RELEASE = 300 MS
+D CURVE = 60
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 60 MS
+SUSTAIN = 0%
+RELEASE = 40 MS
+D CURVE = 70
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 0%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > X DEPTH = 7%
+ENV 1 > POS 2 = 20%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

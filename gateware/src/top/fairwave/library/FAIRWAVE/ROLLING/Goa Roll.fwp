@@ -1,0 +1,35 @@
+FAIRWAVE PATCH 1
+NAME  = GOA ROLL
+ABOUT = ROUND AND WOODY, 138 BPM
+
+# Older psy: round, woody and warm, with the filter hardly moving. It wants a longer kick.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 10%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 2%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 68 MS
+SUSTAIN = 0%
+RELEASE = 40 MS
+D CURVE = 30
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 24%
+CV 2 > POS 1 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 25%

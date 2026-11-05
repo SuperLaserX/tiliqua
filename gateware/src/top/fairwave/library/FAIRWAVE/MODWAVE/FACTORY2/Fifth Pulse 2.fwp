@@ -1,0 +1,60 @@
+FAIRWAVE PATCH 1
+NAME  = FIFTH PULSE
+ABOUT = SEQ FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Fifth Pulse by YO: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 2, a table made along cutoff.
+# Oscillator 2 is the other half of its 2 unison voices.
+# Not carried over: the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Fifth Pulse, Stereo Chorus, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/AF/94A03CD2.WAV
+READ = CLEAN
+TUNE = -5
+FINE = -10
+POS = 39.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/AF/94A03CD2.WAV
+READ = CLEAN
+TUNE = -5
+FINE = -5
+POS = 39.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 344.000 MS
+SUSTAIN = 86%
+RELEASE = 577.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 46.667 MS
+DECAY = 312.000 MS
+SUSTAIN = 3%
+RELEASE = 1.000 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -65.5%
+CV 1 > POS 2 = -65.5%
+ENV 2 > LEVEL 1 = 47%
+ENV 2 > POS 1 = 22%
+ENV 2 > POS 2 = 22%
+CV 2 > POS 1 = -21%
+CV 2 > POS 2 = -21%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

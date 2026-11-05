@@ -1,0 +1,52 @@
+FAIRWAVE PATCH 1
+NAME  = WHAT THE
+ABOUT = THE ALPHA JUNO'S. GATE 1, CV 1
+
+# After the Roland Alpha Juno's factory patch "What The", from its published settings: a rendered loop of its DCO,
+# filter and chorus (see tools/make_rendered.py), one ear on each oscillator, each its own side of the chorus. Its
+# one envelope does three things here too: the level, and up two octaves on a pitch that starts from below and falls
+# back on release. 0 V is C3. Each gate restarts the sample, because its filter envelope and delayed LFO are in it.
+# An emulation, not a recording. The times are by ear: ATTACK and RELEASE are the swoop.
+[OSC 1]
+TABLE = SAMPLES/WHATL.WAV
+TUNE = -42
+FINE = 47
+POS = 0%
+READ = SAMPLE
+EDGE = WRAP
+LOOP = 47.5%
+GRAIN = SYNC 1
+
+[OSC 2]
+TABLE = SAMPLES/WHATR.WAV
+TUNE = -42
+FINE = 47
+POS = 0%
+READ = SAMPLE
+EDGE = WRAP
+LOOP = 47.5%
+GRAIN = SYNC 1
+
+[ENV 1]
+ATTACK = 210 MS
+DECAY = 100 MS
+SUSTAIN = 100%
+RELEASE = 230 MS
+A CURVE = 20
+R CURVE = 15
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > PITCH 1 = 40%
+ENV 1 > PITCH 2 = 40%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

@@ -1,0 +1,43 @@
+FAIRWAVE PATCH 1
+NAME  = FM SLOW PAD
+ABOUT = A DETUNED MODULATOR. GATE 1, CV 1
+
+# The modulator a few cents from an octave up, so its sidebands turn slowly against the carrier. LFO 2 moves the depth
+# more slowly still, on a slow attack. Long and calm.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 0
+FINE = 5
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -12
+POS = 10%
+
+[ENV 1]
+ATTACK = 1.4 S
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 2.4 S
+VCA = OSC 2
+
+[LFO 2]
+RATE = 0.11 HZ
+SHAPE = SINE
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 7%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > X DEPTH = 5%
+CV 2 > X DEPTH = 10%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

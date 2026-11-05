@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = DARKS & SPARKS B
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Darks & Sparks B by Peter Schwartz: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Str_Guru: Denali Cello.
+# Not carried over: performance modulators.
+# Its effects, which FairWave hasn't got: Inharmonic Twang.
+[OSC 1]
+TABLE = MODWAVE/T/75/2206C18A.WAV
+READ = SAMPLE
+TUNE = -30
+FINE = 25
+POS = 0.0%
+EDGE = WRAP
+LOOP = 35.1%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/75/2206C18A.WAV
+TUNE = -30
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.857 S
+DECAY = 14.993 S
+SUSTAIN = 0%
+RELEASE = 4.144 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

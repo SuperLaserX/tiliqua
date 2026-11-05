@@ -1,0 +1,77 @@
+FAIRWAVE PATCH 1
+NAME  = BAD BETA WOBBLE
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Bad Beta Wobble by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Piano: Acoustic Damper.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: controllers, random and Kaoss Physics, the mod wheel's scaling of a modulation, the sub oscillator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Bad Beta Wobble, Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/75/15CE13A1.WAV
+READ = SAMPLE
+TUNE = -5
+FINE = 18
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0.6%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/24/45D0324C.WAV
+READ = CLEAN
+TUNE = 31
+POS = 18.9%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 1.215 S
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 44.2%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 341.333 MS
+SUSTAIN = 0%
+RELEASE = 3.521 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 2 = 62.5%
+ENV 2 > X DEPTH = 57.5%
+CV 1 > POS 2 = 31.5%
+LFO 1 > PITCH 1 = 1%
+LFO 1 > PITCH 2 = 1%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100.0%

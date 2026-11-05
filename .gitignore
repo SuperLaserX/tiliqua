@@ -30,3 +30,5 @@ fp-info-cache
 #oss-cad-suite
 oss-cad-suite
 oss-cad-suite/*
+gateware/src/top/fairwave/ExampleTables
+gateware/src/top/fairwave/ExampleTables/*

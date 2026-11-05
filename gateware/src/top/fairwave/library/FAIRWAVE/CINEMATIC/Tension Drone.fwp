@@ -1,0 +1,41 @@
+FAIRWAVE PATCH 1
+NAME  = TENSION DRONE
+ABOUT = A MINOR SECOND, UNEASY. GATE 1
+
+# Two low tones a semitone apart, each moving by itself. It doesn't resolve. CV 2 opens it, slowly, if you dare.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 18%
+
+[OSC 2]
+TABLE = TABLES/REESE.WAV
+TUNE = -23
+POS = 25%
+
+[ENV 1]
+ATTACK = 2.5 S
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 3 S
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.07 HZ
+SHAPE = SINE
+
+[LFO 2]
+RATE = 0.11 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 14%
+LFO 2 > POS 2 = 20%
+CV 2 > POS 1 = 40%
+CV 2 > POS 2 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

@@ -6,7 +6,7 @@ from amaranth.sim import Simulator
 from model import modulation as mod
 from model import wavescan as osc
 from model.modulation import FULL, LOOP_FREE, ONE, Modulation
-from model.wavescan import MIRROR, WRAP, Layer
+from model.wavescan import CLAMP, MIRROR, WRAP, Layer
 
 from .peripheral import WaveScanPeripheral
 from .psram_model import PsramModel
@@ -32,7 +32,7 @@ def table_reg(frames=A_TABLE, frame_log2=FRAME_LOG2, base=0):
 
 
 def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, frames=(A_TABLE, A_TABLE),
-        edge=(0, 0), script=None, max_level=(0, 0), styles=(0, 0), grain=(0, 0)):
+        edge=(0, 0), script=None, max_level=(0, 0), styles=(0, 0), grain=(0, 0), ctrl_extra=(0, 0)):
     """Writes the registers while the DAC is stalled, then runs `n` samples and checks all four
     outputs against the models."""
     dut = WaveScanPeripheral()
@@ -44,7 +44,7 @@ def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, 
 
     m = Modulation()
     layers = [Layer(frame_log2=FRAME_LOG2, frames=frames[i], edge=edge[i], max_level=max_level[i],
-                    stepped=styles[i] & 1, raw=styles[i] >> 1) for i in range(2)]
+                    stepped=styles[i] & 1, raw=styles[i] >> 1 & 1, sample=styles[i] >> 2) for i in range(2)]
     # The sample stalled at the output was computed from the reset state: silent, at C4.
     m.step([0, 0, 0, 0])
     for i in range(2):
@@ -59,8 +59,8 @@ def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, 
             await ctx.tick()
         for i in range(2):
             await csr.write(ctx, f"l{i}_table", layers[i].table_reg())
-            await csr.write(ctx, f"l{i}_ctrl", layers[i].ctrl_reg(grain[i]))
-            m.ctrl(i, layers[i].ctrl_reg(grain[i]))
+            await csr.write(ctx, f"l{i}_ctrl", layers[i].ctrl_reg(grain[i]) | ctrl_extra[i])
+            m.ctrl(i, layers[i].ctrl_reg(grain[i]) | ctrl_extra[i])
             m.frames_m1[i] = frames[i] - 1
         await csr.write(ctx, "routing", routing)
         m.routing(routing)
@@ -89,7 +89,7 @@ def run(writes, mem, n, adc_of=lambda s: [0, 0, 0, 0], routing=ROUTING_DEFAULT, 
             got = [s16(ctx.get(dut.o.payload[ch].as_value())) for ch in range(4)]
             assert got == want, f"sample {s}: got {got}, models {want}"
             for layer in layers:
-                layer.phase = (layer.phase + layer.inc) & 0xFFFFFFFF
+                osc.advance(layer)
         if script:
             await script(ctx, csr, extra)
 
@@ -337,6 +337,23 @@ def test_a_grain_restarts_a_layer_through_the_registers():
               + [(0x30 + mod.LEVEL, 0), slot(0, mod.LFO1, mod.LEVEL, 13422), slot(1, mod.LFO2, 4 + mod.POS, 3000)])
     extra = run(writes, table_mem(), 30, grain=(1, 2), edge=(WRAP, WRAP))
     assert extra["model"].grain == [1, 2]
+
+
+def test_a_grain_fades_itself_through_the_registers():
+    writes = playing() + lfo_writes(0, r=(1 << 32) // 40)
+    run(writes, table_mem(), 60, grain=(1, 1), ctrl_extra=(0, 1 << 7))
+
+
+def test_a_hard_restart_through_the_registers():
+    writes = playing() + lfo_writes(0, r=(1 << 32) // 7)
+    run(writes, table_mem(), 30, grain=(1, 0), ctrl_extra=(1 << 6, 0))
+
+
+def test_a_sample_through_the_registers():
+    # Frames read end to end, a gate restarting it from its position through a slow LFO.
+    writes = playing(pos=ONE // 4) + [(0x30 + mod.PITCH, 2 << 16)] + lfo_writes(0, r=1 << 10, sync=1)
+    run(writes, table_mem(), 80, adc_of=lambda s: [0, 0, 8000 if s >= 12 else 0, 0], grain=(1, 0),
+        styles=(4, 4), edge=(WRAP, CLAMP), ctrl_extra=(1 << 6, 0))
 
 
 def test_grains_under_cross_modulation():

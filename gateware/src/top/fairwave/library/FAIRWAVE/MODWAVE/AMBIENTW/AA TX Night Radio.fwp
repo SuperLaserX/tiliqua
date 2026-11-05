@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = AA TX NIGHT RADI
+ABOUT = SOUNDSCAPE FROM MODWAVE. GATE 1, C
+
+# From the modwave's AA TX Night Radio by Anton Anru: Korg Modwave - Ambient Worlds Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is A's 2, its wavetable.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, the noise generator.
+[OSC 1]
+TABLE = MODWAVE/T/CD/F25F8EAF.WAV
+READ = CLEAN
+TUNE = -12
+POS = 100.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/20/63A44AB6.WAV
+READ = CLEAN
+TUNE = 7
+POS = 100.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.329 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 3.363 S
+A CURVE = 10
+D CURVE = 60
+R CURVE = 20
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = -73.5%
+CV 2 > POS 2 = -60%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 23.7%

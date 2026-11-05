@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = FOGHORN
+ABOUT = LOW, HOARSE AND SLOW. GATE 1, CV 1
+
+# A voice table at the bottom of the keyboard, with a slow slide up into each note. It's vowels that move, not a filter.
+[OSC 1]
+TABLE = TABLES/TALK.WAV
+TUNE = -24
+POS = 30%
+
+[OSC 2]
+TABLE = TABLES/REESE.WAV
+TUNE = -24
+POS = 50%
+
+[ENV 1]
+ATTACK = 30 MS
+DECAY = 400 MS
+SUSTAIN = 85%
+RELEASE = 160 MS
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 400 MS
+SUSTAIN = 0%
+RELEASE = 120 MS
+D CURVE = 30
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = -4%
+ENV 2 > PITCH 2 = -4%
+ENV 2 > POS 1 = 50%
+CV 2 > POS 2 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 40%

@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = LA 2049 WIND PAD
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's LA 2049 Wind Pad by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Syn: Texture Elly 1.
+# Not carried over: modulation processors, performance modulators, the sub oscillator.
+# Its effects, which FairWave hasn't got: AutoWobble Bass.
+[OSC 1]
+TABLE = MODWAVE/T/D8/05334141.WAV
+READ = SAMPLE
+TUNE = -43
+FINE = -19
+POS = 0.0%
+EDGE = WRAP
+LOOP = 19.2%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/D8/05334141.WAV
+TUNE = -43
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 3.140 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 4.107 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

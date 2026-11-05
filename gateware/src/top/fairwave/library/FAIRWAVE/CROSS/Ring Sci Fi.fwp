@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = RING SCI FI
+ABOUT = THE MODULATOR SWEEPS. GATE 1
+
+# A slow LFO takes the modulator up and down two octaves: the partials pass through each other, one going up and one
+# going down. The sound of a 1960s spaceship.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 0
+POS = 0%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = 0
+POS = 0%
+
+[ENV 1]
+ATTACK = 15 MS
+DECAY = 300 MS
+SUSTAIN = 90%
+RELEASE = 500 MS
+VCA = OSC 2
+
+[LFO 2]
+RATE = 0.8 HZ
+SHAPE = TRI
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 100%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > PITCH 1 = 20%
+CV 2 > PITCH 1 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

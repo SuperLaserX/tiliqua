@@ -1,0 +1,43 @@
+FAIRWAVE PATCH 1
+NAME  = PLANET AMBIENT
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Planet Ambient by Ian Dixon: ID-Berlin.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, its wavetable.
+# Oscillator 2 is B's 2, its wavetable.
+# Not carried over: layer A oscillator 2, performance modulators.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, Orange Phase V2 100, Stereo Chorus, Vox AC30TB, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/44/92D0C61E.WAV
+READ = CLEAN
+TUNE = 12
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/66/A0A21F35.WAV
+READ = CLEAN
+TUNE = -12
+POS = 10.4%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 653.333 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 1.539 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

@@ -1,0 +1,38 @@
+FAIRWAVE PATCH 1
+NAME  = RUMBLE BASS
+ABOUT = LOW, RANDOM, UNDER A KICK. GATE 1
+
+# A sub, with a swarm of saws low down rolling about on a random LFO: the rumble under a techno kick, as a note.
+[OSC 1]
+TABLE = SWARM
+TUNE = -36
+POS = 20%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -36
+POS = 16%
+
+[ENV 1]
+ATTACK = 6 MS
+DECAY = 420 MS
+SUSTAIN = 30%
+RELEASE = 300 MS
+D CURVE = 40
+VCA = BOTH
+
+[LFO 1]
+RATE = 11 HZ
+SHAPE = RANDOM
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 7%
+LFO 1 > LEVEL 1 = -20%
+CV 2 > BALANCE = -30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 60%

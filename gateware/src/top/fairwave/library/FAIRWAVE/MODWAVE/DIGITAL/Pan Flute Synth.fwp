@@ -1,0 +1,51 @@
+FAIRWAVE PATCH 1
+NAME  = PAN FLUTE SYNTH
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Pan Flute Synth by Ian Dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Wnd_Guru: Pan Flute 4.
+# Oscillator 2 is A's 2, its wavetable.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/11/5D63458F.WAV
+READ = SAMPLE
+TUNE = -42
+FINE = 27
+POS = 0.0%
+EDGE = WRAP
+LOOP = 59.4%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/A0/5DF1CECC.WAV
+READ = CLEAN
+TUNE = 0
+POS = 87.1%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 93.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > PITCH 1 = 0.5%
+CV 2 > PITCH 2 = 0.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 62.0%

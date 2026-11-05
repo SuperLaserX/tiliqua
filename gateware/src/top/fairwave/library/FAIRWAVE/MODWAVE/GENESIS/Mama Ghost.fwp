@@ -1,0 +1,74 @@
+FAIRWAVE PATCH 1
+NAME  = MAMA GHOST
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Mama Ghost by Ian Dixon: Genesis.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Syn_WS: SynString.
+# Oscillator 2 is A's 2, the sample Syn_WS: SynString.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/95/293E6B14.WAV
+READ = SAMPLE
+TUNE = -37
+FINE = 27
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/C0/0573F0B3.WAV
+READ = SAMPLE
+TUNE = -37
+FINE = 23
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 82.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 613.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 6.667 MS
+DECAY = 106.667 MS
+SUSTAIN = 0%
+RELEASE = 1.000 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[LFO 1]
+RATE = 5.270 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = -2.5%
+ENV 2 > PITCH 2 = -2.5%
+LFO 1 > PITCH 1 = 0.5%
+LFO 1 > PITCH 2 = 0.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

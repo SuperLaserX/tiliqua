@@ -13,7 +13,7 @@
 //! Version 5 adds a layer's fine tuning.
 
 use crate::modulation::*;
-use crate::patch::{Cross, CrossMode, Edge, Layer, Patch, ReadStyle, FINE_MAX, N_LAYERS};
+use crate::patch::{Cross, CrossMode, Edge, Layer, Patch, ReadStyle, FINE_MAX, GRAIN_CHOICES, N_LAYERS};
 
 pub const N_PATCHES: usize = 8;
 /// How many tables' frame lengths a patch keeps (the FRAME row reshapes a table for all who
@@ -286,7 +286,7 @@ pub fn decode(bytes: &[u8], version: u8) -> Option<Saved> {
     if version >= 4 {
         for l in p.layers.iter_mut() {
             l.read = ReadStyle::Clean.next(r.u8()? as i32);
-            l.grain = r.at_most(3)?;
+            l.grain = r.at_most(GRAIN_CHOICES - 1)?;
         }
         p.cross = Cross {
             mode: CrossMode::Off.next(r.u8()? as i32),
@@ -574,7 +574,7 @@ mod tests {
         assert!(p.lfos[0].rate <= RATE_MAX && p.lfos[0].phase < 360);
         assert!(p.slots[0].amount.abs() <= p.slots[0].dest.amount_limit());
         assert!(p.mixer.balance >= 0 && p.mixer.balance <= 1000);
-        assert!(p.layers[0].grain <= 3 && p.cross.modulator <= 1 && p.cross.depth <= 1000);
+        assert!(p.layers[0].grain < GRAIN_CHOICES && p.cross.modulator <= 1 && p.cross.depth <= 1000);
     }
 
     #[test]

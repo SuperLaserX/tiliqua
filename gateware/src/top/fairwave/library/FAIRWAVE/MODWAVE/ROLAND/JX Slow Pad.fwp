@@ -1,0 +1,58 @@
+FAIRWAVE PATCH 1
+NAME  = JX SLOW PAD
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's JX Slow Pad by Ian Dixon: Roland.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, JC Amp Chorus, Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/4F/50135CDE.WAV
+READ = CLEAN
+TUNE = -12
+POS = 23.2%
+
+[OSC 2]
+TABLE = MODWAVE/T/4F/50135CDE.WAV
+READ = CLEAN
+TUNE = -12
+POS = 23.2%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 193.333 MS
+DECAY = 46.667 MS
+SUSTAIN = 96%
+RELEASE = 3.800 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 2.800 S
+DECAY = 6.667 S
+SUSTAIN = 16%
+RELEASE = 320.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 53.5%
+ENV 2 > POS 2 = 53.5%
+CV 1 > POS 1 = -38.5%
+CV 1 > POS 2 = -38.5%
+ENV 2 > PITCH 1 = 1%
+ENV 2 > PITCH 2 = 1%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

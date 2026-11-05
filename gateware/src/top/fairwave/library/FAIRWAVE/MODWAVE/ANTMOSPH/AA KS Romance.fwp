@@ -1,0 +1,71 @@
+FAIRWAVE PATCH 1
+NAME  = AA KS ROMANCE
+ABOUT = PIANO/KEYS FROM MODWAVE. GATE 1, C
+
+# From the modwave's AA KS Romance by Anton Anru: Korg Modwave - Antmospheric Keys Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: JC Amp Chorus, Med EP Chorus, Metallurgy Bass 9, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/DE/CC645C33.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -1
+POS = 33.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/45/2B0A30C9.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 5
+POS = 33.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 4.769 S
+SUSTAIN = 9%
+RELEASE = 872.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 70.1%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 4.713 S
+SUSTAIN = 1%
+RELEASE = 1.173 S
+A CURVE = 30
+D CURVE = 20
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.813 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -55%
+CV 1 > POS 2 = -55%
+CV 2 > POS 1 = 34%
+CV 2 > POS 2 = 34%
+ENV 2 > POS 1 = 26%
+ENV 2 > POS 2 = 26%
+ENV 2 > X DEPTH = 5.5%
+LFO 1 > X DEPTH = -1.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 46.3%

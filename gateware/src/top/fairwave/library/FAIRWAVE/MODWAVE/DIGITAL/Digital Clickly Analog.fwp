@@ -1,0 +1,59 @@
+FAIRWAVE PATCH 1
+NAME  = DIGITAL CLICKLY
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Digital Clickly Analog by Ian Dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample BassFX: SlapGhostNote 12.
+# Oscillator 2 is A's 2, the sample Wave: Saw Up A2600.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, bpm Pattern 3.
+[OSC 1]
+TABLE = MODWAVE/T/BF/4422ECFD.WAV
+READ = SAMPLE
+TUNE = -17
+FINE = -3
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/EB/9983D2C2.WAV
+READ = SAMPLE
+TUNE = -12
+POS = 0.0%
+EDGE = WRAP
+LOOP = 11.2%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 1]
+RATE = 4.152 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > PITCH 2 = 1%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 58.8%

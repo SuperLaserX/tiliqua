@@ -1,0 +1,71 @@
+FAIRWAVE PATCH 1
+NAME  = SOLAR BELLS
+ABOUT = BELL/MALLET FROM MODWAVE. GATE 1, 
+
+# From the modwave's Solar Bells by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, the sample Bell: Glockenspiel 3.
+# Oscillator 2 is B's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, layer A oscillator 1, layer A oscillator 2, modulation processors, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Solar Bells.
+[OSC 1]
+TABLE = MODWAVE/T/D0/E2B00C51.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = 15
+POS = 0.0%
+EDGE = WRAP
+LOOP = 77.8%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/10/A7ABDEF3.WAV
+READ = CLEAN
+TUNE = 0
+FINE = 2
+POS = 26.2%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 302.667 MS
+SUSTAIN = 10%
+RELEASE = 2.984 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 398.667 MS
+SUSTAIN = 9%
+RELEASE = 3.176 S
+A CURVE = 30
+D CURVE = 50
+R CURVE = 60
+
+[LFO 1]
+RATE = 8.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 2 = 47.5%
+LFO 1 > POS 2 = 45.5%
+CV 1 > POS 2 = -43.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 74.0%

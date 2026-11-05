@@ -44,10 +44,12 @@ def set_params(ctx, dut, i, layer):
     ctx.set(p.max_level, layer.max_level)
     ctx.set(p.stepped, layer.stepped)
     ctx.set(p.raw, layer.raw)
+    ctx.set(p.sample, layer.sample)
 
 
-def run_engine(layers, mem, n, psram=None, on_sample=None, cross=None):
-    """The engine's first `n` samples of each layer, and the longest computation."""
+def run_engine(layers, mem, n, psram=None, on_sample=None, cross=None, restarts=None):
+    """The engine's first `n` samples of each layer, and the longest computation. `restarts`: the samples at
+    which each layer restarts."""
     dut = WaveScanEngine(n_layers=len(layers))
     psram = psram or PsramModel()
     psram.mem = mem
@@ -71,6 +73,8 @@ def run_engine(layers, mem, n, psram=None, on_sample=None, cross=None):
                 ctx.set(dut.cross.lock, cross.lock)
                 ctx.set(dut.cross.modulator, cross.modulator)
                 ctx.set(dut.cross.depth, cross.depth)
+            if restarts:
+                ctx.set(dut.restart, sum((s in r) << i for i, r in enumerate(restarts)))
             ctx.set(dut.o.ready, 1)
             while True:
                 await ctx.tick()
@@ -370,3 +374,133 @@ def test_cross_modulation_with_levels_and_the_worst_sample_still_fits():
     layers[1].inc = (1 << 27) | 1
     _, worst = compare(layers, mem, n=16, cross=Cross(ring=1, modulator=1, depth=DEPTH_FULL))
     assert worst < 450, f"{worst} clocks a sample"
+
+
+# ---- Playing a table as a sample ----
+
+
+def recording(frames, length, seed=5):
+    rnd = random.Random(seed)
+    return [[rnd.randint(-30000, 30000) for _ in range(length)] for _ in range(frames)]
+
+
+def model_of(layers, mem, n, restarts=None, cross=None, on_sample=None):
+    """The model's `n` samples, given when each layer restarts."""
+    state = [copy.copy(layer) for layer in layers]
+    out = [[] for _ in layers]
+    for s in range(n):
+        if on_sample:
+            on_sample(s, state)
+        for i, layer in enumerate(state):
+            hit = bool(restarts and s in restarts[i])
+            if hit:
+                layer.phase = 0
+            model.start_sample(layer, hit)
+        values = model.both(state, mem, cross) if len(state) == 2 else [model.sample(state[0], mem)]
+        for o, v in zip(out, values):
+            o.append(v)
+        for layer in state:
+            model.advance(layer)
+    return out, state
+
+
+def assert_same(layers, mem, n, restarts=None, cross=None, on_sample=None):
+    want, _ = model_of(layers, mem, n, restarts, cross, on_sample)
+    got, longest = run_engine(layers, mem, n, restarts=restarts, cross=cross, on_sample=on_sample)
+    for i in range(len(layers)):
+        for s, (g, w) in enumerate(zip(got[i], want[i])):
+            assert g == w, f"layer {i} sample {s}: engine {g}, model {w}"
+    return longest
+
+
+def played(speed, length=256, frames=3, **kw):
+    return Layer(table_base=0x1000, frame_log2=length.bit_length() - 1, frames=frames, sample=1,
+                 inc=int(speed * (1 << 32) / length), level=model.ONE, **kw)
+
+
+@pytest.mark.parametrize("speed", [1.0, 0.629, 1.53])
+def test_a_sample_plays_across_its_frames(speed):
+    layer = played(speed, edge=WRAP)
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    assert_same([layer], mem, 520)
+
+
+def test_a_sample_loops_back_to_where_shift_says():
+    layer = played(1.27, edge=WRAP, shift=1 << 6)
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    n = 900
+    assert_same([layer], mem, n)
+    _, (state,) = model_of([layer], mem, n)
+    assert state.frame >= 1, "still inside the loop"
+
+
+def test_a_sample_on_clamp_ends_and_is_silent():
+    layer = played(2.3, edge=CLAMP)
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    out, (state,) = model_of([layer], mem, 400)
+    assert state.ended and out[0][-1] == 0
+    assert_same([layer], mem, 400)
+
+
+def test_an_ended_sample_doesnt_silence_what_the_oscillator_plays_next():
+    layer = played(2.3, edge=CLAMP)
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+
+    def next_patch(s, state):
+        if s == 400:
+            state[0].sample = 0
+        if s == 600:
+            state[0].sample = 1
+
+    out, (state,) = model_of([layer], mem, 800, on_sample=next_patch)
+    assert out[0][399] == 0, "it had ended"
+    assert any(out[0][400:600]), "the next patch's table sounds, though it never restarts"
+    assert any(out[0][600:]), "and a sample after that starts over"
+    assert_same([layer], mem, 800, on_sample=next_patch)
+
+
+def test_a_restart_starts_a_sample_from_its_position_and_revives_it():
+    layer = played(2.1, edge=CLAMP, pos=(1 << 16) + 123)
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    assert_same([layer], mem, 500, restarts=[{120, 200, 433}])
+
+
+@pytest.mark.parametrize("pos,shift", [(-(1 << 17), -(1 << 8)), (99 << 16, 99 << 6)])
+def test_a_samples_start_and_loop_stay_inside_the_table(pos, shift):
+    layer = played(2.3, edge=WRAP, pos=pos, shift=shift)
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    assert_same([layer], mem, 400, restarts=[{5, 300}])
+
+
+@pytest.mark.parametrize("length", [256, 512, 1024, 2048])
+def test_a_sample_crosses_frames_of_every_length(length):
+    layer = played(1.7, length=length, frames=2, edge=WRAP)
+    mem = model.pack_frames(recording(2, length), base_word=0x1000 << 6)
+    assert_same([layer], mem, min(1300, length * 2 + 60))
+
+
+def test_two_layers_playing_samples_keep_to_their_own_places():
+    a = played(1.1, edge=WRAP)
+    b = played(0.77, edge=CLAMP, frames=2)
+    b.table_base = 0x2000
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    mem |= model.pack_frames(recording(2, 256, seed=6), base_word=0x2000 << 6)
+    assert_same([a, b], mem, 900, restarts=[{333}, {50, 700}])
+
+
+def test_a_sample_under_ring_and_fm():
+    a = played(1.3, edge=WRAP)
+    b = played(0.9, edge=WRAP)
+    b.table_base = 0x2000
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    mem |= model.pack_frames(recording(3, 256, seed=6), base_word=0x2000 << 6)
+    assert_same([a, b], mem, 300, cross=Cross(ring=1, depth=DEPTH_FULL // 2))
+    assert_same([a, b], mem, 300, cross=Cross(pm=1, depth=DEPTH_FULL // 5, modulator=1))
+
+
+def test_a_sample_takes_less_time_than_a_table():
+    layer = played(1.5, edge=WRAP)
+    both_layers = [layer, played(1.1, edge=WRAP)]
+    mem = model.pack_frames(recording(3, 256), base_word=0x1000 << 6)
+    longest = assert_same(both_layers, mem, 120)
+    assert longest < 200, f"{longest} clocks"

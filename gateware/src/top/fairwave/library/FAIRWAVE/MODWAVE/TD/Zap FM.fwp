@@ -1,0 +1,54 @@
+FAIRWAVE PATCH 1
+NAME  = ZAP FM
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Zap FM by Ian Dixon: TD.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, its wavetable.
+# Oscillator 2 is B's 2, its wavetable.
+# Not carried over: layer A oscillator 1, performance modulators.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, bpm Pattern 1.
+[OSC 1]
+TABLE = MODWAVE/T/51/F11ED939.WAV
+READ = CLEAN
+TUNE = -24
+POS = 70.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/51/F11ED939.WAV
+READ = CLEAN
+TUNE = -24
+POS = 0.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 93.333 MS
+SUSTAIN = 7%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 86.2%
+
+[LFO 1]
+RATE = 0.250 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > X DEPTH = 10.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

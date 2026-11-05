@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = AR MS2K HORROR S
+ABOUT = SOUNDSCAPE FROM MODWAVE. GATE 1, C
+
+# From the modwave's AR MS2k Horror Show by Aquila Rift: AquilaMSPPG.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is the other half of its 3 unison voices.
+# Not carried over: the noise generator.
+# Its effects, which FairWave hasn't got: Belgium Jump Low, Pad Surrounded.
+[OSC 1]
+TABLE = MODWAVE/T/D4/46C2E6BA.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -8
+POS = 30.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/D4/46C2E6BA.WAV
+READ = CLEAN
+TUNE = -24
+FINE = 8
+POS = 30.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 293.333 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.480 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 1.933 S
+DECAY = 4.067 S
+SUSTAIN = 100%
+RELEASE = 4.733 S
+A CURVE = 30
+D CURVE = 0
+R CURVE = 60
+
+[LFO 1]
+RATE = 6.450 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -59.5%
+CV 1 > POS 2 = -59.5%
+ENV 2 > POS 1 = 40%
+ENV 2 > POS 2 = 40%
+LFO 1 > PITCH 1 = 0.5%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

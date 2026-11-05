@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = POWER CHORD
+ABOUT = A CHORD OF ROOT, FIFTH AND OCTAVE
+
+# Three saws in one frame through a saturator: root, fifth and octave. The distortion's beats are the chord's own. CV 2
+# is the drive, and it needs nothing else behind it. 0 V is a C3 chord. A synth's guitar.
+[OSC 1]
+TABLE = TABLES/POWER.WAV
+TUNE = -24
+FINE = -4
+POS = 72%
+LEVEL = 70%
+
+[OSC 2]
+TABLE = TABLES/POWER.WAV
+TUNE = -24
+FINE = 4
+POS = 80%
+LEVEL = 70%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 400 MS
+SUSTAIN = 92%
+RELEASE = 120 MS
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 28%
+CV 2 > POS 2 = 28%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

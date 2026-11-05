@@ -1,0 +1,51 @@
+FAIRWAVE PATCH 1
+NAME  = NEURO GROWL
+ABOUT = A SNARLING MID BASS. GATE 1, CV 1
+
+# The growl table moved by a fast envelope, and a saw into FM with an LFO on the depth: a bass with its teeth out.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -19
+POS = 40%
+
+[OSC 2]
+TABLE = TABLES/GROWL.WAV
+TUNE = -24
+POS = 30%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 200 MS
+SUSTAIN = 90%
+RELEASE = 60 MS
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 240 MS
+SUSTAIN = 0%
+RELEASE = 60 MS
+D CURVE = 30
+
+[LFO 1]
+RATE = 2.1 HZ
+SHAPE = SAW DN
+POLAR = UNI
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 5%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 2 = 50%
+LFO 1 > X DEPTH = 10%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

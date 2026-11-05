@@ -1,0 +1,61 @@
+FAIRWAVE PATCH 1
+NAME  = LITTLE PIRATE PR
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Little Pirate Princess by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is B's 1, its wavetable.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, layer A oscillator 2, layer B oscillator 2, performance modulators, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: Acid Techno Beat, Li'l Pirate Hollow, Little Pirate Saw, Sine2Pad I.
+[OSC 1]
+TABLE = MODWAVE/T/36/F01CE691.WAV
+READ = CLEAN
+TUNE = 19
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/79/F01CD193.WAV
+READ = CLEAN
+TUNE = 0
+POS = 0.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 58.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 449.333 MS
+SUSTAIN = 50%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 3.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 34%
+CV 1 > POS 1 = -26.5%
+ENV 2 > POS 1 = 19%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 37.7%

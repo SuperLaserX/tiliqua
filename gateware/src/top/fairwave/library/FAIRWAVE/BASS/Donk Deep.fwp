@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = DONK DEEP
+ABOUT = LOW AND ROUND, FOR HOUSE. GATE 1
+
+# Deep house's: an FM pluck low down, with most of its weight in the fundamental and a soft knock on top. 0 V is C2.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -5
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/DONK.WAV
+TUNE = -24
+POS = 14%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 520 MS
+SUSTAIN = 30%
+RELEASE = 140 MS
+D CURVE = 50
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 95 MS
+SUSTAIN = 0%
+RELEASE = 60 MS
+D CURVE = 65
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 2%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 2 = 6%
+ENV 2 > X DEPTH = 10%
+ENV 2 > POS 2 = 26%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

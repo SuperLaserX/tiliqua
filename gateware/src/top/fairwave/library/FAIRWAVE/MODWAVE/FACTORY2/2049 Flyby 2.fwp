@@ -1,0 +1,53 @@
+FAIRWAVE PATCH 1
+NAME  = 2049 FLYBY
+ABOUT = SFX FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's 2049 Flyby by Rodier: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is A's 2, its wavetable.
+# Not carried over: the sub oscillator.
+[OSC 1]
+TABLE = MODWAVE/T/AB/0826BEA5.WAV
+READ = STEPS
+TUNE = -60
+POS = 51.5%
+
+[OSC 2]
+TABLE = MODWAVE/T/65/BD334187.WAV
+READ = CLEAN
+TUNE = -60
+POS = 100.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 100.0%
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 51%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100.0%

@@ -232,8 +232,68 @@ def glass():
     return at_full_level(frames)
 
 
+def donk():
+    """A pipe: a square with some of a saw in it, under a filter that rings. Knocking near the top, and near the
+    bottom a round, hollow note with its third harmonic still in it."""
+    return at_full_level([frame_of((SQUARE + 0.3 * SAW) * ladder(c, 2.6)) for c in sweep(1.3, 36)])
+
+
+def hard():
+    """A hardstyle kick's tail: a sine through two stages of clipping with a resonance between them, from a clean
+    sine at 0% to something very nearly a buzz, with a tone of its own, at 100%."""
+    t = phase_axis()
+    s_ = np.sin(2 * np.pi * t)
+    frames = []
+    for w in WAY:
+        first = np.clip((1 + 5 * w) * s_ + 0.25 * w, -1, 1)
+        x = np.fft.rfft(first)
+        n = np.arange(len(x), dtype=float)
+        bump = 1 + 5 * w * np.exp(-((n - 7) / 3.5) ** 2)
+        y = np.fft.irfft(x * bump, len(t))
+        frames.append(band_limited(np.tanh((1 + 16 * w ** 2) * y)))
+    return at_full_level(frames)
+
+
+# Chords in one cycle: each note is some harmonic of a frequency far below them. 10:12:15:18 is a minor seventh,
+# so a frame's cycle is a tenth of the root and `TUNE = -40` puts the root on about C4.
+MINOR_SEVENTH = (10, 12, 15, 18)
+MINOR_NINTH = (10, 12, 15, 18, 22)
+RAVE_MINOR = (10, 12, 15, 20, 24)
+
+
+def chord_table(notes, lo, hi):
+    """The notes as saws under a filter opening. Each frame has the same phases, so they blend cleanly."""
+    rng = np.random.default_rng(sum(notes))
+    phases = np.exp(2j * np.pi * rng.random(TOP))
+    gain = np.zeros(TOP)
+    for n in notes:
+        for k in range(1, TOP // n + 1):
+            gain[n * k - 1] += 1 / k
+    return at_full_level([frame_of(gain * phases * lowpass(c, 2)) for c in sweep(lo, hi)])
+
+
+def dubchord():
+    """A dub techno stab: a minor seventh, filter from dark to open."""
+    return chord_table(MINOR_SEVENTH, 12, 300)
+
+
+def ravechrd():
+    """A rave stab, root and minor third doubled up an octave, filter from dark to open."""
+    return chord_table(RAVE_MINOR, 14, 400)
+
+
+def power():
+    """A power chord, root, fifth and octave, from clean to crunch. Each is a saw, so where they beat against each
+    other in the clipping, that is what a distorted guitar's chord does. The cycle is half the root: `TUNE = -12`
+    for the root at C4."""
+    t = phase_axis()
+    y = sum(2 * ((t * n) % 1) - 1 for n in (2, 3, 4)) / 3
+    return at_full_level([band_limited(np.tanh((0.6 + 14 * w ** 1.5) * y)) for w in WAY])
+
+
 TABLES = {"SAWLP": sawlp, "SQRLP": sqrlp, "ACIDLP": acidlp, "SYNC": sync, "PWM": pwm, "FOLD": fold, "SUBDRV": subdrv,
-          "GROWL": growl, "TALK": talk, "PPG": ppg, "REESE": reese, "ORGAN": organ, "GLASS": glass}
+          "GROWL": growl, "TALK": talk, "PPG": ppg, "REESE": reese, "ORGAN": organ, "GLASS": glass,
+          "DONK": donk, "HARD": hard, "DUBCHORD": dubchord, "RAVECHRD": ravechrd, "POWER": power}
 
 
 def wav_bytes(frames):

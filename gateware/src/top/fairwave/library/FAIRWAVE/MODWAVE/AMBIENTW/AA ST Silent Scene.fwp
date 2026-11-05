@@ -1,0 +1,68 @@
+FAIRWAVE PATCH 1
+NAME  = AA ST SILENT SCE
+ABOUT = STRINGS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA ST Silent Scene by Anton Anru: Korg Modwave - Ambient Worlds Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along position.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics.
+# Its effects, which FairWave hasn't got: bpm Tape 3-Head.
+[OSC 1]
+TABLE = MODWAVE/T/0B/0C69C063.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 3
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/CF/AE7ACF29.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -2
+POS = 0.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 3.581 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.181 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 81.4%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 5.328 S
+DECAY = 11.080 S
+SUSTAIN = 0%
+RELEASE = 4.432 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+ENV 2 > POS 2 = 100%
+LFO 1 > X DEPTH = 5.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100.0%

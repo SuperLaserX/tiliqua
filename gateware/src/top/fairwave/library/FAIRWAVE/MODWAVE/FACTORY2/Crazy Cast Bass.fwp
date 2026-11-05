@@ -1,0 +1,76 @@
+FAIRWAVE PATCH 1
+NAME  = CRAZY CAST BASS
+ABOUT = BASS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Crazy Cast Bass by TO: backup1.mwbackup.
+# 0 V plays what its C3 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: the mod wheel's scaling of a modulation, the sub oscillator.
+# Its effects, which FairWave hasn't got: Crazy Cast Bass.
+[OSC 1]
+TABLE = MODWAVE/T/72/92F3CFC1.WAV
+READ = CLEAN
+TUNE = -36
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/40/4C51FB0A.WAV
+READ = CLEAN
+TUNE = -24
+POS = 33.8%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 0.0%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 50%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[LFO 3]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 2 = -56.5%
+LFO 1 > POS 2 = 55.5%
+ENV 2 > POS 2 = 32.5%
+CV 1 > POS 1 = -31.5%
+LFO 1 > POS 1 = 31%
+LFO 3 > LEVEL 1 = -20%
+LFO 3 > LEVEL 2 = -20%
+ENV 2 > POS 1 = 18%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100.0%

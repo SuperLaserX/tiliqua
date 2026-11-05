@@ -1,0 +1,69 @@
+FAIRWAVE PATCH 1
+NAME  = AA KS CANVAS
+ABOUT = PIANO/KEYS FROM MODWAVE. GATE 1, C
+
+# From the modwave's AA KS Canvas by Anton Anru: Korg Modwave - Antmospheric Keys Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along position.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, the sub oscillator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 500ms, Vintage Flanger, Vintage Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/07/C0498479.WAV
+READ = CLEAN
+TUNE = 12
+POS = 34.4%
+
+[OSC 2]
+TABLE = MODWAVE/T/FD/F49AC7C6.WAV
+READ = CLEAN
+TUNE = 0
+POS = 0.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 2.512 S
+SUSTAIN = 9%
+RELEASE = 817.333 MS
+A CURVE = 30
+D CURVE = 70
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 22.4%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 1.372 S
+SUSTAIN = 13%
+RELEASE = 1.544 S
+A CURVE = 0
+D CURVE = 20
+R CURVE = 60
+
+[LFO 2]
+RATE = 0.094 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 2 = 100%
+CV 1 > POS 1 = -57.5%
+ENV 1 > POS 2 = -53%
+ENV 2 > X DEPTH = 43%
+ENV 2 > POS 1 = 31%
+CV 2 > POS 1 = 16%
+CV 2 > X DEPTH = -6%
+LFO 2 > X DEPTH = 5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 43.6%

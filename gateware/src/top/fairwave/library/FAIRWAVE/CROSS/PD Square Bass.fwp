@@ -1,0 +1,45 @@
+FAIRWAVE PATCH 1
+NAME  = PD SQUARE BASS
+ABOUT = A SINE BENT INTO A SQUARE. GATE 1
+
+# The same, bent by a square: it goes hollow as it opens. Punchy, with a fast envelope.
+[OSC 1]
+TABLE = TABLES/SQRLP.WAV
+TUNE = -24
+POS = 100%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 280 MS
+SUSTAIN = 60%
+RELEASE = 70 MS
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 150 MS
+SUSTAIN = 6%
+RELEASE = 80 MS
+D CURVE = 55
+
+[CROSS MOD]
+MODE = PD
+FROM = OSC 1
+DEPTH = 3%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > X DEPTH = 22%
+CV 2 > X DEPTH = 15%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

@@ -1,0 +1,54 @@
+FAIRWAVE PATCH 1
+NAME  = STRETCH
+ABOUT = A VOICE, 20 SECONDS LONG. GATE 1
+
+# A ramp on the place grains read from, once through in 20 seconds: a recording of a few seconds, stretched
+# out to that, at any pitch. Time and pitch come apart: that's what grains are for.
+[OSC 1]
+TABLE = SAMPLES/VOX.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = -26
+POS = 0%
+EDGE = WRAP
+GRAIN = LFO 1
+LOOP = 33.5%
+
+[OSC 2]
+TABLE = SAMPLES/VOX.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = -26
+POS = 0%
+EDGE = WRAP
+GRAIN = LFO 1 B
+LOOP = 33.5%
+
+[LFO 1]
+RATE = 7.3 HZ
+SHAPE = SAW UP
+
+[ENV 1]
+ATTACK = 200 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 1.5 S
+VCA = BOTH
+
+[LFO 2]
+RATE = 0.05 HZ
+SHAPE = SAW UP
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 0%
+CV 2 > POS 2 = 0%
+LFO 2 > POS 1 = 100%
+LFO 2 > POS 2 = 100%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+LEVEL 1 = 100%
+LEVEL 2 = 100%

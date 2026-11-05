@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = DONK SCOUSE
+ABOUT = HARD AND BRIGHT. OFFBEATS. GATE 1
+
+# Scouse house's: higher, harder and more of the knock, a touch of ring modulation for its metal, a bit of a sub.
+[OSC 1]
+TABLE = TABLES/DONK.WAV
+TUNE = -5
+POS = 18%
+
+[OSC 2]
+TABLE = TABLES/DONK.WAV
+TUNE = -12
+POS = 30%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 420 MS
+SUSTAIN = 12%
+RELEASE = 120 MS
+D CURVE = 45
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 55 MS
+SUSTAIN = 0%
+RELEASE = 40 MS
+D CURVE = 70
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 22%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 12%
+ENV 2 > PITCH 2 = 12%
+ENV 2 > POS 2 = 55%
+ENV 1 > POS 2 = 20%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

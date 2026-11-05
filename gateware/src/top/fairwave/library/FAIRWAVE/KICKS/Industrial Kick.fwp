@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = INDUSTRIAL KICK
+ABOUT = FOLDED, WITH NOISE IN IT. GATE 1
+
+# A sine into a wavefolder as far as the envelope pushes it, with a random LFO on the place: dirt that changes each time.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -28
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/FOLD.WAV
+TUNE = -28
+POS = 18%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 360 MS
+SUSTAIN = 0%
+RELEASE = 360 MS
+D CURVE = 45
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 28 MS
+SUSTAIN = 0%
+RELEASE = 28 MS
+D CURVE = 75
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 50%
+ENV 2 > PITCH 2 = 50%
+ENV 1 > POS 2 = 60%
+LFO 1 > POS 2 = 6%
+[LFO 1]
+RATE = 83 HZ
+SHAPE = RANDOM
+
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 86%

@@ -1,53 +1,58 @@
 FAIRWAVE PATCH 1
 NAME  = HOOVER
-ABOUT = THE RAVE HOOVER. GATE 1, CV 1
+ABOUT = RAVE HOOVER, LIVE FILTER. GATE 1
 
-# After the Alpha Juno's mentasm: pulse and saw well apart, swooping up into each note and sagging out.
+# The same oscillator and chorus as What The, but two recordings of it, one with the filter open and one with it shut,
+# and the level moved between them: a filter that follows this patch's own envelope and LFO, at any pitch, with
+# nothing baked in. It restarts on each gate so the two stay together. CV 2 opens it. 0 V is C3.
 [OSC 1]
-TABLE = TABLES/PWM.WAV
-TUNE = -12
-FINE = -18
-POS = 45%
+TABLE = SAMPLES/HOOVDRK.WAV
+TUNE = -42
+FINE = 47
+POS = 0%
+READ = SAMPLE
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
 
 [OSC 2]
-TABLE = TABLES/SAWLP.WAV
-TUNE = -12
-FINE = 18
-POS = 85%
+TABLE = SAMPLES/HOOVBRI.WAV
+TUNE = -42
+FINE = 47
+POS = 0%
+READ = SAMPLE
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
 
 [ENV 1]
-ATTACK = 30 MS
-DECAY = 400 MS
-SUSTAIN = 85%
-RELEASE = 300 MS
-R CURVE = 30
+ATTACK = 170 MS
+DECAY = 100 MS
+SUSTAIN = 100%
+RELEASE = 200 MS
+A CURVE = 20
+R CURVE = 15
 VCA = BOTH
 
-[ENV 2]
-GATE = GATE 1
-ATTACK = 0
-DECAY = 190 MS
-SUSTAIN = 0%
-RELEASE = 10 MS
-D CURVE = 50
-
 [LFO 1]
-RATE = 5.1 HZ
+RATE = 1.4 HZ
 SHAPE = SINE
 
-[LFO 2]
-RATE = 1.2 HZ
-SHAPE = TRI
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
 
 [ROUTING]
 CV 1 > PITCH 1 = 100%
 CV 1 > PITCH 2 = 100%
-ENV 2 > PITCH 1 = -20%
-ENV 2 > PITCH 2 = -20%
-LFO 1 > PITCH 1 = 0.5%
-LFO 1 > PITCH 2 = 0.5%
-LFO 2 > POS 1 = 25%
+ENV 1 > PITCH 1 = 40%
+ENV 1 > PITCH 2 = 40%
+ENV 1 > BALANCE = 75%
+LFO 1 > BALANCE = 18%
+CV 2 > BALANCE = 30%
 
 [MIXER]
 OUT 0 = MIX
 OUT 1 = MIX
+BALANCE = 10%

@@ -1,0 +1,54 @@
+FAIRWAVE PATCH 1
+NAME  = SPACED TRIBAL BE
+ABOUT = PERCUSSION FROM MODWAVE. GATE 1, C
+
+# From the modwave's Spaced Tribal Beat by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample FX: BD-Cannon.
+# Oscillator 2 is A's 2, the sample Atk: Granular St Noise 4.
+# Not carried over: 3 unison voices, controllers, random and Kaoss Physics, performance modulators, the noise generator.
+# Its effects, which FairWave hasn't got: 1/8 dotted LPF, Clavi Chorus, Spaced Tribal Beat.
+[OSC 1]
+TABLE = MODWAVE/T/AC/EAE5585C.WAV
+READ = SAMPLE
+TUNE = -13
+FINE = 18
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/F1/883377CC.WAV
+READ = SAMPLE
+TUNE = -7
+FINE = -20
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 3.812 S
+SUSTAIN = 66%
+RELEASE = 910.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 19.4%

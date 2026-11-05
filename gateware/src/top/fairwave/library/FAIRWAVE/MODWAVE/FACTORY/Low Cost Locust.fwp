@@ -1,0 +1,72 @@
+FAIRWAVE PATCH 1
+NAME  = LOW COST LOCUST
+ABOUT = SFX FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Low Cost Locust by Rodier: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, a table made along cutoff.
+# Oscillator 2 is B's 2, a table made along cutoff.
+# Not carried over: 16 unison voices, controllers, random and Kaoss Physics, layer A oscillator 1, layer A oscillator 2, the sub oscillator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/0D/9495AA8D.WAV
+READ = CLEAN
+TUNE = -12
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/9F/B07EAA42.WAV
+READ = CLEAN
+TUNE = -12
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 685.333 MS
+DECAY = 302.667 MS
+SUSTAIN = 100%
+RELEASE = 392.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 100.0%
+
+[LFO 1]
+RATE = 32.000 HZ
+SHAPE = TRI
+PHASE = 1
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 32.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[LFO 3]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > LEVEL 1 = 100%
+LFO 2 > LEVEL 2 = 100%
+LFO 1 > POS 1 = 43.5%
+LFO 1 > POS 2 = 43.5%
+CV 1 > POS 1 = -11%
+CV 1 > POS 2 = -11%
+LFO 3 > PITCH 1 = 1.5%
+LFO 3 > PITCH 2 = 1.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 52.5%

@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = AR PPG OH, OKAY!
+ABOUT = VOCAL/AIRY FROM MODWAVE. GATE 1, C
+
+# From the modwave's AR PPG Oh, Okay! by Aquila Rift: AquilaMSPPG.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Vox: Choir Ohh.
+# Oscillator 2 is A's 2, the sample Vox: Female Mnnn.
+# Not carried over: controllers, random and Kaoss Physics, layer B oscillator 1, layer B oscillator 2, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: Ambient Reverse, Modern Compressor, Stereo Chorus, bpm Old Tape.
+[OSC 1]
+TABLE = MODWAVE/T/F4/36786344.WAV
+READ = SAMPLE
+TUNE = -30
+FINE = 46
+POS = 0.0%
+EDGE = WRAP
+LOOP = 36.9%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/BD/440BAB52.WAV
+READ = SAMPLE
+TUNE = -9
+FINE = 28
+POS = 0.0%
+EDGE = WRAP
+LOOP = 20%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 866.667 MS
+DECAY = 2.467 S
+SUSTAIN = 0%
+RELEASE = 1.333 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 49.5%

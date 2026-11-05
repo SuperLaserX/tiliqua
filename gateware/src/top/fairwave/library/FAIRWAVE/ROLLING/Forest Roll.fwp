@@ -1,0 +1,41 @@
+FAIRWAVE PATCH 1
+NAME  = FOREST ROLL
+ABOUT = DARK AND SLOW-OPENING, 150 BPM
+
+# Dark psy: a dull roll that a very slow LFO opens into something nasty, and closes again. The growl table does the rest.
+[OSC 1]
+TABLE = TABLES/GROWL.WAV
+TUNE = -24
+POS = 16%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 8%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 60 MS
+SUSTAIN = 0%
+RELEASE = 39 MS
+D CURVE = 45
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[LFO 2]
+RATE = 0.07 HZ
+SHAPE = TRI
+POLAR = UNI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 26%
+LFO 2 > POS 1 = 42%
+CV 2 > POS 1 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 36%

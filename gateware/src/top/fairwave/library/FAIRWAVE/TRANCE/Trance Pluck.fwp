@@ -1,0 +1,37 @@
+FAIRWAVE PATCH 1
+NAME  = TRANCE PLUCK
+ABOUT = SHORT, BRIGHT AND RUNNING. GATE 1
+
+# A saw and a saw a fifth up, filter closing fast: to run in sixteenths under a delay. CV 2 opens it.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = 0
+FINE = -5
+POS = 18%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = 7
+FINE = 5
+POS = 14%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 240 MS
+SUSTAIN = 0%
+RELEASE = 120 MS
+D CURVE = 55
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 55%
+ENV 1 > POS 2 = 50%
+CV 2 > POS 1 = 30%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 26%

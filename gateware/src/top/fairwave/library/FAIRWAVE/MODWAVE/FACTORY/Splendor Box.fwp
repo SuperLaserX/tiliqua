@@ -1,0 +1,61 @@
+FAIRWAVE PATCH 1
+NAME  = SPLENDOR BOX
+ABOUT = SEQ FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Splendor Box by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Hit: Synth Decay 2.
+# Oscillator 2 is A's 2, the sample Atk: Mad Analog Noise 1.
+# Not carried over: 3 unison voices, controllers, random and Kaoss Physics, layer B oscillator 1, layer B oscillator 2, performance modulators, the mod wheel's scaling of a modulation, the sub oscillator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Bass Squasher, Clavi Chorus, Drum Squasher, LCR Long Delay 2, bpm Mband Bounce.
+[OSC 1]
+TABLE = MODWAVE/T/D1/525C266B.WAV
+READ = SAMPLE
+TUNE = -9
+FINE = -26
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/DD/7B5B3910.WAV
+READ = SAMPLE
+TUNE = -7
+FINE = -15
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 701.333 MS
+SUSTAIN = 16%
+RELEASE = 504.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 1]
+RATE = 1.704 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 4%
+LFO 1 > LEVEL 2 = 4%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 6.2%

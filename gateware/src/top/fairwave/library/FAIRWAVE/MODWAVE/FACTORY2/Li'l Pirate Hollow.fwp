@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = LI'L PIRATE HOLL
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Li'l Pirate Hollow by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, performance modulators, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: Li'l Pirate Hollow, Sine2Pad I.
+[OSC 1]
+TABLE = MODWAVE/T/BC/C159C027.WAV
+READ = CLEAN
+TUNE = 19
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/8F/007D342A.WAV
+READ = CLEAN
+TUNE = 12
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 58.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 449.333 MS
+SUSTAIN = 50%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 4.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 34%
+LFO 1 > POS 2 = 34%
+CV 1 > POS 1 = -26.5%
+CV 1 > POS 2 = -26.5%
+ENV 2 > POS 1 = 19%
+ENV 2 > POS 2 = 19%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 23.0%

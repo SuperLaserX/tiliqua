@@ -1,0 +1,53 @@
+FAIRWAVE PATCH 1
+NAME  = AX73 HI-RES PAD
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AX73 Hi-Res Pad by Ian Dixon: ID-AX73.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Akai AX73 Brass Solo.
+# Oscillator 2 is A's 2, the sample Akai AX73 Brass Solo.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/85/5B8DBE56.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = -19
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/6C/E915BAE9.WAV
+READ = SAMPLE
+TUNE = -7
+FINE = -26
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.000 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > PITCH 1 = 0.5%
+CV 2 > PITCH 2 = 0.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 46.5%

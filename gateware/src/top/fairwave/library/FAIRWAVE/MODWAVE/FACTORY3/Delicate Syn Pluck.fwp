@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = DELICATE SYN PLU
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Delicate Syn Pluck by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Wave: DWGS Organ 4.
+# Oscillator 2 is A's 2, the sample Vox: Choir Whisper F.
+# Not carried over: controllers, random and Kaoss Physics, the sub oscillator.
+# Its effects, which FairWave hasn't got: Delicate Syn Pluck, Inharmonic Twang.
+[OSC 1]
+TABLE = MODWAVE/T/73/710CA985.WAV
+READ = SAMPLE
+TUNE = 12
+FINE = -1
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/A5/F308DEE2.WAV
+READ = SAMPLE
+TUNE = -17
+FINE = -38
+POS = 0.0%
+EDGE = WRAP
+LOOP = 22.6%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 1.417 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 66.2%

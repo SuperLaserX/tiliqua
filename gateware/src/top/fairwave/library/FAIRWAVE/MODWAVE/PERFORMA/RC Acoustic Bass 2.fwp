@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = RC ACOUSTIC BASS
+ABOUT = BASS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's RC Acoustic Bass 2 by Deborah Pickett: RC Acoustic Bass 2.mwperf.
+# 0 V plays what its C3 key plays.
+# Oscillator 1 is A's 1, the sample Bass: Acoustic 2 mp.
+# Not carried over: modulation processors, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Distortion 2, Stereo Chorus, Stereo Delay.
+[OSC 1]
+TABLE = MODWAVE/T/6E/9B21CEA4.WAV
+READ = SAMPLE
+TUNE = -14
+FINE = -32
+POS = 0.0%
+EDGE = WRAP
+LOOP = 86.6%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/6E/9B21CEA4.WAV
+TUNE = -14
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 10.667 MS
+DECAY = 8.667 S
+SUSTAIN = 0%
+RELEASE = 580.000 MS
+A CURVE = 100
+D CURVE = 100
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

@@ -22,10 +22,8 @@ const MORPH_TRIANGLE: u16 = 333;
 pub const NAMES: [&str; N_PATCHES] =
     ["VOWEL RIDE", "FM CHIME", "RING GLASS", "AM FLUTTER", "CZ BEND", "GRAINS", "TILT SWARM", "LOFI STEPS"];
 
-/// Where a sine or triangle LFO is at zero, unipolar, as its cycle starts: what makes it a grain's window.
-const WINDOW_PHASE: u16 = 270;
-/// The grains' rates: about 2.6 and 3.6 a second.
-const GRAIN_RATES: [u8; 2] = [64, 68];
+/// The grains' rates: about 4.3 and 6.1 a second.
+const GRAIN_RATES: [u8; 2] = [70, 74];
 
 /// Modulation that takes a slot.
 const fn slot(source: Source, dest: Dest, amount: i16) -> Slot {
@@ -114,30 +112,25 @@ pub fn preset(i: usize) -> Patch {
             p.lfos[0] = Lfo { rate: 32, shape: Shape::Sine, unipolar: true, phase: 0, level: 100, sync: 1 };
             p.slots[2] = slot(Source::Lfo1, Dest::Cross, 80);
         }
-        // Two streams of grains drifting over each other, slowly enough to hear each one. A grain holds its
-        // frame while its window, at zero when an LFO's cycle starts, fades it in and out. Their rates
-        // differ because the LFO's PHASE moves its shape and not when its cycle starts: at one rate
-        // they would restart together. LFO 3 walks the place in the table along.
+        // Two streams of grains, each a different overtone: a random LFO picks each one's place in a table of
+        // single harmonics, a fifth apart. A grain fades itself in and out, so this is all it takes.
         5 => {
-            p.layers[0].table = VOWELS;
-            p.layers[1].table = FM_BELL;
+            p.layers[0].table = HARMONICS;
+            p.layers[1].table = HARMONICS;
             p.layers[0].semitones = -12;
-            p.layers[0].level = 0;
-            p.layers[1].level = 0;
-            p.layers[0].position = 500;
-            p.layers[1].position = 500;
+            p.layers[1].semitones = -5;
+            p.layers[0].position = 220;
+            p.layers[1].position = 260;
             p.layers[0].grain = 1;
             p.layers[1].grain = 2;
-            let window = Lfo { rate: GRAIN_RATES[0], shape: Shape::Sine, unipolar: true, phase: WINDOW_PHASE, level: 100, sync: 0 };
-            p.lfos[0] = window;
-            p.lfos[1] = Lfo { rate: GRAIN_RATES[1], ..window };
-            p.lfos[2] = Lfo { rate: 29, shape: Shape::Triangle, unipolar: false, phase: 0, level: 100, sync: 0 };
-            p.slots[2] = slot(Source::Lfo1, Dest::Level1, 200);
-            p.slots[3] = slot(Source::Lfo2, Dest::Level2, 200);
-            p.slots[4] = slot(Source::Lfo3, Dest::Position1, 80);
-            p.slots[5] = slot(Source::Lfo3, Dest::Position2, -60);
-            p.slots[6] = slot(Source::Cv2, Dest::Position1, 100);
-            p.slots[7] = slot(Source::Cv2, Dest::Position2, 100);
+            let clock = Lfo { rate: GRAIN_RATES[0], shape: Shape::Triangle, unipolar: false, phase: 0, level: 100, sync: 0 };
+            p.lfos[0] = clock;
+            p.lfos[1] = Lfo { rate: GRAIN_RATES[1], ..clock };
+            p.lfos[2] = Lfo { rate: 77, shape: Shape::Random, unipolar: false, phase: 0, level: 100, sync: 0 };
+            p.slots[2] = slot(Source::Lfo3, Dest::Position1, 24);
+            p.slots[3] = slot(Source::Lfo3, Dest::Position2, -24);
+            p.slots[4] = slot(Source::Cv2, Dest::Position1, 100);
+            p.slots[5] = slot(Source::Cv2, Dest::Position2, 100);
             p.mixer.outs[0] = OutSel::Mix;
             p.mixer.outs[1] = OutSel::Mix;
         }
@@ -231,24 +224,16 @@ mod tests {
     }
 
     #[test]
-    fn the_grain_preset_windows_what_it_restarts() {
+    fn the_grain_preset_has_two_streams_on_two_clocks() {
         let p = preset(5);
         assert_eq!((p.layers[0].grain, p.layers[1].grain), (1, 2));
         let w = p.words(&[TABLE, TABLE], &[8, 8], 48000);
         assert_eq!((w.ctrl[0] >> 4) & 3, 1);
         assert_eq!((w.ctrl[1] >> 4) & 3, 2);
-        for lfo in &p.lfos[..2] {
-            assert!(lfo.unipolar, "a window doesn't go negative");
-            assert_eq!(lfo.phase, WINDOW_PHASE, "so a grain starts from silence, not with a click");
-            // A window's value at the start of its cycle: x = 0 plus the phase's offset. A parabola here.
-            let x = (lfo.phase as i64 * 65536 / 360) & 0xFFFF;
-            let s = if x & 0x8000 != 0 { x - 0x10000 } else { x };
-            let y = (s * (0x8000 - s.abs())) >> 12;
-            assert_eq!((y + ONE) >> 1, 0, "the window is shut when the grain starts");
-        }
-        assert_ne!(p.lfos[0].rate, p.lfos[1].rate, "at one rate both streams would restart on one sample");
-        // Slow enough to hear each grain as one.
-        assert!(p.lfos.iter().take(2).all(|l| rate_millihertz(l.rate) < 5000));
+        assert_eq!(w.ctrl[0] >> 6, 0, "faded, whole cycles");
+        assert_ne!(p.lfos[0].rate, p.lfos[1].rate);
+        assert!(p.layers.iter().all(|l| l.level == 100), "the gateware does the fading");
+        assert_eq!(p.lfos[2].shape, Shape::Random);
     }
 
     #[test]

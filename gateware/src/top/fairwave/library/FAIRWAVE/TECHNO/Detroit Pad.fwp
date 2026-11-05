@@ -1,0 +1,39 @@
+FAIRWAVE PATCH 1
+NAME  = DETROIT PAD
+ABOUT = THE CHORD, HELD. GATE 1, CV 1
+
+# The same chord, slow and wide: two detuned copies, one on each output, with the filter moving on an LFO.
+[OSC 1]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 8
+POS = 40%
+
+[OSC 2]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 22
+POS = 40%
+
+[ENV 1]
+ATTACK = 1 S
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 1.6 S
+VCA = BOTH
+
+[LFO 2]
+RATE = 0.14 HZ
+SHAPE = SINE
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > POS 1 = 22%
+LFO 2 > POS 2 = -22%
+CV 2 > POS 1 = 30%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

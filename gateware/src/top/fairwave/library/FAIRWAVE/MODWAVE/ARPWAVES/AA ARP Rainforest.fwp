@@ -1,0 +1,66 @@
+FAIRWAVE PATCH 1
+NAME  = AA ARP RAINFORES
+ABOUT = ARPEGGIO FROM MODWAVE. GATE 1, CV 
+
+# From the modwave's AA ARP Rainforest by Anton Anru: Korg Modwave - Arp Waves Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Buzz Troy Bass, Electro Beatz, Orange Mk I Phaser, Thin Phaser.
+[OSC 1]
+TABLE = MODWAVE/T/5C/6613D2C8.WAV
+READ = CLEAN
+TUNE = -48
+FINE = -5
+POS = 35.6%
+
+[OSC 2]
+TABLE = MODWAVE/T/72/4494389B.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 9
+POS = 35.6%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 4.000 MS
+DECAY = 313.333 MS
+SUSTAIN = 57%
+RELEASE = 85.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 86.667 MS
+SUSTAIN = 0%
+RELEASE = 89.333 MS
+A CURVE = 30
+D CURVE = 30
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.070 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -59.5%
+CV 1 > POS 2 = -59.5%
+ENV 2 > POS 1 = 29%
+ENV 2 > POS 2 = 29%
+CV 2 > POS 1 = 25.5%
+CV 2 > POS 2 = 25.5%
+LFO 1 > POS 1 = 12.5%
+LFO 1 > POS 2 = 12.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 48.6%

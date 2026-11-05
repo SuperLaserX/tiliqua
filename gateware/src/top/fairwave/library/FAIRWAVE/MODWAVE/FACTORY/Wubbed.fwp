@@ -1,0 +1,63 @@
+FAIRWAVE PATCH 1
+NAME  = WUBBED
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Wubbed by Korg: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: layer B oscillator 1, layer B oscillator 2, performance modulators.
+# Its effects, which FairWave hasn't got: 1/8 - 1/4 LPF, Chorus-Flange Morph, Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/96/0E7E89D0.WAV
+READ = CLEAN
+TUNE = -24
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/AE/45E45E1C.WAV
+READ = CLEAN
+TUNE = -12
+POS = 25.5%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 30.667 MS
+DECAY = 90.000 S
+SUSTAIN = 34%
+RELEASE = 2.133 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 400.000 MS
+DECAY = 3.733 S
+SUSTAIN = 41%
+RELEASE = 673.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 2]
+RATE = 4.250 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+ENV 2 > POS 2 = 49%
+CV 1 > POS 2 = -42.5%
+LFO 2 > PITCH 1 = 0.5%
+LFO 2 > PITCH 2 = 0.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 49.7%

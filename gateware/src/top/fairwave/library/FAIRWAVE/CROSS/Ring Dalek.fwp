@@ -1,0 +1,40 @@
+FAIRWAVE PATCH 1
+NAME  = RING DALEK
+ABOUT = 30 HZ ON A VOICE. GATE 1, CV 1
+
+# A fixed low sine ring-modulating a formant: how a voice was made into a Dalek. Send it CV 1 for the pitch of the voice.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -37
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/TALK.WAV
+TUNE = -12
+POS = 45%
+
+[ENV 1]
+ATTACK = 8 MS
+DECAY = 200 MS
+SUSTAIN = 95%
+RELEASE = 90 MS
+VCA = OSC 2
+
+[LFO 1]
+RATE = 3.3 HZ
+SHAPE = TRI
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 100%
+
+[ROUTING]
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 2 = 40%
+CV 2 > POS 2 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

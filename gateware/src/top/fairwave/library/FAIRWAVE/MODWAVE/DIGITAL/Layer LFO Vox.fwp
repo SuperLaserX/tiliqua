@@ -1,0 +1,62 @@
+FAIRWAVE PATCH 1
+NAME  = LAYER LFO VOX
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Layer LFO Vox by Ian Dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, the sample Vox: Choir Ahh.
+# Oscillator 2 is B's 2, the sample Vox: Choir Ohh.
+# Its effects, which FairWave hasn't got: Chorus-Flange Morph, Modern Compressor, Smooth Tremolo, Super Chorus, bpm Pattern 3, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/92/7664A532.WAV
+READ = SAMPLE
+TUNE = -30
+FINE = 47
+POS = 0.0%
+EDGE = WRAP
+LOOP = 32.1%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/82/37CEC1EC.WAV
+READ = SAMPLE
+TUNE = -29
+FINE = -50
+POS = 0.0%
+EDGE = WRAP
+LOOP = 36.9%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 4.133 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.533 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 1]
+RATE = 0.074 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 100%
+LFO 1 > LEVEL 2 = -100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 48.6%

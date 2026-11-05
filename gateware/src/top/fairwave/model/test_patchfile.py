@@ -7,7 +7,7 @@ import pytest
 
 from . import modulation as mod
 from .modulation import Modulation
-from .patchfile import (ABOUT_CHARS, CLEAN, FM, NAME_CHARS, RAW, RING, STEPS, a_layer, configure, default_patch, env_words,
+from .patchfile import (ABOUT_CHARS, CLEAN, FM, NAME_CHARS, RAW, RING, SAMPLE, STEPS, a_layer, configure, default_patch, env_words,
                         layers_for, lfo_words, parse, patch_of, default_settings, rate_index, rate_millihertz, read_wav,
                         slot_word, time_index, time_samples)
 from .wavescan import CLAMP, DEPTH_FULL, MIRROR, WRAP
@@ -133,9 +133,16 @@ def test_fine_tuning_reaches_the_pitch():
 
 
 def test_there_is_a_library():
-    assert len(PATCHES) >= 30
-    for folder in ("BASS", "REESE", "ROLLING", "CLASSIC"):
+    assert len(PATCHES) >= 250
+    for folder in ("BASS", "REESE", "ROLLING", "CLASSIC", "CROSS", "CINEMATIC", "DNB", "FAIRLIGHT", "GRAINS", "GUITARS",
+                   "HARDSTYLE", "HOUSE", "KICKS", "ORCHESTRA", "TECHNO", "TRANCE"):
         assert any(p.parent.name == folder for p in PATCHES), folder
+
+
+def table_of(path, name):
+    """As the firmware looks for one: beside the patch, then from the top of the library."""
+    beside = path.parent / name
+    return read_wav((beside if beside.exists() else LIBRARY / name).read_bytes())
 
 
 @pytest.mark.parametrize("path", PATCHES, ids=lambda p: f"{p.parent.name}/{p.stem}")
@@ -145,8 +152,9 @@ def test_every_patch_reads_with_nothing_left_out_and_its_tables_are_there(path):
     assert f.name and f.about, "the Browser shows these"
     for table in f.tables:
         if "/" in table:
-            frames = read_wav((LIBRARY / table).read_bytes())
-            assert (len(frames), len(frames[0])) == (64, 1024), table
+            frames = table_of(path, table)
+            assert len(frames[0]) in (256, 512, 1024, 2048), table
+            assert 1 <= len(frames) <= 1024, table
     # Every route takes CV 1 to a pitch, so it can be played, unless it has no way to be.
     assert any(s[0] == mod.CV1 for s in f.settings["slots"])
 
@@ -168,14 +176,37 @@ def test_the_rolling_patches_run_by_themselves_near_their_tempo_on_one_envelope(
         assert abs(60 / (period / 48000 * 4) - bpm_16ths) < 2.5, f"{name}: {period} samples"
 
 
-def test_a_grain_patchs_windows_are_shut_when_grains_start():
-    for name in ("Grain Drift", "Grain Spray"):
-        s = parse((LIBRARY / "CLASSIC" / f"{name}.fwp").read_bytes()).settings
-        for layer in s["layers"]:
-            k = s["lfos"][layer["grain"] - 1]
-            assert layer["grain"] != 0, name
-            value = mod.lfo_shape(k["shape"], k["phase"] * 65536 // 360, 0)
-            assert (value + mod.ONE) >> 1 == 0 and k["unipolar"], name
+@pytest.mark.parametrize("path", [p for p in PATCHES if p.parent.name == "GRAINS"], ids=lambda p: p.stem)
+def test_a_grain_patch_has_two_streams_of_faded_grains(path):
+    s = parse(path.read_bytes()).settings
+    for layer in s["layers"]:
+        assert 1 <= layer["grain"] <= 6, "the fade is in the gateware, and SYNC has none"
+        assert layer["level"] == 100, "and needs no help from a level at 0"
+
+
+SAMPLED = [p for p in PATCHES if any(layer["read"] == SAMPLE for layer in parse(p.read_bytes()).settings["layers"])]
+
+
+def test_there_are_sampled_patches():
+    assert len(SAMPLED) > 150
+
+
+@pytest.mark.parametrize("path", SAMPLED, ids=lambda p: f"{p.parent.name}/{p.stem}")
+def test_a_sample_loops_on_a_frame_that_comes_round_to_where_it_ended(path):
+    """A slip in `LOOP` by even one frame would click at each time round, which this would see."""
+    f = parse(path.read_bytes())
+    for layer, name in zip(f.settings["layers"], f.tables):
+        if layer["read"] != SAMPLE or layer["edge"] != WRAP:
+            continue
+        frames = table_of(path, name)
+        loop = (layer["shift"] * mod.ONE // 1000 * (len(frames) - 1)) >> 16
+        assert 0 <= loop < len(frames), name
+        # (a little less than a frame can be attacks: what counts is the join)
+        end, start = frames[-1][-1], frames[loop][0]
+        peak = max(abs(s) for frame in frames for s in frame)
+        looping = [s for frame in frames[loop:] for s in frame]
+        slope = max(abs(a - b) for a, b in zip(looping, looping[1:]))
+        assert abs(end - start) <= max(slope * 2, peak // 8), f"{name}: {end} to {start} at frame {loop}, steepest {slope}"
 
 
 def test_a_table_file_says_its_frame_length_and_has_no_dc():

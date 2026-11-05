@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = AM TREMOLO
+ABOUT = AM AT 16 HZ, WHATEVER THE NOTE
+
+# The modulator at C0, with no CV 1 on it: a tremolo as fast as a helicopter at any pitch. AM keeps the carrier, so
+# the note stays where it is. CV 2 turns it down.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -48
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -12
+POS = 62%
+
+[ENV 1]
+ATTACK = 20 MS
+DECAY = 300 MS
+SUSTAIN = 90%
+RELEASE = 200 MS
+VCA = OSC 2
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 100%
+
+[ROUTING]
+CV 1 > PITCH 2 = 100%
+CV 2 > X DEPTH = -100%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

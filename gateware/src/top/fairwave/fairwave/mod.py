@@ -264,8 +264,9 @@ class Lfos(wiring.Component):
             "rising": In(2),
             "out": Out(data.ArrayLayout(signed(18), self.N)),
             "phase": Out(data.ArrayLayout(unsigned(32), self.N)),
-            # Which started a cycle this sample.
+            # Which started a cycle this sample, and which passed half way.
             "wrapped": Out(self.N),
+            "halved": Out(self.N),
             # For the simulation's harness.
             "held": Out(data.ArrayLayout(signed(17), self.N)),
             "lfsr": Out(23),
@@ -356,6 +357,7 @@ class Lfos(wiring.Component):
                 m.d.sync += lfsr.eq(Cat(lfsr[22] ^ lfsr[17], lfsr[:22]))
                 m.d.sync += phase.eq(Mux(fire, 0, total))
                 m.d.sync += self.wrapped.bit_select(i, 1).eq(fire | total[32])
+                m.d.sync += self.halved.bit_select(i, 1).eq(~fire & total[31] & ~phase[31])
                 with m.If(fire | total[32]):
                     m.d.sync += held.eq(lfsr[:17])
                 m.d.comb += word.eq(2)
@@ -415,9 +417,14 @@ class ModMatrix(wiring.Component):
             "frames_m1": In(data.ArrayLayout(unsigned(10), 2)),
             "env_level": In(data.ArrayLayout(unsigned(17), 2)),
             "vca": In(data.ArrayLayout(unsigned(2), 2)),
-            # Per layer: 1 to 3, the LFO whose cycles restart it; and which LFOs just did.
+            # Per layer: 1 to 3, the LFO whose cycles restart it; no fade; half a cycle on. And which
+            # LFOs just started a cycle or passed half way, and where each is.
             "grain": In(data.ArrayLayout(unsigned(2), 2)),
+            "hard": In(2),
+            "half": In(2),
             "wrapped": In(3),
+            "halved": In(3),
+            "lfo_phase": In(data.ArrayLayout(unsigned(16), 3)),
             "restart": Out(2),
             "inc": Out(data.ArrayLayout(unsigned(32), 2)),
             "pos": Out(data.ArrayLayout(signed(30), 2)),
@@ -484,11 +491,20 @@ class ModMatrix(wiring.Component):
                 self.level[i].eq(results["level"][i]),
             ]
             # (a grain's position is the one it started with: `grain` is 0 for no grain)
-            choices = Cat(C(0, 1), self.wrapped)
+            choices = Cat(C(0, 1), Mux(self.half[i], self.halved, self.wrapped))
             m.d.comb += self.restart[i].eq(choices.bit_select(self.grain[i], 1))
         m.d.comb += [self.balance.eq(balance), self.depth.eq(depth)]
         grain_on = Array(self.grain[i] != 0 for i in range(2))[layer]
         restarting = self.restart.bit_select(layer, 1)
+
+        # A grain's fade, `window()`: a raised sine from where its clock is. (Half a cycle on is the top bit.)
+        grain_now = Array(self.grain[i] for i in range(2))[layer]
+        clock_at = Array([C(0, 16), *(self.lfo_phase[k] for k in range(3))])[grain_now]
+        faded = grain_on & ~self.hard.bit_select(layer, 1)
+        window_y = Signal(16)
+        m.d.comb += window_y.eq(Cat(clock_at[:15], clock_at[15] ^ self.half.bit_select(layer, 1)) - 0x4000)
+        window_s = window_y.as_signed()
+        window_abs = Mux(window_y[15], -window_s, window_s)
 
         at = Mux(layer, LAYER_DESTS, 0)
         frames_m1 = Array(self.frames_m1[i] for i in range(2))[layer]
@@ -608,6 +624,27 @@ class ModMatrix(wiring.Component):
             with m.State("SHIFT_DONE"):
                 m.d.sync += Array(results["shift"])[layer].eq(prod >> 10)
                 m.d.sync += [q.eq(fraction), env.eq(0)]
+                m.next = "WINDOW"
+
+            with m.State("WINDOW"):
+                with m.If(faded):
+                    m.d.sync += [a.eq(window_s), b.eq(0x8000 - window_abs)]
+                    m.next = "WINDOW_WAIT"
+                with m.Else():
+                    m.next = "VCA"
+
+            with m.State("WINDOW_WAIT"):
+                m.next = "WINDOW_SHAPE"
+
+            with m.State("WINDOW_SHAPE"):
+                m.d.sync += [a.eq(q), b.eq(((prod >> 12) + ONE) >> 1)]
+                m.next = "WINDOW_WAIT2"
+
+            with m.State("WINDOW_WAIT2"):
+                m.next = "WINDOW_DONE"
+
+            with m.State("WINDOW_DONE"):
+                m.d.sync += q.eq(prod >> 16)
                 m.next = "VCA"
 
             # Each envelope routed to this layer's VCA multiplies its level.
@@ -682,6 +719,8 @@ class ModEngine(wiring.Component):
             "frames_m1": In(data.ArrayLayout(unsigned(10), 2)),
             "vca": In(data.ArrayLayout(unsigned(2), 2)),
             "grain": In(data.ArrayLayout(unsigned(2), 2)),
+            "hard": In(2),
+            "half": In(2),
             "wr_en": In(1),
             "wr_addr": In(8),
             "wr_data": In(32),
@@ -728,7 +767,9 @@ class ModEngine(wiring.Component):
             env.rising.eq(rising),
             lfo.rising.eq(rising),
         ]
-        m.d.comb += mat.wrapped.eq(lfo.wrapped)
+        m.d.comb += [mat.wrapped.eq(lfo.wrapped), mat.halved.eq(lfo.halved), mat.hard.eq(self.hard), mat.half.eq(self.half)]
+        for k in range(3):
+            m.d.comb += mat.lfo_phase[k].eq(lfo.phase[k][16:])
         for i in range(2):
             m.d.comb += [mat.frames_m1[i].eq(self.frames_m1[i]), mat.vca[i].eq(self.vca[i]),
                          mat.grain[i].eq(self.grain[i]), mat.env_level[i].eq(env.level[i])]

@@ -35,20 +35,21 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
+LIBRARY = HERE.parent / "library" / "FAIRWAVE"
 
 import numpy as np  # noqa: E402
 
 from model import modulation as mod  # noqa: E402
 from model.modulation import Modulation  # noqa: E402
-from model.patchfile import (CLEAN, FM, PD, RAW, RING, STEPS, a_layer, configure, default_patch, env_words, lfo_words,  # noqa: E402
-                             parse, slot_word)
-from model.wavescan import CLAMP, MIRROR, WRAP, Layer, both, mip_rows, pack_frames  # noqa: E402
+from model.patchfile import (CLEAN, FM, PD, RAW, RING, SAMPLE, STEPS, a_layer, configure, default_patch, env_words, lfo_words,  # noqa: E402
+                             parse, slot_word, read_wav)
+from model.wavescan import CLAMP, MIRROR, WRAP, Layer, advance, both, mip_rows, pack_frames  # noqa: E402
 
 DUMP_BASE = 0x800000
 
 TRACE = np.dtype([
     ("adc", "<u2", 4), ("phase", "<u4", 2), ("lfo_phase", "<u4", 3), ("env_level", "<u4", 2),
-    ("max_level", "<u2", 2), ("lfo_held", "<i4", 3), ("lfsr", "<u4"), ("pos", "<i4", 2)])
+    ("max_level", "<u2", 2), ("lfo_held", "<i4", 3), ("lfsr", "<u4"), ("pos", "<i4", 2), ("scan", "<u2", 2)])
 
 def vca_and_loops(p):
     """Through the screens: envelope 1 closes both VCAs and loops while its gate is high, envelope
@@ -115,11 +116,10 @@ PRESETS = [
            lfo=[lfo_words(32, mod.SINE, unipolar=1, sync=1), lfo_words(72, mod.TRI), lfo_words(37, mod.SQUARE)],
            slots=V_OCT + [slot_word(mod.LFO1, mod.CROSS, 40)],
            **HEAR_OSC2),
-    preset(layers=[a_layer(table=VOWELS, level=0, grain=1, semitones=-12), a_layer(table=FM_BELL, level=0, grain=2)],
-           lfo=[lfo_words(64, mod.SINE, unipolar=1, phase=270), lfo_words(68, mod.SINE, unipolar=1, phase=270),
-                lfo_words(29, mod.TRI)],
-           slots=V_OCT + [slot_word(mod.LFO1, mod.LEVEL, 100), slot_word(mod.LFO2, 4 + mod.LEVEL, 100),
-                          slot_word(mod.LFO3, mod.POS, 40), slot_word(mod.LFO3, 4 + mod.POS, -30),
+    preset(layers=[a_layer(table=HARMONICS, grain=1, semitones=-12, position=220),
+                   a_layer(table=HARMONICS, grain=2, semitones=-5, position=260)],
+           lfo=[lfo_words(70, mod.TRI), lfo_words(74, mod.TRI), lfo_words(77, mod.RANDOM)],
+           slots=V_OCT + [slot_word(mod.LFO3, mod.POS, 12), slot_word(mod.LFO3, 4 + mod.POS, -12),
                           slot_word(mod.CV2, mod.POS, 50), slot_word(mod.CV2, 4 + mod.POS, 50)],
            outs=[mod.OUT_MIX, mod.OUT_MIX, mod.OUT_ENV1, mod.OUT_ENV2]),
     preset(layers=[a_layer(table=SWARM, edge=MIRROR), a_layer(table=SWARM, edge=MIRROR, semitones=7)],
@@ -143,6 +143,14 @@ def parse_tables(uart):
 
 def s16(a):
     return (a.astype(int) + 0x8000) % 0x10000 - 0x8000
+
+
+def rows_on_disk(patch_file, name):
+    """A table a patch names, as the firmware looks for one: beside the patch, then from the top of the library."""
+    if "/" not in name:
+        return None
+    beside = Path(patch_file).parent / name
+    return read_wav((beside if beside.exists() else LIBRARY / name).read_bytes())
 
 
 def main():
@@ -191,7 +199,16 @@ def main():
         # Every frame must really have reached PSRAM: a dirty cache leaves zeros.
         peaks = [int(np.abs(body[f * length:(f + 1) * length].astype(int)).max()) for f in range(frames)]
         print(f"{name}: frame peaks {min(peaks)} to {max(peaks)}")
-        if min(peaks) < 14000:
+        file_says = rows_on_disk(args.patch_file, f.tables[i]) if args.patch_file and f.tables[i] else None
+        if file_says is not None:
+            # A file says just what should be there, quiet frames and all.
+            differ = int(np.count_nonzero(body != np.array(file_says, dtype=np.int16).reshape(-1)))
+            print(f"{name}: {differ} of {len(body)} samples differ from its file")
+            if differ:
+                print(f"  FAIL: {name} isn't in PSRAM as it is on the drive")
+                ok = False
+        # (a recording's frames are as quiet as it is, and it can end in silence: its peak has to get there)
+        elif (max(peaks) if spec["read"] == SAMPLE else min(peaks)) < 14000:
             print(f"  FAIL: a frame of {name} didn't reach PSRAM (peak {min(peaks)})")
             ok = False
         rows = [body[f * length:(f + 1) * length].tolist() for f in range(frames)]
@@ -212,7 +229,8 @@ def main():
         else:
             print(f"{name}: its levels weren't finished in this run")
         layers.append(Layer(table_base=offset // 256, frame_log2=int(math.log2(length)), frames=frames,
-                            edge=spec["edge"], stepped=int(spec["read"] >= STEPS), raw=int(spec["read"] == RAW)))
+                            edge=spec["edge"], stepped=int(spec["read"] in (STEPS, RAW)), raw=int(spec["read"] == RAW),
+                            sample=int(spec["read"] == SAMPLE)))
 
     m = Modulation()
     configure(m, patch, layers)
@@ -259,8 +277,10 @@ def main():
     first = [None] * 4
     levels_seen = [set(), set()]
     switches = []
-    for layer, phase in zip(layers, phases[n0]):
+    for layer, phase, scan in zip(layers, phases[n0], trace["scan"][n0]):
         layer.phase = int(phase)
+        layer.frame = int(scan) & 0x3FF
+        layer.ended = int(scan) >> 15
     for i in range(n0, n):
         if i == known_from[1] and i != n0:
             # (a free envelope's level until now was unknown here; it restarts from it)
@@ -297,7 +317,7 @@ def main():
                 if first[c] is None:
                     first[c] = (i, int(audio[i][c]), want[c])
         for layer in layers:
-            layer.phase = (layer.phase + layer.inc) & 0xFFFFFFFF
+            advance(layer)
     print(f"levels available through the run: osc 1 {sorted(levels_seen[0])}, osc 2 {sorted(levels_seen[1])}")
     for at, when in switches:
         print(f"levels came on at sample {at}, worked out {when}")

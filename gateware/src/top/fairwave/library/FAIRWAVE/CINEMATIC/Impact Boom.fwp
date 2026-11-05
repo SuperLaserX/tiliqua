@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = IMPACT BOOM
+ABOUT = THE TRAILER HIT. GATE 1
+
+# A sub with a fast drop, and a low ring-modulated clang on the front: a door the size of a building. A second and a half.
+[OSC 1]
+TABLE = TABLES/FOLD.WAV
+TUNE = -19
+FINE = 20
+POS = 50%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -36
+POS = 22%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 1.5 S
+SUSTAIN = 0%
+RELEASE = 1.5 S
+D CURVE = 40
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 140 MS
+SUSTAIN = 0%
+RELEASE = 140 MS
+D CURVE = 70
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 40%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 2 = 28%
+ENV 2 > X DEPTH = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

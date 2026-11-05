@@ -1,0 +1,51 @@
+FAIRWAVE PATCH 1
+NAME  = EUPHORIC LEAD
+ABOUT = THE BIG MELODY. GATE 1, CV 1
+
+# A lot of saws, wide and bright, with a short filter envelope for the front of the notes and delayed vibrato:
+# hardstyle's euphoric lead. One side on each output.
+[OSC 1]
+TABLE = SWARM
+TUNE = 0
+FINE = -7
+POS = 76%
+
+[OSC 2]
+TABLE = SWARM
+TUNE = 12
+FINE = 7
+POS = 76%
+
+[ENV 1]
+ATTACK = 6 MS
+DECAY = 400 MS
+SUSTAIN = 85%
+RELEASE = 300 MS
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 160 MS
+SUSTAIN = 0%
+RELEASE = 120 MS
+D CURVE = 55
+
+[LFO 1]
+RATE = 5.5 HZ
+SHAPE = SINE
+LEVEL = 16%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 18%
+ENV 2 > POS 2 = 18%
+LFO 1 > PITCH 1 = 0.5%
+LFO 1 > PITCH 2 = 0.5%
+CV 2 > POS 1 = -20%
+CV 2 > POS 2 = -20%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

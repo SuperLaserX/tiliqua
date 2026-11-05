@@ -1,0 +1,59 @@
+FAIRWAVE PATCH 1
+NAME  = AA SY CELLAR
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA SY Cellar by Anton Anru: Korg Modwave - Antmospheric Keys Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 1/8 & Dotted 1/8, 1000ms, Vintage Flanger.
+[OSC 1]
+TABLE = MODWAVE/T/CE/724B9E78.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -4
+POS = 32.6%
+
+[OSC 2]
+TABLE = MODWAVE/T/BB/16AE7DE6.WAV
+READ = CLEAN
+TUNE = 4
+FINE = 14
+POS = 37.2%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 2.495 S
+SUSTAIN = 9%
+RELEASE = 817.333 MS
+A CURVE = 30
+D CURVE = 70
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 1.372 S
+SUSTAIN = 13%
+RELEASE = 1.544 S
+A CURVE = 0
+D CURVE = 20
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 2 = -62%
+CV 1 > POS 1 = -54.5%
+ENV 2 > POS 2 = 40%
+ENV 2 > POS 1 = 35%
+CV 2 > POS 2 = 25.5%
+CV 2 > POS 1 = 22.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 32.5%

@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = SCREECH
+ABOUT = THE RAW LEAD. GATE 1, CV 1
+
+# Heavy FM from a sawtooth a fifth up, through a table clipping hard: the raw lead. A fast random LFO on the depth makes it
+# screech, a fast small one on the pitch makes it scream. CV 2 is the drive.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = 7
+POS = 85%
+
+[OSC 2]
+TABLE = TABLES/HARD.WAV
+TUNE = 0
+POS = 50%
+LEVEL = 65%
+
+[ENV 1]
+ATTACK = 3 MS
+DECAY = 180 MS
+SUSTAIN = 90%
+RELEASE = 90 MS
+VCA = OSC 2
+
+[LFO 1]
+RATE = 17 HZ
+SHAPE = RANDOM
+
+[LFO 2]
+RATE = 7.3 HZ
+SHAPE = TRI
+LEVEL = 30%
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 14%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > X DEPTH = 8%
+LFO 2 > PITCH 2 = 0.5%
+CV 2 > POS 2 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

@@ -1,0 +1,44 @@
+FAIRWAVE PATCH 1
+NAME  = GATED STAB
+ABOUT = THE CHORD, CHOPPED AT 150 BPM
+
+# A rave chord chopped by a square LFO at sixteenths of 150 BPM. It runs by itself during the gate. To change the tempo,
+# change LFO 1's RATE: 16ths are BPM divided by 15, in Hz.
+[OSC 1]
+TABLE = TABLES/RAVECHRD.WAV
+TUNE = -40
+FINE = 14
+POS = 70%
+LEVEL = 0%
+
+[OSC 2]
+TABLE = TABLES/RAVECHRD.WAV
+TUNE = -40
+FINE = 24
+POS = 70%
+LEVEL = 0%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 200 MS
+SUSTAIN = 100%
+RELEASE = 150 MS
+VCA = BOTH
+
+[LFO 1]
+RATE = 10 HZ
+SHAPE = SQUARE
+POLAR = UNI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 100%
+LFO 1 > LEVEL 2 = 100%
+CV 2 > POS 1 = -40%
+CV 2 > POS 2 = -40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

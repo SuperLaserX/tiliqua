@@ -1,0 +1,55 @@
+FAIRWAVE PATCH 1
+NAME  = CMI WHISTLE
+ABOUT = A THIN LEAD
+
+# Fairlight CMI: Fairlight  Whistle. 1905.8 Hz, tuned so 0 V is C6.
+# Plays once from the start on each gate: GRAIN = SYNC 1, with LFO 1 as slow as it goes.
+# CV 2 moves where it starts.
+[OSC 1]
+TABLE = WAVES/WHISTLE.WAV
+READ = SAMPLE
+TUNE = -24
+FINE = -17
+POS = 0%
+EDGE = CLAMP
+GRAIN = SYNC 1
+
+[OSC 2]
+TABLE = WAVES/WHISTLE.WAV
+READ = SAMPLE
+TUNE = -24
+FINE = -14
+POS = 0%
+EDGE = CLAMP
+GRAIN = SYNC 1
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 180 MS
+D CURVE = 40
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 5.1 HZ
+SHAPE = SINE
+LEVEL = 30%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 12%
+CV 2 > POS 2 = 12%
+LFO 2 > PITCH 1 = 0.5%
+LFO 2 > PITCH 2 = 0.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50%

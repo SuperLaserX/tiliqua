@@ -1,0 +1,65 @@
+FAIRWAVE PATCH 1
+NAME  = OLDIE PLK2 KNB A
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Oldie Plk2 Knb ADSR by YO: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: controllers, random and Kaoss Physics, performance modulators, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Oldie Pluck 1, Oldie Pluck 2, Orange Mk I Phaser.
+[OSC 1]
+TABLE = MODWAVE/T/A6/4A7549C4.WAV
+READ = CLEAN
+TUNE = -12
+POS = 25.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/AA/35466EC1.WAV
+READ = CLEAN
+TUNE = -12
+POS = 25.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 86.667 MS
+SUSTAIN = 0%
+RELEASE = 18.667 MS
+A CURVE = 30
+D CURVE = 70
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 66.667 MS
+SUSTAIN = 38%
+RELEASE = 18.667 MS
+A CURVE = 30
+D CURVE = 50
+R CURVE = 60
+
+[LFO 1]
+RATE = 4.474 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 50%
+ENV 2 > POS 2 = 50%
+ENV 2 > LEVEL 2 = 46%
+CV 1 > POS 1 = -41.5%
+CV 1 > POS 2 = -41.5%
+LFO 1 > PITCH 1 = -0.5%
+LFO 1 > PITCH 2 = -0.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 36.4%

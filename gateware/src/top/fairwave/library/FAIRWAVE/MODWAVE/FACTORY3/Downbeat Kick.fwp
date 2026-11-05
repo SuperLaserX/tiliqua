@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = DOWNBEAT KICK
+ABOUT = PERCUSSION FROM MODWAVE. GATE 1, C
+
+# From the modwave's Downbeat Kick by Peter Schwartz: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Drm_Guru: Kick Trance.
+# On a modwave oscillator 1 plays at one pitch on every key. It does at 0 V here, and CV 1 tunes it.
+# Not carried over: controllers, random and Kaoss Physics, performance modulators, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Inharmonic Twang, Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/C7/F8DCCBA2.WAV
+READ = SAMPLE
+TUNE = -7
+FINE = -23
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/C7/F8DCCBA2.WAV
+TUNE = -7
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 192.000 MS
+SUSTAIN = 100%
+RELEASE = 0.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

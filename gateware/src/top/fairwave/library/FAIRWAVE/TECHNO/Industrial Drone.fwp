@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = INDUSTRIAL DRONE
+ABOUT = A MACHINE, HUMMING. BY ITSELF
+
+# A wavefolder ring-modulated against a low saw, with no envelope at all, and three slow LFOs at odd rates. It doesn't
+# repeat for a long time. Send CV 1 to tune it, and CV 2 for more fold.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -36
+FINE = 7
+POS = 60%
+
+[OSC 2]
+TABLE = TABLES/FOLD.WAV
+TUNE = -24
+POS = 25%
+
+[LFO 1]
+RATE = 0.13 HZ
+SHAPE = TRI
+
+[LFO 2]
+RATE = 0.19 HZ
+SHAPE = SINE
+
+[LFO 3]
+RATE = 2.7 HZ
+SHAPE = RANDOM
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 70%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 2 = 20%
+LFO 2 > X DEPTH = 15%
+LFO 3 > POS 1 = 5%
+CV 2 > POS 2 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

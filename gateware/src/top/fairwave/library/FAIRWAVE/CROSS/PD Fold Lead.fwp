@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = PD FOLD LEAD
+ABOUT = BENT BY A WAVEFOLDER. GATE 1
+
+# The wavefolder's table as the bend: many turns in a cycle, so it's more like FM than anything a CZ could do. An LFO on
+# the place in the table keeps it alive. A lead.
+[OSC 1]
+TABLE = TABLES/FOLD.WAV
+TUNE = 0
+POS = 35%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = 0
+POS = 0%
+
+[ENV 1]
+ATTACK = 4 MS
+DECAY = 200 MS
+SUSTAIN = 85%
+RELEASE = 160 MS
+VCA = OSC 2
+
+[LFO 1]
+RATE = 0.9 HZ
+SHAPE = TRI
+
+[LFO 2]
+RATE = 5.2 HZ
+SHAPE = SINE
+LEVEL = 20%
+
+[CROSS MOD]
+MODE = PD
+FROM = OSC 1
+DEPTH = 8%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 30%
+LFO 2 > PITCH 2 = 0.5%
+CV 2 > X DEPTH = 12%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

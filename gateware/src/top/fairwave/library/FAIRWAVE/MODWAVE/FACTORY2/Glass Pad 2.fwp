@@ -1,0 +1,57 @@
+FAIRWAVE PATCH 1
+NAME  = GLASS PAD
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Glass Pad by YO: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is A's 2, its wavetable.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Glass Pad, Smile Curve, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/AC/89D3FE02.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 5
+POS = 46.9%
+
+[OSC 2]
+TABLE = MODWAVE/T/C9/677C6339.WAV
+READ = CLEAN
+TUNE = 0
+FINE = -8
+POS = 45.1%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 865.333 MS
+DECAY = 80.500 S
+SUSTAIN = 59%
+RELEASE = 0.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 4.005 S
+SUSTAIN = 0%
+RELEASE = 496.000 MS
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 2 = -47.5%
+ENV 2 > POS 1 = 39%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 31.7%

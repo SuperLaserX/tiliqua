@@ -15,7 +15,7 @@ def rate(samples):
     return (-(-(1 << 32) // samples)) & 0xFFFFFFFF
 
 
-def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None, grain=(0, 0)):
+def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None, grain=(0, 0), hard=(0, 0), half=(0, 0)):
     """Drives the gateware and the model with the same writes and inputs, and compares every
     source and result after each of `n` samples. Returns the longest run in clocks."""
     dut = ModEngine()
@@ -23,6 +23,8 @@ def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None, grain=(0, 0
     m.routing(routing)
     m.frames_m1 = [frames[0] - 1, frames[1] - 1]
     m.grain = list(grain)
+    m.hard = list(hard)
+    m.half = list(half)
     sim = Simulator(dut)
     sim.add_clock(1 / 60e6)
     longest = [0]
@@ -41,6 +43,8 @@ def run(writes, adc_of, n, routing=0, frames=(1, 1), on_sample=None, grain=(0, 0
             ctx.set(dut.vca[i], (routing >> (16 + 2 * i)) & 3)
             ctx.set(dut.frames_m1[i], frames[i] - 1)
             ctx.set(dut.grain[i], grain[i])
+        ctx.set(dut.hard, hard[0] | hard[1] << 1)
+        ctx.set(dut.half, half[0] | half[1] << 1)
         for addr, data in writes:
             await write(ctx, addr, data)
         for s in range(n):
@@ -310,6 +314,33 @@ def test_every_lfo_can_be_a_grains_clock_and_a_gate_can_start_one():
               + [(0x30 + model.POS, ONE // 4), (0x34 + model.POS, ONE // 4)])
     for grain in ((1, 2), (3, 1), (2, 3)):
         run(writes, gate_at(0, (6, 8), (14, 18)), 20, frames=(9, 9), grain=grain)
+
+
+def test_a_grain_fades_its_level():
+    writes = (lfo_writes(1, r=(1 << 32) // 40) + lfo_writes(2, kind=model.SQUARE, r=(1 << 32) // 13, offset=0x2000)
+              + [(0x33, ONE), (0x37, ONE // 2)])
+    run(writes, lambda s: [0, 0, 0, 0], 90, frames=(4, 4), grain=(2, 3))
+
+
+def test_a_hard_restart_isnt_faded_and_the_other_layer_still_is():
+    writes = lfo_writes(0, r=(1 << 32) // 25) + [(0x33, ONE), (0x37, ONE)]
+    run(writes, lambda s: [0, 0, 0, 0], 60, frames=(4, 4), grain=(1, 1), hard=(1, 0))
+
+
+def test_a_second_stream_on_one_lfo_is_half_a_cycle_on():
+    writes = lfo_writes(0, r=(1 << 32) // 30) + [(0x33, ONE), (0x37, ONE), (0x31, ONE // 3), (0x35, ONE // 5)]
+    run(writes, lambda s: [0, 0, 0, 0], 80, frames=(8, 8), grain=(1, 1), half=(0, 1))
+
+
+def test_a_gate_syncing_a_grains_clock_starts_it_on_both_streams():
+    writes = lfo_writes(2, r=1 << 22, sync=1) + [(0x33, ONE), (0x37, ONE)]
+    run(writes, gate_at(0, (6, 8), (30, 33)), 45, frames=(4, 4), grain=(3, 3), half=(0, 1))
+
+
+def test_the_window_through_an_envelope_and_the_level_slots():
+    writes = (lfo_writes(0, r=(1 << 32) // 17) + lfo_writes(1, kind=model.TRI, r=(1 << 32) // 11)
+              + [(0x33, ONE // 2), slot(0, model.LFO2, model.LEVEL, 6000)])
+    run(writes, lambda s: [0, 0, 0, 0], 40, routing=1 << 16, frames=(4, 4), grain=(1, 0))
 
 
 def test_a_run_stays_short_with_all_of_it():

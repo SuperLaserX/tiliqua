@@ -1,0 +1,74 @@
+FAIRWAVE PATCH 1
+NAME  = ATTEMPT NO LANDI
+ABOUT = VOCAL/AIRY FROM MODWAVE. GATE 1, C
+
+# From the modwave's Attempt No Landing by Francis Preve: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Vox: Tape Choir.
+# Oscillator 2 is A's 2, the sample Vox: Choir Whisper M.
+# Not carried over: 4 unison voices, controllers, random and Kaoss Physics, layer B oscillator 1, layer B oscillator 2, performance modulators, the mod wheel's scaling of a modulation, the sub oscillator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Abandoned Facility, Acid Techno Beat, Europa Chorale.
+[OSC 1]
+TABLE = MODWAVE/T/74/76E73A69.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = -1
+POS = 0.0%
+EDGE = WRAP
+LOOP = 1.1%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/CB/BC8A5C84.WAV
+READ = SAMPLE
+TUNE = -30
+FINE = 48
+POS = 0.0%
+EDGE = WRAP
+LOOP = 20.3%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 221.333 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 426.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 50.0%
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 0.987 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > X DEPTH = 19%
+LFO 2 > PITCH 1 = 0.5%
+LFO 2 > PITCH 2 = 0.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 42.9%

@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = AX73 SLOW PAD
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AX73 Slow Pad by Ian Dixon: ID-AX73.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, the sample Akai AX73 Orch 2.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, Stereo Delay, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/FC/BF2356C2.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = -16
+POS = 0.0%
+EDGE = WRAP
+LOOP = 16%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/FC/BF2356C2.WAV
+TUNE = -19
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 37.333 MS
+DECAY = 3.533 S
+SUSTAIN = 100%
+RELEASE = 440.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

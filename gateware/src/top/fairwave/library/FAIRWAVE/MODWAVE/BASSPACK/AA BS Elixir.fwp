@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = AA BS ELIXIR
+ABOUT = BASS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA BS Elixir by Anton Anru: Korg Modwave - Bass Pack Bundle (by Anton Anru).mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: controllers, random and Kaoss Physics, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+[OSC 1]
+TABLE = MODWAVE/T/BF/9432FA41.WAV
+READ = CLEAN
+TUNE = -24
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/ED/F2CA000E.WAV
+READ = CLEAN
+TUNE = -36
+FINE = 9
+POS = 31.3%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 660.000 MS
+SUSTAIN = 85%
+RELEASE = 84.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 2.312 S
+SUSTAIN = 0%
+RELEASE = 2.619 S
+A CURVE = 30
+D CURVE = 0
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+CV 1 > POS 2 = -52%
+ENV 2 > POS 2 = 37.5%
+CV 2 > POS 2 = 28%
+CV 2 > POS 1 = 18%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 22.8%

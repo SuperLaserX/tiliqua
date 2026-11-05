@@ -35,7 +35,7 @@
 use heapless::String;
 
 use crate::modulation::*;
-use crate::patch::{CrossMode, Edge, Patch, ReadStyle, FINE_MAX, N_LAYERS};
+use crate::patch::{grain_name, CrossMode, Edge, Patch, ReadStyle, FINE_MAX, GRAIN_CHOICES, N_LAYERS};
 
 /// What a patch file starts with.
 pub const MAGIC: &str = "FAIRWAVE PATCH";
@@ -289,7 +289,7 @@ impl PatchFile {
                 self.frame_log2[i] = log2;
             }
             _ if same(key, "READ") => {
-                l.read = ReadStyle::Clean.next(named(value, 4, |k| ReadStyle::Clean.next(k).name())?);
+                l.read = ReadStyle::Clean.next(named(value, 5, |k| ReadStyle::Clean.next(k).name())?);
             }
             _ if same(key, "TUNE") => l.semitones = nearest(with_unit(value, "ST")?, 1000).clamp(-48, 48) as i16,
             _ if same(key, "FINE") => {
@@ -297,10 +297,11 @@ impl PatchFile {
                 l.fine = nearest(with_unit(value, "CT")?, 1000).clamp(-limit, limit) as i8;
             }
             _ if same(key, "POS") => l.position = nearest(percent(value)?, 100).clamp(0, 1000) as u16,
-            _ if same(key, "SHIFT") => l.shift = nearest(percent(value)?, 100).clamp(-2000, 2000) as i16,
+            // (`LOOP`: what `SHIFT` is to a sample)
+            _ if same(key, "SHIFT") || same(key, "LOOP") => l.shift = nearest(percent(value)?, 100).clamp(-2000, 2000) as i16,
             _ if same(key, "EDGE") => l.edge = Edge::Clamp.next(named(value, 3, |k| Edge::Clamp.next(k).name())?),
             _ if same(key, "GRAIN") => {
-                l.grain = if same(value, "OFF") { 0 } else { numbered(value, "LFO", N_LFOS)? as u8 + 1 };
+                l.grain = named(value, GRAIN_CHOICES as i32, |k| grain_name(k as u8))? as u8;
             }
             _ if same(key, "LEVEL") => l.level = nearest(percent(value)?, 1000).clamp(0, 100) as u8,
             _ => return None,
@@ -568,10 +569,20 @@ mod tests {
             let m = CrossMode::Off.next(i);
             assert_eq!(body(&std::format!("[CROSS MOD]\nMODE = {}\n", m.name())).patch.cross.mode, m);
         }
-        for i in 0..4 {
+        for g in 0..GRAIN_CHOICES {
+            assert_eq!(body(&std::format!("[OSC 1]\nGRAIN = {}\n", grain_name(g))).patch.layers[0].grain, g);
+        }
+        for i in 0..5 {
             let r = ReadStyle::Clean.next(i);
             assert_eq!(body(&std::format!("[OSC 1]\nREAD = {}\n", r.name())).patch.layers[0].read, r);
         }
+    }
+
+    #[test]
+    fn a_samples_loop_is_its_shift_by_another_name() {
+        let f = body("[OSC 1]\nREAD = SAMPLE\nLOOP = 40%\n");
+        assert_eq!(f.patch.layers[0].read, ReadStyle::Sample);
+        assert_eq!(f.patch.layers[0].shift, 400);
     }
 
     #[test]

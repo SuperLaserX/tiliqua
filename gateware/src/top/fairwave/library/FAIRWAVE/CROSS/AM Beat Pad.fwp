@@ -1,0 +1,43 @@
+FAIRWAVE PATCH 1
+NAME  = AM BEAT PAD
+ABOUT = TWO NOTES BEATING. GATE 1, CV 1
+
+# Carrier and modulator six cents apart: AM between them comes and goes slowly, and it swells through its harmonics,
+# not only in level.
+[OSC 1]
+TABLE = TABLES/PWM.WAV
+TUNE = -12
+FINE = 6
+POS = 30%
+
+[OSC 2]
+TABLE = TABLES/PWM.WAV
+TUNE = -12
+POS = 25%
+
+[ENV 1]
+ATTACK = 450 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 1.3 S
+VCA = OSC 2
+
+[LFO 2]
+RATE = 0.24 HZ
+SHAPE = SINE
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 100%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > POS 2 = 20%
+CV 2 > POS 1 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

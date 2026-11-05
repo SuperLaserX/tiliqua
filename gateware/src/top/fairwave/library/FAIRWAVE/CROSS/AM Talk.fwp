@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = AM TALK
+ABOUT = A VOICE AM'D BY A VOICE. GATE 1
+
+# The carrier's table is formants, moved by an LFO, and so is the modulator's: it says different things at once.
+[OSC 1]
+TABLE = TABLES/TALK.WAV
+TUNE = 0
+POS = 40%
+
+[OSC 2]
+TABLE = TABLES/TALK.WAV
+TUNE = -24
+POS = 60%
+
+[ENV 1]
+ATTACK = 5 MS
+DECAY = 200 MS
+SUSTAIN = 95%
+RELEASE = 90 MS
+VCA = OSC 2
+
+[LFO 1]
+RATE = 2.3 HZ
+SHAPE = TRI
+
+[LFO 2]
+RATE = 3.7 HZ
+SHAPE = SINE
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 80%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 1 = 40%
+LFO 2 > POS 2 = 34%
+CV 2 > X DEPTH = 20%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

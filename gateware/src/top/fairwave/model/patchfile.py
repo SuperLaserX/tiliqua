@@ -26,7 +26,7 @@ TABLE_CHARS = 64
 FINE_MAX = 50
 
 # Reading styles.
-CLEAN, PLAIN, STEPS, RAW = 0, 1, 2, 3
+CLEAN, PLAIN, STEPS, RAW, SAMPLE = 0, 1, 2, 3, 4
 # Cross modulation's modes, as the routing register's bits.
 RING, FM, PD = 0b001, 0b010, 0b110
 
@@ -35,7 +35,9 @@ DESTS = ["PITCH 1", "POS 1", "SHIFT 1", "LEVEL 1", "PITCH 2", "POS 2", "SHIFT 2"
 OUTS = ["OFF", "MIX", "OSC 1", "OSC 2", "ENV 1", "ENV 2", "LFO 1", "LFO 2", "LFO 3"]
 SHAPES = ["SINE", "TRI", "SAW UP", "SAW DN", "SQUARE", "RANDOM"]
 EDGES = ["CLAMP", "WRAP", "MIRROR"]
-READS = ["CLEAN", "PLAIN", "STEPS", "RAW"]
+READS = ["CLEAN", "PLAIN", "STEPS", "RAW", "SAMPLE"]
+# A layer's `GRAIN`, from 1: faded, faded half a cycle on, and with no fade at all.
+GRAINS = ["OFF", "LFO 1", "LFO 2", "LFO 3", "LFO 1 B", "LFO 2 B", "LFO 3 B", "SYNC 1", "SYNC 2", "SYNC 3"]
 LOOPS = ["OFF", "GATED", "FREE"]
 MODES = ["OFF", "RING", "AM", "FM", "PD"]
 
@@ -139,6 +141,14 @@ def patch_of(s):
     }
 
 
+def grain_bits(grain):
+    """A `GRAIN` setting as the `ctrl` register's grain, hard and half."""
+    if grain == 0:
+        return 0, 0, 0
+    kind, clock = (grain - 1) // 3, (grain - 1) % 3 + 1
+    return clock, int(kind == 2), int(kind == 1)
+
+
 def configure(m, patch, layers):
     """Writes a patch into a `Modulation`, as the firmware does the gateware, and `layers`' styles."""
     for i, w in enumerate(patch["env"][0] + patch["env"][1]):
@@ -154,7 +164,7 @@ def configure(m, patch, layers):
         m.write(0x30 + at + mod.POS, spec["position"] * ONE // 1000)
         m.write(0x30 + at + mod.SHIFT, spec["shift"] * ONE // 1000)
         m.write(0x30 + at + mod.LEVEL, spec["level"] * ONE // 100)
-        m.ctrl(i, layers[i].ctrl_reg(spec["grain"]))
+        m.ctrl(i, layers[i].ctrl_reg(*grain_bits(spec["grain"])))
     m.write(0x30 + mod.BALANCE, patch["balance"] * ONE // 1000)
     depth = patch["depth_word"] if "depth_word" in patch else patch["depth"] * DEPTH_FULL // 1000
     m.write(0x30 + mod.CROSS, depth)
@@ -282,12 +292,12 @@ def _osc(f, i, key, value):
         layer["fine"] = clamp(nearest(need(with_unit(value, "CT")), 1000), -FINE_MAX, FINE_MAX)
     elif same(key, "POS"):
         layer["position"] = clamp(nearest(need(with_unit(value, "%")), 100), 0, 1000)
-    elif same(key, "SHIFT"):
+    elif same(key, "SHIFT") or same(key, "LOOP"):
         layer["shift"] = clamp(nearest(need(with_unit(value, "%")), 100), -2000, 2000)
     elif same(key, "EDGE"):
         layer["edge"] = need(named(value, EDGES))
     elif same(key, "GRAIN"):
-        layer["grain"] = 0 if same(value, "OFF") else need(numbered(value, "LFO", 3)) + 1
+        layer["grain"] = need(named(value, GRAINS))
     elif same(key, "LEVEL"):
         layer["level"] = clamp(nearest(need(with_unit(value, "%")), 1000), 0, 100)
     else:
@@ -491,7 +501,8 @@ def layers_for(patch, tables):
     for spec, (base, frames) in zip(patch["layers"], tables):
         log2 = int(math.log2(len(frames[0])))
         out.append(Layer(table_base=base, frame_log2=log2, frames=len(frames), edge=spec["edge"],
-                         stepped=int(spec["read"] >= STEPS), raw=int(spec["read"] == RAW),
+                         stepped=int(spec["read"] in (STEPS, RAW)), raw=int(spec["read"] == RAW),
+                         sample=int(spec["read"] == SAMPLE),
                          max_level=log2 - 3 if spec["read"] == CLEAN else 0))
     return out
 

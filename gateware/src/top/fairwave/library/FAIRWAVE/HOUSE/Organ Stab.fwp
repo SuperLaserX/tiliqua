@@ -1,0 +1,33 @@
+FAIRWAVE PATCH 1
+NAME  = ORGAN STAB
+ABOUT = THE 90S HOUSE ORGAN. GATE 1, CV 1
+
+# Drawbars out, a fast decay with some sustain: a Korg M1 kind of organ. Two octaves apart.
+[OSC 1]
+TABLE = TABLES/ORGAN.WAV
+TUNE = 0
+POS = 58%
+
+[OSC 2]
+TABLE = TABLES/ORGAN.WAV
+TUNE = -12
+POS = 68%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 220 MS
+SUSTAIN = 25%
+RELEASE = 90 MS
+D CURVE = 50
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 30%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 45%

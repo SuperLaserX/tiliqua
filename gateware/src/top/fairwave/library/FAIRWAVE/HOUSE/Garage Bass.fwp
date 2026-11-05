@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = GARAGE BASS
+ABOUT = 2-STEP'S WARPED BASS. GATE 1, CV 1
+
+# A square with a slow filter on the note, and a little FM from an octave up to warp the middle. It slides on the note's
+# front. CV 2 is how warped.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -12
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SQRLP.WAV
+TUNE = -24
+POS = 12%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 340 MS
+SUSTAIN = 55%
+RELEASE = 60 MS
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 100 MS
+SUSTAIN = 0%
+RELEASE = 60 MS
+D CURVE = 60
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 3%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 2 = 4%
+ENV 2 > POS 2 = 28%
+CV 2 > X DEPTH = 15%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

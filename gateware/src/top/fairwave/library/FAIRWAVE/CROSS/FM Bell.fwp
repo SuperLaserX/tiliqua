@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = FM BELL
+ABOUT = 1:3.5, AN INHARMONIC BELL. GATE 1
+
+# The modulator at 3.5 times the carrier, so the sidebands aren't harmonics. Depth falls slowly, so it mellows as it rings.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 22
+FINE = -31
+POS = 0%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = 0
+POS = 0%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 3.2 S
+SUSTAIN = 0%
+RELEASE = 1.5 S
+D CURVE = 55
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 2.2 S
+SUSTAIN = 0%
+RELEASE = 1.2 S
+D CURVE = 60
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 2%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > X DEPTH = 16%
+CV 2 > X DEPTH = 10%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

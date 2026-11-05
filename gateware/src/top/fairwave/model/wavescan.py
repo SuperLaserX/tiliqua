@@ -38,6 +38,14 @@ The row's word index has `frame_log2` - 1 bits, so this is a prefix code: a mask
 **Reading styles.** `stepped` keeps to one frame instead of blending two, as the wavetable
 machines of the early 80s did. `raw` keeps to one sample instead of interpolating two.
 
+**Playing a table as a sample.** With `sample` set, `pos` and `shift` don't choose a frame. The layer
+keeps its own frame, and each time its phase wraps it goes on to the next, so the table's frames are read
+end to end as one long recording: a cycle is then one frame's worth of it, and pitch is playback speed, as on
+a Fairlight. A restart starts it from `pos`. Past the last frame, on `WRAP` it goes back to `shift`'s frame,
+and otherwise it ends and is silent until the next restart, or until the layer stops being a sample, as an
+oscillator does when the next patch doesn't play one. (Interpolation carries over into the next frame, so
+nothing shows where one ends.)
+
 **Cross modulation** (`both`). One layer, the modulator, is computed first; the other, the carrier,
 then uses its output, level and all, so its envelope sets the amount as on any FM synth.
 
@@ -85,13 +93,17 @@ class Layer:
     max_level: int = 0      # band-limited levels there are to read
     stepped: int = 0        # one frame, not a blend of two
     raw: int = 0            # one sample, not a blend of two
+    sample: int = 0         # the frames read end to end, as one recording
+    frame: int = 0          # the frame a sample is on
+    ended: int = 0          # a sample has run off its end, and is silent
+    carried: int = 0        # the phase has wrapped since the frame last moved
 
     def table_reg(self):
         """The `table` register's value (one register, so a table changes atomically)."""
         return self.table_base | (self.frame_log2 - 8) << 16 | (self.frames - 1) << 18 | self.max_level << 28
 
-    def ctrl_reg(self, grain=0):
-        return self.edge | self.stepped << 2 | self.raw << 3 | grain << 4
+    def ctrl_reg(self, grain=0, hard=0, half=0):
+        return self.edge | self.stepped << 2 | self.raw << 3 | grain << 4 | hard << 6 | half << 7 | self.sample << 8
 
 
 @dataclass
@@ -162,13 +174,15 @@ def s16(x):
     return x - 0x10000 if x & 0x8000 else x
 
 
-def read_pair(layer, mem, frame, index, level=0):
-    """Samples `index` and `index` + 1 of `frame` at `level` (wrapping round the frame)."""
+def read_pair(layer, mem, frame, index, level=0, after=None):
+    """Samples `index` and `index` + 1 of `frame` at `level`. Past its end that wraps round the frame, or,
+    if `after` says so, goes on into that frame."""
     half = 1 << (layer.frame_log2 - level - 1)      # words in a frame
     w = index >> 1
     if index & 1:
         hi = word_read(layer, mem, frame, w, level) >> 16
-        lo = word_read(layer, mem, frame, (w + 1) & (half - 1), level) & 0xFFFF
+        next_word = (w + 1) & (half - 1)
+        lo = word_read(layer, mem, after if after is not None and next_word == 0 else frame, next_word, level) & 0xFFFF
         return s16(hi), s16(lo)
     word = word_read(layer, mem, frame, w, level)
     return s16(word & 0xFFFF), s16(word >> 16)
@@ -178,21 +192,54 @@ def saturate(x):
     return max(-32768, min(32767, x))
 
 
+def loop_start(layer):
+    """Where a sample goes back to on `WRAP`: `shift`'s whole frames, inside the table."""
+    return max(0, min(layer.shift >> 6, layer.frames - 1))
+
+
+def next_frame(layer):
+    return loop_start(layer) if layer.frame >= layer.frames - 1 else layer.frame + 1
+
+
+def start_sample(layer, restart=False):
+    """Before a sample's computation: where a sample is, now its `pos` and `shift` are this sample's. A layer
+    that isn't one stays at the start, so that a sample that ended can't silence what it plays next."""
+    if restart or not layer.sample:
+        layer.frame = max(0, min(layer.pos >> 16, layer.frames - 1))
+        layer.ended = 0
+    elif layer.carried:
+        if layer.frame >= layer.frames - 1 and layer.edge != WRAP:
+            layer.ended = 1
+        else:
+            layer.frame = next_frame(layer)
+    layer.carried = 0
+
+
+def advance(layer):
+    """After a sample's computation."""
+    total = layer.phase + layer.inc
+    layer.phase = total & 0xFFFFFFFF
+    layer.carried = total >> 32
+
+
 def sample(layer, mem, phase=None, inc=None):
     """The layer's output at its current phase, before the phase advances: or read at `phase`,
     moving at `inc`, if it is following something else."""
-    if layer.level == 0:
+    if layer.level == 0 or layer.ended:
         return 0
     phase = layer.phase if phase is None else phase
     level = mip_level(layer, layer.inc if inc is None else inc)
     k = layer.frame_log2 - level
     index = phase >> (32 - k)
     fi = 0 if layer.raw else (phase >> (16 - k)) & 0xFFFF
-    f0, f1, ff = frame_coords(layer, phase)
+    if layer.sample:
+        f0, f1, ff = layer.frame, next_frame(layer), 0
+    else:
+        f0, f1, ff = frame_coords(layer, phase)
     if layer.stepped:
         ff = 0
 
-    x0, x1 = read_pair(layer, mem, f0, index, level)
+    x0, x1 = read_pair(layer, mem, f0, index, level, f1 if layer.sample else None)
     out = x0 + (((x1 - x0) * fi) >> 16)
     if ff != 0 and f0 != f1:
         x0, x1 = read_pair(layer, mem, f1, index, level)
@@ -233,6 +280,8 @@ def render(layers, mem, n, on_sample=None, cross=None):
     for i in range(n):
         if on_sample:
             on_sample(i, layers)
+        for layer in layers:
+            start_sample(layer)
         if cross:
             values = both(layers, mem, cross)
         else:
@@ -240,7 +289,7 @@ def render(layers, mem, n, on_sample=None, cross=None):
         for o, v in zip(out, values):
             o.append(v)
         for layer in layers:
-            layer.phase = (layer.phase + layer.inc) & 0xFFFFFFFF
+            advance(layer)
     return out
 
 

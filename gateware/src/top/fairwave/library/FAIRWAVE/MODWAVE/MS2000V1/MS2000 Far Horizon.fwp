@@ -1,0 +1,66 @@
+FAIRWAVE PATCH 1
+NAME  = MS2000 FAR HORIZ
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's MS2000 Far Horizon by Ian Dixon: ID-MS2000_V1.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is B's 1, a table made along morph.
+# Not carried over: 5 unison voices, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: 1/8 dotted HPF, Vintage Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/8C/45BBBFFE.WAV
+READ = CLEAN
+TUNE = -12
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/E9/BE5DF010.WAV
+READ = CLEAN
+TUNE = -12
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 449.333 MS
+SUSTAIN = 54%
+RELEASE = 0.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 1.160 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 0.246 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -56.5%
+LFO 1 > POS 2 = 50%
+CV 2 > LEVEL 1 = 47%
+LFO 2 > POS 1 = 16%
+ENV 2 > POS 1 = 13%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 48.8%

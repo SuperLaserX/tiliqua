@@ -1,0 +1,67 @@
+FAIRWAVE PATCH 1
+NAME  = ON THE RUN SEQ
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's On the Run Seq by Ian Dixon: pinkfloyd.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, a table made along cutoff.
+# Oscillator 2 is B's 2, a table made along cutoff.
+# Not carried over: layer A oscillator 1, layer A oscillator 2, performance modulators, the noise generator.
+# Its effects, which FairWave hasn't got: AutoWobble Bass, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/40/92716062.WAV
+READ = CLEAN
+TUNE = -28
+POS = 40.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/CA/0EFCDA2C.WAV
+READ = CLEAN
+TUNE = -40
+FINE = -8
+POS = 40.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 373.333 MS
+DECAY = 90.000 S
+SUSTAIN = 100%
+RELEASE = 900.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 933.333 MS
+SUSTAIN = 54%
+RELEASE = 80.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 10.000 HZ
+SHAPE = SQUARE
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -68%
+CV 1 > POS 2 = -68%
+LFO 1 > LEVEL 1 = 38%
+LFO 1 > LEVEL 2 = 38%
+ENV 2 > POS 1 = 18.5%
+ENV 2 > POS 2 = 18.5%
+LFO 1 > POS 1 = 8.5%
+LFO 1 > POS 2 = 8.5%
+LFO 1 > PITCH 1 = 1.5%
+LFO 1 > PITCH 2 = 1.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.4%

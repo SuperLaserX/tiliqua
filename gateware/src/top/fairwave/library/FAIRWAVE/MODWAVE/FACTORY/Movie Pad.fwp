@@ -1,0 +1,75 @@
+FAIRWAVE PATCH 1
+NAME  = MOVIE PAD
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Movie Pad by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 2, a table made along position.
+# Oscillator 2 is B's 1, a table made along cutoff.
+# Not carried over: 3 unison voices, an LFO past the three here, controllers, random and Kaoss Physics, layer A oscillator 1, layer B oscillator 2, modulation processors, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 16ths - 3,4,6.
+[OSC 1]
+TABLE = MODWAVE/T/24/8D21D59C.WAV
+READ = CLEAN
+TUNE = 0
+FINE = -1
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/90/B17949BC.WAV
+READ = CLEAN
+TUNE = -12
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 1.257 S
+DECAY = 80.500 S
+SUSTAIN = 59%
+RELEASE = 554.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 1.200 S
+DECAY = 90.000 S
+SUSTAIN = 100%
+RELEASE = 90.000 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[LFO 3]
+RATE = 1.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+LFO 3 > LEVEL 1 = 90%
+LFO 2 > LEVEL 2 = 65%
+LFO 1 > POS 2 = 33%
+CV 1 > POS 2 = -28%
+ENV 2 > PITCH 1 = 20%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 73.1%

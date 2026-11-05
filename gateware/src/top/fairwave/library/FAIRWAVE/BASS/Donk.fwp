@@ -1,47 +1,45 @@
 FAIRWAVE PATCH 1
 NAME  = DONK
-ABOUT = RING-MOD PLUCK, OFFBEATS. GATE 1
+ABOUT = THE BOUNCE BASS. GATE 1, CV 1
 
-# The hard house and bounce bass: a short pluck with a metallic knock from ring modulation, pitch dropping fast.
+# A hollow pipe that knocks and then rings, with a sub under it. A fast pitch drop and a filter closing are the knock,
+# half a second's decay is the note, and it holds on quietly while the gate is up. 0 V is C3, with the sub an octave down.
 [OSC 1]
-TABLE = TABLES/SAWLP.WAV
-TUNE = 7
-POS = 0%
+TABLE = TABLES/DONK.WAV
+TUNE = -12
+POS = 22%
 
 [OSC 2]
-TABLE = TABLES/SAWLP.WAV
-TUNE = -12
-POS = 30%
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 8%
 
 [ENV 1]
 ATTACK = 1 MS
-DECAY = 120 MS
-SUSTAIN = 0%
-RELEASE = 40 MS
-D CURVE = 60
-VCA = OSC 2
+DECAY = 560 MS
+SUSTAIN = 22%
+RELEASE = 150 MS
+D CURVE = 45
+VCA = BOTH
 
 [ENV 2]
 GATE = GATE 1
 ATTACK = 0
-DECAY = 40 MS
+DECAY = 75 MS
 SUSTAIN = 0%
 RELEASE = 40 MS
-D CURVE = 70
-
-[CROSS MOD]
-MODE = RING
-FROM = OSC 1
-DEPTH = 40%
+D CURVE = 65
 
 [ROUTING]
 CV 1 > PITCH 1 = 100%
 CV 1 > PITCH 2 = 100%
-ENV 2 > PITCH 1 = 8%
-ENV 2 > PITCH 2 = 8%
-ENV 2 > POS 2 = 30%
+ENV 2 > PITCH 1 = 10%
+ENV 2 > PITCH 2 = 6%
+ENV 2 > POS 1 = 55%
+ENV 1 > POS 1 = 14%
+CV 2 > POS 1 = 30%
 
 [MIXER]
 OUT 0 = MIX
 OUT 1 = MIX
-BALANCE = 100%
+BALANCE = 38%

@@ -1,0 +1,55 @@
+FAIRWAVE PATCH 1
+NAME  = AX73 SYNTH STAB
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AX73 Synth Stab by Ian Dixon: ID-AX73.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Akai AX73 VI.
+# Oscillator 2 is A's 2, the sample Akai AX73 VI.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, bpm Pattern 3.
+[OSC 1]
+TABLE = MODWAVE/T/AD/2B37D7AD.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = -12
+POS = 0.0%
+EDGE = WRAP
+LOOP = 37.3%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/AA/0C0A30E1.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = -19
+POS = 0.0%
+EDGE = WRAP
+LOOP = 37.3%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.000 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

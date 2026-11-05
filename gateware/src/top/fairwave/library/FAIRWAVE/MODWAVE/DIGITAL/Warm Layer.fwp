@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = WARM LAYER
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Warm Layer by Ian Dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 2, the sample Syn: Ensemble A2600.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/EE/FBA3516B.WAV
+READ = SAMPLE
+TUNE = -7
+FINE = 45
+POS = 0.0%
+EDGE = WRAP
+LOOP = 1%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/EE/FBA3516B.WAV
+TUNE = -7
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 846.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 826.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

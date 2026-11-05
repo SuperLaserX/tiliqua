@@ -1,0 +1,55 @@
+FAIRWAVE PATCH 1
+NAME  = AA ST SAGA
+ABOUT = STRINGS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA ST Saga by Anton Anru: Korg Modwave - Ambient Worlds Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics.
+[OSC 1]
+TABLE = MODWAVE/T/59/A582AE8B.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -1
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/B7/CAD71B63.WAV
+READ = CLEAN
+TUNE = 7
+FINE = 4
+POS = 42.9%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.596 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.805 S
+A CURVE = 20
+D CURVE = 60
+R CURVE = 10
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 9.755 S
+DECAY = 7.649 S
+SUSTAIN = 0%
+RELEASE = 3.089 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+CV 1 > POS 2 = -71.5%
+CV 2 > POS 2 = 14.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 40.2%

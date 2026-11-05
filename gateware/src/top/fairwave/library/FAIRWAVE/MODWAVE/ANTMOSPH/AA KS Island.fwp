@@ -1,0 +1,66 @@
+FAIRWAVE PATCH 1
+NAME  = AA KS ISLAND
+ABOUT = PIANO/KEYS FROM MODWAVE. GATE 1, C
+
+# From the modwave's AA KS Island by Anton Anru: Korg Modwave - Antmospheric Keys Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, an LFO past the three here, controllers, random and Kaoss Physics, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Vintage Flanger, bpm Tape 3-Head.
+[OSC 1]
+TABLE = MODWAVE/T/6A/93A3C950.WAV
+READ = CLEAN
+TUNE = 0
+FINE = -4
+POS = 28.8%
+
+[OSC 2]
+TABLE = MODWAVE/T/22/3044CE4F.WAV
+READ = CLEAN
+TUNE = 12
+FINE = 3
+POS = 28.8%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 4.477 S
+SUSTAIN = 16%
+RELEASE = 1.539 S
+A CURVE = 30
+D CURVE = 70
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 2.491 S
+SUSTAIN = 19%
+RELEASE = 1.544 S
+A CURVE = 0
+D CURVE = 50
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.531 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -48%
+CV 1 > POS 2 = -48%
+ENV 2 > POS 1 = 42.5%
+ENV 2 > POS 2 = 42.5%
+CV 2 > POS 1 = 13.5%
+CV 2 > POS 2 = 13.5%
+LFO 1 > PITCH 1 = 0.5%
+LFO 1 > PITCH 2 = 0.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 37.2%

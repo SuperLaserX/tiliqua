@@ -1,0 +1,66 @@
+FAIRWAVE PATCH 1
+NAME  = AA ARP SHARD
+ABOUT = ARPEGGIO FROM MODWAVE. GATE 1, CV 
+
+# From the modwave's AA ARP Shard by Anton Anru: Korg Modwave - Arp Waves Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: controllers, random and Kaoss Physics, the noise generator, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Reverse Delay, Stereo Chorus, bpm Pattern 3.
+[OSC 1]
+TABLE = MODWAVE/T/F6/6AF67ED3.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -2
+POS = 31.9%
+
+[OSC 2]
+TABLE = MODWAVE/T/40/5B4A5646.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 2
+POS = 31.9%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 97.333 MS
+SUSTAIN = 70%
+RELEASE = 56.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 129.333 MS
+SUSTAIN = 0%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 2]
+RATE = 0.696 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -53%
+CV 1 > POS 2 = -53%
+ENV 2 > POS 1 = 36.5%
+ENV 2 > POS 2 = 36.5%
+CV 2 > POS 1 = 17.5%
+CV 2 > POS 2 = 17.5%
+LFO 2 > POS 1 = 2%
+LFO 2 > POS 2 = 2%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 51.7%

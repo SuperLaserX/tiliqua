@@ -1,0 +1,40 @@
+FAIRWAVE PATCH 1
+NAME  = GROUND SUB BASS
+ABOUT = BASS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Ground Sub Bass by TO: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Not carried over: controllers, random and Kaoss Physics, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Ground Sub Bass.
+[OSC 1]
+TABLE = MODWAVE/T/B5/F1627297.WAV
+READ = CLEAN
+TUNE = -24
+POS = 100.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/B5/F1627297.WAV
+TUNE = -24
+POS = 100.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 140.000 MS
+DECAY = 948.000 MS
+SUSTAIN = 0%
+RELEASE = 974.667 MS
+A CURVE = 100
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

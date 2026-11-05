@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = LAYER BELL
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Layer Bell by Ian Dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Bell: Metal VPM Bell.
+# Oscillator 2 is A's 2, the sample Wave: DWGS Bell 1.
+# Not carried over: 3 unison voices.
+# Its effects, which FairWave hasn't got: Chorus-Flange Morph, Modern Compressor, bpm Pattern 3.
+[OSC 1]
+TABLE = MODWAVE/T/40/0AFD8FF2.WAV
+READ = SAMPLE
+TUNE = -19
+FINE = -2
+POS = 0.0%
+EDGE = WRAP
+LOOP = 40.1%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/46/DC1F8639.WAV
+READ = SAMPLE
+TUNE = 12
+FINE = 2
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 3.907 S
+SUSTAIN = 0%
+RELEASE = 853.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 51.4%

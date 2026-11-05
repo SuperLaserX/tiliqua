@@ -1,0 +1,37 @@
+FAIRWAVE PATCH 1
+NAME  = DUB CHORD
+ABOUT = THE MINOR SEVENTH STAB. GATE 1
+
+# One note plays a whole minor seventh, because one frame of the table is all of it. Short, and dark: the sound of dub
+# techno, wants a long delay after it. ENV 1 on POS is the filter, CV 2 opens it further. 0 V is a C4 chord.
+[OSC 1]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 14
+POS = 18%
+
+[OSC 2]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 21
+POS = 18%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 320 MS
+SUSTAIN = 0%
+RELEASE = 260 MS
+D CURVE = 55
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 36%
+ENV 1 > POS 2 = 36%
+CV 2 > POS 1 = 30%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

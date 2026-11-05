@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = FM GROWL
+ABOUT = AN LFO ON THE DEPTH. GATE 1, CV 1
+
+# A saw modulating a sine at 1:2, with an LFO on the depth: a bass that opens and shuts by itself. CV 2 is how far.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -12
+POS = 40%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 200 MS
+SUSTAIN = 90%
+RELEASE = 60 MS
+VCA = OSC 2
+
+[LFO 1]
+RATE = 3.1 HZ
+SHAPE = SINE
+POLAR = UNI
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 2%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > X DEPTH = 24%
+CV 2 > X DEPTH = 24%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

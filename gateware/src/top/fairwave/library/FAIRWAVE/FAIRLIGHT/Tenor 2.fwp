@@ -1,0 +1,57 @@
+FAIRWAVE PATCH 1
+NAME  = CMI TENOR 2
+ABOUT = THE CMI'S VOICES
+
+# Fairlight CMI: Fairlight Tenor 2. 947.3 Hz, tuned so 0 V is C5.
+# Plays its attack, then its loop, restarting on each gate: GRAIN = SYNC 1.
+# CV 2 moves where it starts.
+[OSC 1]
+TABLE = WAVES/TENOR2.WAV
+READ = SAMPLE
+TUNE = -24
+FINE = -3
+POS = 0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 1
+
+[OSC 2]
+TABLE = WAVES/TENOR2.WAV
+READ = SAMPLE
+TUNE = -24
+FINE = 5
+POS = 0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 1
+
+[ENV 1]
+ATTACK = 110 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 500 MS
+D CURVE = 40
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 5.1 HZ
+SHAPE = SINE
+LEVEL = 30%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 12%
+CV 2 > POS 2 = 12%
+LFO 2 > PITCH 1 = 0.5%
+LFO 2 > PITCH 2 = 0.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50%

@@ -1,0 +1,57 @@
+FAIRWAVE PATCH 1
+NAME  = FM GLOCK
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's FM Glock by Ian Dixon: FM.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is A's 2, its wavetable.
+[OSC 1]
+TABLE = MODWAVE/T/76/8B3C6F9A.WAV
+READ = CLEAN
+TUNE = 23
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/0C/C6A96376.WAV
+READ = CLEAN
+TUNE = 0
+POS = 0.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 857.333 MS
+SUSTAIN = 29%
+RELEASE = 1.112 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 8.3%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 24.000 MS
+SUSTAIN = 10%
+RELEASE = 784.000 MS
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > X DEPTH = 7.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100.0%

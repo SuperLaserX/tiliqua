@@ -1,0 +1,67 @@
+FAIRWAVE PATCH 1
+NAME  = QUAD PAD
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Quad Pad by Ian Dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Vox_WS:Glass Vox.
+# Oscillator 2 is B's 1, the sample Syn: Brass Pad.
+# Not carried over: layer A oscillator 2, layer B oscillator 2.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/72/ED9E8BBE.WAV
+READ = SAMPLE
+TUNE = -48
+FINE = 13
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/6D/B9C3C757.WAV
+READ = SAMPLE
+TUNE = -48
+FINE = 8
+POS = 0.0%
+EDGE = WRAP
+LOOP = 17.7%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 666.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 72.000 MS
+DECAY = 90.000 S
+SUSTAIN = 100%
+RELEASE = 3.560 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 3%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 49.9%

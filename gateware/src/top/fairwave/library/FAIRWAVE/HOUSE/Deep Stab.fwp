@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = DEEP STAB
+ABOUT = A DARK HOUSE CHORD. GATE 1
+
+# The minor seventh with a softer filter and a long tail: deep house's chord. Play it on the offbeats.
+[OSC 1]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 14
+POS = 10%
+
+[OSC 2]
+TABLE = TABLES/DUBCHORD.WAV
+TUNE = -40
+FINE = 18
+POS = 10%
+
+[ENV 1]
+ATTACK = 4 MS
+DECAY = 520 MS
+SUSTAIN = 0%
+RELEASE = 400 MS
+D CURVE = 45
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 26%
+ENV 1 > POS 2 = 26%
+CV 2 > POS 1 = 30%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

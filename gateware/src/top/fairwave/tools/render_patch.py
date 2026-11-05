@@ -5,7 +5,7 @@ what comes out as a WAV to listen to on a computer: for trying a sound without f
 
 Outputs `out0` and `out1` are left and right, in DAC counts, so 5 V is 20000 of 32768. `--play` picks
 what the inputs do: `riff` sends notes down CV 1 and gates to gate 1, `free` holds one note with no gates
-(for a sound that runs by itself), `long` is slow held notes. A built-in table needs `--built-in`, a folder
+(for a sound that runs by itself), `long` is slow held notes, and `hold` one note with its gate up throughout. A built-in table needs `--built-in`, a folder
 of them as `FAIRWAVE_TABLES_OUT=... cargo test dump_the_built_in_tables` writes.
 """
 
@@ -20,8 +20,8 @@ sys.path.insert(0, str(HERE.parent))
 import numpy as np  # noqa: E402
 
 from model.modulation import Modulation  # noqa: E402
-from model.patchfile import configure, layers_for, parse, read_wav  # noqa: E402
-from model.wavescan import both, pack_table  # noqa: E402
+from model.patchfile import CLEAN, configure, layers_for, parse, read_wav  # noqa: E402
+from model.wavescan import advance, both, pack_frames, pack_table  # noqa: E402
 
 FS = 48000
 LIBRARY = HERE.parent / "library" / "FAIRWAVE"
@@ -46,6 +46,8 @@ def inputs(play, n, bpm=125):
         for k, i in enumerate(range(0, n, step)):
             cv[i:i + step] = [0, 3, 7, 12][k % 4] * VOLT // 12
             gate[i:i + step * 7 // 8] = HIGH
+    elif play == "hold":
+        gate[:] = HIGH
     elif play == "free":
         step = FS * 2
         for k, i in enumerate(range(0, n, step)):
@@ -79,12 +81,20 @@ def render(path, seconds, play, built_in=None, default_tables=("MORPH 2048", "PU
     next_base = 0x8000
     for i in range(2):
         name = f.tables[i] or default_tables[i]
-        if name not in frames_of:
-            frames_of[name] = (next_base, find_table(name, Path(path).parent, built_in))
-            frames = frames_of[name][1]
-            mem |= pack_table(frames, base_word=next_base << 6)
+        wanted = (name, f.frame_log2[i])
+        if wanted not in frames_of:
+            frames = find_table(name, Path(path).parent, built_in)
+            if f.frame_log2[i]:
+                samples = [s for frame in frames for s in frame]
+                length = 1 << f.frame_log2[i]
+                frames = [samples[k:k + length] for k in range(0, len(samples) - length + 1, length)]
+            frames_of[wanted] = (next_base, frames)
+            # (only a CLEAN read looks at a table's levels, and they take a long table a long time)
+            clean = any(p["read"] == CLEAN and (f.tables[k] or default_tables[k], f.frame_log2[k]) == wanted
+                        for k, p in enumerate(patch["layers"]))
+            mem |= (pack_table if clean else pack_frames)(frames, base_word=next_base << 6)
             next_base += len(frames) * len(frames[0]) * 4 // 256 + 1
-        tables.append(frames_of[name])
+        tables.append(frames_of[wanted])
     layers = layers_for(patch, tables)
     m = Modulation()
     configure(m, patch, layers)
@@ -101,7 +111,7 @@ def render(path, seconds, play, built_in=None, default_tables=("MORPH 2048", "PU
         l1, l2 = both(layers, mem, cross)
         out[i] = m.mix(l1, l2)
         for layer in layers:
-            layer.phase = (layer.phase + layer.inc) & 0xFFFFFFFF
+            advance(layer)
     return out, f
 
 
@@ -117,7 +127,7 @@ def main():
     parser.add_argument("patch")
     parser.add_argument("-o", "--out", required=True)
     parser.add_argument("--seconds", type=float, default=8)
-    parser.add_argument("--play", default="riff", choices=["riff", "free", "long"])
+    parser.add_argument("--play", default="riff", choices=["riff", "free", "long", "hold"])
     parser.add_argument("--built-in", help="a folder of the built-in tables")
     args = parser.parse_args()
     out, f = render(args.patch, args.seconds, args.play, args.built_in)

@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = RC ORGAN GOSPEL
+ABOUT = PIANO/KEYS FROM MODWAVE. GATE 1, C
+
+# From the modwave's RC Organ Gospel by Deborah Pickett: RC Organ Gospel.mwprog.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Organ: Gospel 1.
+# Not carried over: the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Polysix Ensemble, Stereo Delay.
+[OSC 1]
+TABLE = MODWAVE/T/0B/57557448.WAV
+READ = SAMPLE
+TUNE = -6
+FINE = -49
+POS = 0.0%
+EDGE = WRAP
+LOOP = 28.6%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/0B/57557448.WAV
+TUNE = -6
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 28.000 MS
+DECAY = 1.800 S
+SUSTAIN = 71%
+RELEASE = 76.000 MS
+A CURVE = 0
+D CURVE = 0
+R CURVE = 100
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

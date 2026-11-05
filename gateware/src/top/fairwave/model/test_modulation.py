@@ -591,3 +591,111 @@ def test_attack_is_not_shortened_by_a_retrigger_during_delay():
     assert levels[51 + 100 + 99] == ONE
     assert stages[51 + 98] == DELAY
     assert stages[51 + 99] == ATTACK
+
+
+# ---- A grain's fade ----
+
+
+def test_a_window_is_shut_at_its_ends_and_full_half_way():
+    assert mod.window(0) == 0
+    assert mod.window(0x8000) == ONE
+    assert mod.window(0xFFFF) <= 1
+    assert abs(mod.window(0x4000) - ONE // 2) <= 1
+    for x in range(0, 0x8000, 257):
+        assert mod.window(x) <= mod.window(x + 257), "it only rises to half way"
+        assert abs(mod.window(x) - mod.window(0x10000 - x & 0xFFFF)) <= 2, "and falls as it rose"
+
+
+def test_two_windows_half_a_cycle_apart_add_up_to_one():
+    for x in range(0, 0x10000, 97):
+        total = mod.window(x) + mod.window((x + 0x8000) & 0xFFFF)
+        assert abs(total - ONE) <= 2, f"{x:#x}: {total}"
+
+
+def faded_model(word=2 << 4):
+    m = Modulation()
+    m.frames_m1 = [15, 15]
+    m.ctrl(0, word)
+    m.lfos[1].words = [(1 << 32) // 100, 0, FULL]
+    m.write(0x33, ONE)
+    return m
+
+
+def test_a_grains_level_is_shut_as_it_restarts_and_full_half_way():
+    m = faded_model()
+    seen = {}
+    for s in range(300):
+        m.step([0, 0, 0, 0])
+        seen[s] = m.level[0]
+        if m.restart[0]:
+            assert m.level[0] < mod.UNITY_LEVEL / 500, f"sample {s}: {m.level[0]}"
+    assert max(seen.values()) >= mod.UNITY_LEVEL - 1
+    assert seen[49] > mod.UNITY_LEVEL * 0.99, "half way through the first grain"
+    assert seen[24] == pytest.approx(mod.UNITY_LEVEL / 2, rel=0.05)
+
+
+def test_the_lfos_own_shape_and_phase_setting_dont_move_the_fade():
+    a, b = faded_model(), faded_model()
+    b.lfos[1].words = [(1 << 32) // 100, 1 << 16 | 0x4000, FULL]
+    for _ in range(200):
+        a.step([0, 0, 0, 0])
+        b.step([0, 0, 0, 0])
+        assert a.level[0] == b.level[0]
+        assert a.restart[0] == b.restart[0]
+
+
+def test_with_no_grain_nothing_is_faded():
+    m = Modulation()
+    m.write(0x33, ONE)
+    m.lfos[1].words = [(1 << 32) // 100, 0, FULL]
+    for _ in range(150):
+        m.step([0, 0, 0, 0])
+        assert m.level[0] == mod.UNITY_LEVEL
+
+
+def test_a_hard_restart_isnt_faded():
+    m = faded_model(2 << 4 | 1 << 6)
+    restarted = False
+    for _ in range(150):
+        m.step([0, 0, 0, 0])
+        assert m.level[0] == mod.UNITY_LEVEL
+        restarted |= m.restart[0]
+    assert restarted
+
+
+def test_a_second_stream_is_half_a_cycle_on_and_together_they_stay_level():
+    m = Modulation()
+    m.frames_m1 = [15, 15]
+    m.ctrl(0, 1 << 4)
+    m.ctrl(1, 1 << 4 | 1 << 7)
+    m.lfos[0].words = [(1 << 32) // 100, 0, FULL]
+    m.write(0x33, ONE)
+    m.write(0x37, ONE)
+    starts = [[], []]
+    for s in range(400):
+        m.step([0, 0, 0, 0])
+        for i in range(2):
+            if m.restart[i]:
+                starts[i].append(s)
+                assert m.level[i] < mod.UNITY_LEVEL / 500, f"osc {i + 1} at sample {s}"
+        assert abs(m.level[0] + m.level[1] - mod.UNITY_LEVEL) <= 8, f"sample {s}"
+    assert len(starts[0]) >= 3 and len(starts[1]) >= 3
+    for a, b in zip(starts[0], starts[1]):
+        assert abs(abs(a - b) - 50) <= 1, "half a cycle apart"
+
+
+def test_a_gate_restarting_the_lfo_restarts_a_sample_from_its_position():
+    m = Modulation()
+    m.frames_m1 = [15, 15]
+    m.ctrl(0, 1 << 4 | 1 << 6 | 1 << 8)     # a hard restart, as a sample has
+    m.lfos[0].words = [1 << 8, 1 << 20, FULL]   # slow, restarted by gate 1
+    m.write(0x31, ONE // 2)
+    layers = [Layer(frames=16, frame_log2=8, sample=1), Layer(frames=16, frame_log2=8)]
+    layers[0].frame = 3
+    layers[0].ended = 1
+    m.step([0, 0, 0, 0])
+    m.apply(layers)
+    assert (layers[0].frame, layers[0].ended) == (3, 1)
+    m.step([0, 0, 9000, 0])
+    m.apply(layers)
+    assert (layers[0].frame, layers[0].ended, layers[0].phase) == (7, 0, 0), "half way through 16 frames"

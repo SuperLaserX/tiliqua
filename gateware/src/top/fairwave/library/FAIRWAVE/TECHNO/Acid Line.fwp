@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = ACID LINE
+ABOUT = A SQUELCHING 303. GATE 1, CV 1
+
+# A saw under a resonant filter, with the envelope on POS. Its envelope is short, the filter is CV 2. Send it gates of
+# different lengths, and accent with a higher CV 2.
+[OSC 1]
+TABLE = TABLES/ACIDLP.WAV
+TUNE = -24
+POS = 14%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 4%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 240 MS
+SUSTAIN = 0%
+RELEASE = 40 MS
+D CURVE = 50
+VCA = OSC 1
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 1 MS
+DECAY = 300 MS
+SUSTAIN = 70%
+RELEASE = 30 MS
+VCA = OSC 2
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 42%
+CV 2 > POS 1 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 12%

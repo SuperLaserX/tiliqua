@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = RING METAL HIT
+ABOUT = STRUCK, SHORT, NOT TUNED. GATE 1
+
+# Two rich tables an inharmonic ratio apart, with a very fast envelope on the place in one: a metal thing, hit once.
+[OSC 1]
+TABLE = TABLES/GLASS.WAV
+TUNE = 9
+FINE = 20
+POS = 70%
+
+[OSC 2]
+TABLE = TABLES/FOLD.WAV
+TUNE = 0
+POS = 30%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 260 MS
+SUSTAIN = 0%
+RELEASE = 180 MS
+D CURVE = 70
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 60 MS
+SUSTAIN = 0%
+RELEASE = 60 MS
+D CURVE = 75
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 100%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 2 = 50%
+ENV 2 > PITCH 2 = 6%
+CV 2 > PITCH 1 = 20%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

@@ -13,6 +13,7 @@ import random
 import numpy as np
 import pytest
 
+from . import wavescan
 from .wavescan import (CLAMP, DEPTH_FULL, MIRROR, MOD_FULL, WRAP, Cross, Layer, both, decimate, interpolate, mip_level,
                        mip_rows, pack_frames, pack_table, render, s16, sample, word_read)
 
@@ -465,3 +466,135 @@ def test_the_direction_swaps_who_is_who():
     one = both([x, y], mem, Cross(pm=1, modulator=0, depth=DEPTH_FULL // 3))
     two = both([y, x], mem, Cross(pm=1, modulator=1, depth=DEPTH_FULL // 3))
     assert one == [two[1], two[0]]
+
+
+# ---- Playing a table as a sample ----
+
+
+def recording(frames, length):
+    """A table whose every sample says where it is, so what's read can be told."""
+    return [[((f * length + i) * 7) % 30000 - 15000 for i in range(length)] for f in range(frames)]
+
+
+def a_sample(frames=4, length=256, speed=1.0, **kw):
+    """A layer set to read a recording at `speed` samples a sample, level unchanged."""
+    mem = wavescan.pack_table(recording(frames, length))
+    layer = Layer(frame_log2=length.bit_length() - 1, frames=frames, sample=1, inc=int(speed * (1 << 32) / length),
+                  level=wavescan.ONE, **kw)
+    return layer, mem
+
+
+def play(layer, mem, n):
+    out = []
+    for _ in range(n):
+        wavescan.start_sample(layer)
+        out.append(wavescan.sample(layer, mem))
+        wavescan.advance(layer)
+    return out
+
+
+def test_a_sample_reads_straight_through_its_frames():
+    layer, mem = a_sample(edge=WRAP)
+    length, frames = 256, 4
+    whole = [v for f in recording(frames, length) for v in f]
+    got = play(layer, mem, length * frames)
+    assert got == whole, "one recording, end to end"
+
+
+def test_a_sample_interpolates_across_where_its_frames_meet():
+    layer, mem = a_sample(edge=WRAP, speed=0.5)
+    length = 256
+    whole = [v for f in recording(2, length) for v in f]
+    got = play(layer, mem, (length + 4) * 2)
+    for i, v in enumerate(got):
+        a, b = whole[i // 2], whole[i // 2 + 1]
+        assert abs(v - (a + b) // 2 if i % 2 else v - a) <= 1, f"sample {i}: {v} between {a} and {b}"
+    # The sample in question: half way from a frame's last to the next frame's first.
+    at = (length - 1) * 2 + 1
+    assert abs(got[at] - (whole[length - 1] + whole[length]) // 2) <= 1
+
+
+def test_a_sample_on_wrap_goes_back_to_where_shift_says():
+    layer, mem = a_sample(edge=WRAP, shift=2 << 6)
+    length = 256
+    whole = [v for f in recording(4, length) for v in f]
+    got = play(layer, mem, length * 6)
+    assert got[:length * 4] == whole
+    assert got[length * 4:] == whole[length * 2:], "frames 2 and 3 again"
+
+
+@pytest.mark.parametrize("edge", [CLAMP, MIRROR])
+def test_a_sample_otherwise_ends_and_stays_silent(edge):
+    layer, mem = a_sample(edge=edge)
+    length = 256
+    whole = [v for f in recording(4, length) for v in f]
+    got = play(layer, mem, length * 5)
+    assert got[:length * 4] == whole
+    assert got[length * 4:] == [0] * length
+    assert layer.ended
+
+
+@pytest.mark.parametrize("edge", [CLAMP, MIRROR])
+def test_an_ended_sample_doesnt_silence_what_the_oscillator_plays_next(edge):
+    layer, mem = a_sample(edge=edge)
+    play(layer, mem, 256 * 5)
+    assert layer.ended
+    layer.sample = 0
+    assert any(play(layer, mem, 256)), "the next patch's table sounds, though it never restarts"
+    assert not layer.ended
+
+
+def test_a_sample_after_something_else_starts_from_its_position():
+    layer, mem = a_sample(edge=CLAMP)
+    play(layer, mem, 256 * 5)
+    layer.sample = 0
+    layer.pos = 2 << 16
+    play(layer, mem, 1)
+    layer.sample = 1
+    layer.phase = 0
+    layer.carried = 0
+    wavescan.start_sample(layer)
+    assert (layer.frame, layer.ended) == (2, 0)
+    assert wavescan.sample(layer, mem) == recording(4, 256)[2][0]
+
+
+def test_a_restart_starts_a_sample_from_its_position():
+    layer, mem = a_sample(edge=WRAP)
+    play(layer, mem, 300)
+    layer.pos = 2 << 16
+    layer.phase = 0
+    wavescan.start_sample(layer, restart=True)
+    assert (layer.frame, layer.ended) == (2, 0)
+    assert wavescan.sample(layer, mem) == recording(4, 256)[2][0]
+    layer.ended = 1
+    wavescan.start_sample(layer, restart=True)
+    assert layer.ended == 0, "and brings an ended one back"
+
+
+@pytest.mark.parametrize("pos,frame", [(-(1 << 16), 0), (99 << 16, 3)])
+def test_a_restart_past_a_tables_ends_stays_inside_it(pos, frame):
+    layer, mem = a_sample(edge=WRAP)
+    layer.pos = pos
+    wavescan.start_sample(layer, restart=True)
+    assert layer.frame == frame
+
+
+@pytest.mark.parametrize("shift,frame", [(-(3 << 6), 0), (99 << 6, 3)])
+def test_a_loop_past_a_tables_ends_stays_inside_it(shift, frame):
+    layer, _ = a_sample(edge=WRAP, shift=shift)
+    assert wavescan.loop_start(layer) == frame
+
+
+def test_pitch_is_speed():
+    layer, mem = a_sample(edge=WRAP, speed=2.0)
+    whole = [v for f in recording(4, 256) for v in f]
+    assert play(layer, mem, 256) == whole[::2][:256], "an octave up is every other sample"
+
+
+def test_outside_sample_mode_a_layer_keeps_to_its_position():
+    frames = recording(4, 256)
+    mem = wavescan.pack_table(frames)
+    layer = Layer(frame_log2=8, frames=4, inc=(1 << 32) // 256, level=wavescan.ONE, pos=1 << 16)
+    got = play(layer, mem, 512)
+    assert got == frames[1] + frames[1], "the same frame, round and round"
+    assert layer.frame == 1, "where its position says: the cycles haven't walked it on"

@@ -1,0 +1,51 @@
+FAIRWAVE PATCH 1
+NAME  = VS VECTOR BELL
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's VS Vector Bell by Ian Dixon: VS.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/6E/F9C7A496.WAV
+READ = CLEAN
+TUNE = -12
+POS = 13.8%
+
+[OSC 2]
+TABLE = MODWAVE/T/6E/F9C7A496.WAV
+TUNE = -12
+POS = 13.8%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 3.089 S
+SUSTAIN = 36%
+RELEASE = 977.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 61.333 MS
+DECAY = 1.969 S
+SUSTAIN = 73%
+RELEASE = 364.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+ENV 2 > POS 1 = 72.5%
+CV 1 > POS 1 = -23%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

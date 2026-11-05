@@ -81,10 +81,10 @@ impl Engine {
             self.regs.l1_table().write(|w| unsafe { w.bits(new.table[1]) });
         }
         if changed!(ctrl[0]) {
-            self.regs.l0_ctrl().write(|w| unsafe { w.bits(new.ctrl[0] as u8) });
+            self.regs.l0_ctrl().write(|w| unsafe { w.bits(new.ctrl[0] as u16) });
         }
         if changed!(ctrl[1]) {
-            self.regs.l1_ctrl().write(|w| unsafe { w.bits(new.ctrl[1] as u8) });
+            self.regs.l1_ctrl().write(|w| unsafe { w.bits(new.ctrl[1] as u16) });
         }
         for e in 0..N_ENVELOPES {
             for w in 0..8 {

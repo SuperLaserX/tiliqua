@@ -1,0 +1,32 @@
+AQUILAMS	AR Gnarly Pass	nothing audible
+AQUILAMS	AR High Strangeness	nothing audible
+AQUILAMS	AR Ktrk Romance	nothing audible
+AQUILAMS	AR MS2k 4pBP Pad	nothing audible
+AQUILAMS	AR PPG Inharm Pad	nothing audible
+AQUILAMS	AR PPG More Pluck	nothing audible
+AQUILAMS	AR PPG Mseq (Whl)	nothing audible
+AQUILAMS	AR PPG Sparkler Pad	nothing audible
+ANALOGUE	Drum machine 2	nothing audible
+LOWFI	Record Noise	nothing audible
+LOWFI	Record Noise2	nothing audible
+VOCAL	Slice Vox	nothing audible
+TD	Tangram Noise kit	nothing audible
+TD	Noise high	nothing audible
+TD	Noise Low	nothing audible
+GENESIS	Mama Organ Stabs	nothing audible
+BERLIN	Kick & Span	nothing audible
+BERLIN	Mochalin Bass	a wavetable I don't have
+PPGWITHW	PPG  Soft Saw	a wavetable I don't have
+PPGWITHW	PPG  Velo Pluck	a wavetable I don't have
+PPGWITHW	PPG Wavetable	a wavetable I don't have
+KRAFTWER	Home Computer Up	nothing audible
+KRAFTWER	Kraftwerk Noise Snare	nothing audible
+KRAFTWER	The Robots Sin Up	nothing audible
+MOTION	Vector Pad	nothing audible
+PINKFLOY	Shine On Noise	nothing audible
+VS	VS FM Bells	nothing audible
+FACTORY	Acid Techno Beat	nothing audible
+FACTORY	Dream Sparkle Pad	nothing audible
+FACTORY	El HH&Bass Knb2&3	nothing audible
+FACTORY	Hawkins Noise	nothing audible
+FACTORY	Mini MW Noise	nothing audible

@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = TRANCE GATE
+ABOUT = A PAD CHOPPED AT 140 BPM
+
+# A pad through a square LFO: sixteenths of 140 BPM, so about 9.3 Hz, restarted by the gate. Change LFO 1's RATE to go
+# with your tempo: BPM divided by 15.
+[OSC 1]
+TABLE = SWARM
+TUNE = -12
+FINE = -5
+POS = 62%
+LEVEL = 0%
+
+[OSC 2]
+TABLE = SWARM
+TUNE = 0
+FINE = 5
+POS = 62%
+LEVEL = 0%
+
+[ENV 1]
+ATTACK = 60 MS
+DECAY = 200 MS
+SUSTAIN = 100%
+RELEASE = 400 MS
+VCA = BOTH
+
+[LFO 1]
+RATE = 9.3 HZ
+SHAPE = SQUARE
+POLAR = UNI
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 0.11 HZ
+SHAPE = SINE
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 100%
+LFO 1 > LEVEL 2 = 100%
+LFO 2 > POS 1 = 14%
+LFO 2 > POS 2 = 14%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

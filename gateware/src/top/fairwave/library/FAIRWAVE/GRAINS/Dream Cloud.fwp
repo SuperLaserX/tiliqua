@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = DREAM CLOUD
+ABOUT = A SHIMMER ON TWO CLOCKS. GATE 1
+
+# Each stream on a clock of its own, so they keep passing through one another, and the level breathes with
+# them. A random LFO throws each grain a little way from the last.
+[OSC 1]
+TABLE = SAMPLES/DREAM.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = 28
+POS = 38%
+EDGE = WRAP
+GRAIN = LFO 1
+
+[OSC 2]
+TABLE = SAMPLES/DREAM.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = 28
+POS = 38%
+EDGE = WRAP
+GRAIN = LFO 2
+
+[LFO 1]
+RATE = 4.1 HZ
+SHAPE = SAW UP
+
+[LFO 2]
+RATE = 6.3 HZ
+SHAPE = SAW UP
+
+[ENV 1]
+ATTACK = 1.2 S
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 3 S
+VCA = BOTH
+
+[LFO 3]
+RATE = 17 HZ
+SHAPE = RANDOM
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 50%
+CV 2 > POS 2 = 50%
+LFO 3 > POS 1 = 8%
+LFO 3 > POS 2 = -8%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+LEVEL 1 = 100%
+LEVEL 2 = 100%

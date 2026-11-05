@@ -61,6 +61,7 @@ class LayerParams(data.Struct):
     edge:       unsigned(2)     # CLAMP, WRAP or MIRROR
     stepped:    unsigned(1)     # one frame, not a blend of two
     raw:        unsigned(1)     # one sample, not a blend of two
+    sample:     unsigned(1)     # the frames read end to end, as one recording
 
 
 class CrossParams(data.Struct):
@@ -86,6 +87,9 @@ class WaveScanEngine(wiring.Component):
             "pending": Out(1),
             "go": In(1, init=1),
             "phase": Out(data.ArrayLayout(unsigned(32), n_layers)),
+            # Where a sample is: its frame, and whether it has run off the end.
+            "frame": Out(data.ArrayLayout(unsigned(10), n_layers)),
+            "ended": Out(n_layers),
             # A sample's computation, in clocks (up to the offer on `o`).
             "clocks": Out(16),
             "clocks_stb": Out(1),
@@ -100,6 +104,11 @@ class WaveScanEngine(wiring.Component):
         for i in range(n):
             m.d.comb += self.phase[i].eq(phases[i])
         results = [Signal(signed(16), name=f"result{i}") for i in range(n)]
+        frame_of = [Signal(10, name=f"frame{i}") for i in range(n)]
+        ended_of = [Signal(name=f"ended{i}") for i in range(n)]
+        carried_of = [Signal(name=f"carried{i}") for i in range(n)]
+        for i in range(n):
+            m.d.comb += [self.frame[i].eq(frame_of[i]), self.ended[i].eq(ended_of[i])]
 
         # Whose turn it is: the modulator's first.
         whose = (layer ^ self.cross.modulator)[0] if n > 1 else C(0, 1)
@@ -107,6 +116,9 @@ class WaveScanEngine(wiring.Component):
         cur = Array(self.layers[i] for i in range(n))[whose]
         result = Array(results)[whose]
         other = Array(results)[~whose]
+        frame_now = Array(frame_of)[whose]
+        ended_now = Array(ended_of)[whose]
+        carried_now = Array(carried_of)[whose]
 
         # The phase to read at, and how fast it moves: a modulator under phase distortion follows
         # the carrier, and a carrier under FM has the modulator added.
@@ -194,7 +206,8 @@ class WaveScanEngine(wiring.Component):
         # The frame and word of the next read, as an offset into the table. A level's row is after
         # the table's, and its word has the prefix that says which level: a one for each bit from
         # the level's frame's length up to the row's.
-        frame_sel = Mux(second, f1, f0)
+        crossing = Signal()                     # a sample's next one is in its next frame
+        frame_sel = Mux(second | crossing, f1, f0)
         row = Signal(12)
         m.d.comb += row.eq(frame_sel + Mux(level_now != 0, frames, 0))
         prefix = Signal(10)
@@ -220,6 +233,26 @@ class WaveScanEngine(wiring.Component):
             bus.bte.eq(wishbone.BurstTypeExt.LINEAR),
         ]
 
+        # A sample: where it starts from, where it loops back to, and what its next frame is.
+        pos_int = cur.pos[16:].as_signed()
+        start_frame = Signal(10)
+        with m.If(pos_int < 0):
+            m.d.comb += start_frame.eq(0)
+        with m.Elif(pos_int > cur.frames_m1):
+            m.d.comb += start_frame.eq(cur.frames_m1)
+        with m.Else():
+            m.d.comb += start_frame.eq(pos_int)
+        loop_int = cur.shift[6:].as_signed()
+        loop_frame = Signal(10)
+        with m.If(loop_int < 0):
+            m.d.comb += loop_frame.eq(0)
+        with m.Elif(loop_int > cur.frames_m1):
+            m.d.comb += loop_frame.eq(cur.frames_m1)
+        with m.Else():
+            m.d.comb += loop_frame.eq(loop_int)
+        at_end = frame_now >= cur.frames_m1
+        after = Mux(at_end, loop_frame, frame_now + 1)
+
         lerp_diff = x1 - x0
         lerp_out = (x0 + (prod >> 16))[:16].as_signed()
         blend_out = (top + (prod >> 16))[:16].as_signed()
@@ -244,7 +277,7 @@ class WaveScanEngine(wiring.Component):
                 m.next = "EMIT"
             with m.Else():
                 m.d.sync += layer.eq(layer + 1)
-                m.next = "START"
+                m.next = "TURN"
 
         with m.FSM() as fsm:
 
@@ -253,10 +286,23 @@ class WaveScanEngine(wiring.Component):
                     for i in range(n):
                         with m.If(self.restart[i]):
                             m.d.sync += phases[i].eq(0)
-                    m.next = "START"
+                    m.next = "TURN"
+
+            # Where a sample is, now this sample's parameters have arrived. A layer that isn't one stays
+            # at the start, so that a sample that ended can't silence what it plays next.
+            with m.State("TURN"):
+                with m.If(self.restart.bit_select(whose, 1) | ~cur.sample):
+                    m.d.sync += [frame_now.eq(start_frame), ended_now.eq(0)]
+                with m.Elif(carried_now):
+                    with m.If(at_end & (cur.edge != WRAP)):
+                        m.d.sync += ended_now.eq(1)
+                    with m.Else():
+                        m.d.sync += frame_now.eq(after)
+                m.d.sync += carried_now.eq(0)
+                m.next = "START"
 
             with m.State("START"):
-                with m.If(cur.level == 0):
+                with m.If((cur.level == 0) | ended_now):
                     m.d.sync += result.eq(0)
                     next_layer()
                 with m.Else():
@@ -279,8 +325,12 @@ class WaveScanEngine(wiring.Component):
                 m.next = "SCAN_START"
 
             with m.State("SCAN_START"):
-                m.d.sync += [a.eq(cur.shift), b.eq(Cat(read[15:], C(0, 1)))]
-                m.next = "SCAN_WAIT"
+                with m.If(cur.sample):
+                    m.d.sync += [f0.eq(frame_now), f1.eq(after), ff.eq(0)]
+                    m.next = "READ_SETUP"
+                with m.Else():
+                    m.d.sync += [a.eq(cur.shift), b.eq(Cat(read[15:], C(0, 1)))]
+                    m.next = "SCAN_WAIT"
 
             with m.State("SCAN_WAIT"):
                 m.next = "SCAN"
@@ -340,7 +390,7 @@ class WaveScanEngine(wiring.Component):
                 m.next = "READ_SETUP"
 
             with m.State("READ_SETUP"):
-                m.d.sync += [second.eq(0), which_word.eq(word), hold.eq(1)]
+                m.d.sync += [second.eq(0), crossing.eq(0), which_word.eq(word), hold.eq(1)]
                 with m.If(cur.stepped):
                     m.d.sync += ff.eq(0)
                 m.next = "ADDR"
@@ -355,7 +405,8 @@ class WaveScanEngine(wiring.Component):
                     with m.If(odd):
                         # The first sample is this word's upper half; the second is
                         # the next word's lower half.
-                        m.d.sync += [x0.eq(bus.dat_r[16:]), which_word.eq(word_next)]
+                        m.d.sync += [x0.eq(bus.dat_r[16:]), which_word.eq(word_next),
+                                     crossing.eq(cur.sample & (word_next == 0))]
                         m.next = "ADDR_NEXT"
                     with m.Else():
                         m.d.sync += [x0.eq(bus.dat_r[:16]), x1.eq(bus.dat_r[16:])]
@@ -444,7 +495,8 @@ class WaveScanEngine(wiring.Component):
                     m.d.comb += self.o.payload[i].as_value().eq(results[i])
                 with m.If(self.o.ready):
                     for i in range(n):
-                        m.d.sync += phases[i].eq(phases[i] + self.layers[i].inc)
+                        total = Cat(phases[i], C(0, 1)) + self.layers[i].inc
+                        m.d.sync += [phases[i].eq(total[:32]), carried_of[i].eq(total[32])]
                     m.d.sync += layer.eq(0)
                     m.next = "WAIT"
 

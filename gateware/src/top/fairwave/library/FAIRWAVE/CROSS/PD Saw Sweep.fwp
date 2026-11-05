@@ -1,0 +1,46 @@
+FAIRWAVE PATCH 1
+NAME  = PD SAW SWEEP
+ABOUT = A SINE BENT INTO A SAW. GATE 1
+
+# Phase distortion the way a Casio CZ does it: a sine, read at a phase the other table bends. The depth acts as a filter
+# would: an envelope on it sweeps a sine towards a saw, with no filter involved.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 100%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 360 MS
+SUSTAIN = 55%
+RELEASE = 120 MS
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 280 MS
+SUSTAIN = 12%
+RELEASE = 120 MS
+D CURVE = 60
+
+[CROSS MOD]
+MODE = PD
+FROM = OSC 1
+DEPTH = 2%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > X DEPTH = 15%
+CV 2 > X DEPTH = 15%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

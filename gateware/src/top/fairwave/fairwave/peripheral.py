@@ -10,7 +10,8 @@ Registers, per layer 0x20 apart:
 
     0x00 table    base (16, in units of 256 bytes), frame_log2 (2, less 8), frames_m1 (10),
                   max_level (4): the band-limited levels there are to read, 0 until they are made
-    0x04 ctrl     edge (2), stepped (1), raw (1), grain (2): the LFO whose cycles restart it
+    0x04 ctrl     edge (2), stepped (1), raw (1), grain (2): the LFO whose cycles restart it, hard (1):
+                  with no fade, half (1): half a cycle on, sample (1): the frames read end to end
 
 and:
 
@@ -58,6 +59,9 @@ class WaveScanPeripheral(wiring.Component):
         stepped: csr.Field(csr.action.W, unsigned(1))
         raw: csr.Field(csr.action.W, unsigned(1))
         grain: csr.Field(csr.action.W, unsigned(2))
+        hard: csr.Field(csr.action.W, unsigned(1))
+        half: csr.Field(csr.action.W, unsigned(1))
+        sample: csr.Field(csr.action.W, unsigned(1))
 
     class ParamAddr(csr.Register, access="w"):
         addr: csr.Field(csr.action.W, unsigned(8))
@@ -113,6 +117,7 @@ class WaveScanPeripheral(wiring.Component):
             "lfo_held": data.ArrayLayout(signed(32), 3),
             "lfsr": unsigned(32),
             "pos": data.ArrayLayout(signed(32), 2),
+            "scan": data.ArrayLayout(unsigned(16), 2),
         }))
         regs = csr.Builder(addr_width=8, data_width=8)
         self._layers = []
@@ -163,6 +168,9 @@ class WaveScanPeripheral(wiring.Component):
             stepped = Signal(name=f"stepped{i}")
             raw = Signal(name=f"raw{i}")
             grain = Signal(2, name=f"grain{i}")
+            hard = Signal(name=f"hard{i}")
+            half = Signal(name=f"half{i}")
+            sample = Signal(name=f"sample{i}")
             held(r["table"].f.base, table_base)
             held(r["table"].f.frame_log2, frame_log2)
             held(r["table"].f.frames_m1, frames_m1)
@@ -171,6 +179,9 @@ class WaveScanPeripheral(wiring.Component):
             held(r["ctrl"].f.stepped, stepped)
             held(r["ctrl"].f.raw, raw)
             held(r["ctrl"].f.grain, grain)
+            held(r["ctrl"].f.hard, hard)
+            held(r["ctrl"].f.half, half)
+            held(r["ctrl"].f.sample, sample)
             p = engine.layers[i]
             m.d.comb += [
                 p.table_base.eq(table_base),
@@ -180,12 +191,15 @@ class WaveScanPeripheral(wiring.Component):
                 p.edge.eq(edge),
                 p.stepped.eq(stepped),
                 p.raw.eq(raw),
+                p.sample.eq(sample),
                 p.inc.eq(mod.matrix.inc[i]),
                 p.pos.eq(mod.matrix.pos[i]),
                 p.shift.eq(mod.matrix.shift[i]),
                 p.level.eq(mod.matrix.level[i]),
                 mod.frames_m1[i].eq(frames_m1),
                 mod.grain[i].eq(grain),
+                mod.hard[i].eq(hard),
+                mod.half[i].eq(half),
                 self.trace.max_level[i].eq(max_level),
             ]
         m.d.comb += engine.restart.eq(mod.matrix.restart)
@@ -320,6 +334,7 @@ class WaveScanPeripheral(wiring.Component):
             m.d.comb += [self.trace.phase[i].eq(engine.phase[i]),
                          self.trace.env_level[i].eq(mod.envelopes.level[i])]
             m.d.comb += self.trace.pos[i].eq(mod.matrix.pos[i])
+            m.d.comb += self.trace.scan[i].eq(engine.frame[i] | engine.ended[i] << 15)
         for i in range(3):
             m.d.comb += [self.trace.lfo_phase[i].eq(mod.lfos.phase[i]),
                          self.trace.lfo_held[i].eq(mod.lfos.held[i])]

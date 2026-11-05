@@ -1,0 +1,61 @@
+FAIRWAVE PATCH 1
+NAME  = 1+5 PULSATOR
+ABOUT = LEAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's 1+5 Pulsator by Francis Preve: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along morph.
+# Oscillator 2 is A's 2, a table made along position.
+# Not carried over: 2 unison voices, performance modulators.
+# Its effects, which FairWave hasn't got: 1+5 Pulsator, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/DF/4AB7AFA3.WAV
+READ = CLEAN
+TUNE = -12
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/6F/F3BED201.WAV
+READ = CLEAN
+TUNE = 7
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 3.835 S
+DECAY = 1.432 S
+SUSTAIN = 0%
+RELEASE = 44.611 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = SAW DN
+PHASE = 180
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+LFO 1 > POS 2 = 50%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 33.5%

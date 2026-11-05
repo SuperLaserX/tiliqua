@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = AA PD NAVIGATION
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA PD Navigation by Anton Anru: Korg Modwave - Ambient Worlds Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along morph.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 3 unison voices, controllers, random and Kaoss Physics.
+# Its effects, which FairWave hasn't got: Glass Pad, Stereo Chorus, bpm Pattern 3.
+[OSC 1]
+TABLE = MODWAVE/T/AA/4C848CF8.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 2
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/8F/8D4641F2.WAV
+READ = CLEAN
+TUNE = 24
+FINE = -2
+POS = 42.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.333 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 1.827 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 10
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 50.0%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 4.144 S
+DECAY = 4.552 S
+SUSTAIN = 0%
+RELEASE = 1.896 S
+A CURVE = 30
+D CURVE = 20
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 100%
+CV 1 > POS 2 = -70%
+CV 2 > LEVEL 1 = -26%
+CV 2 > LEVEL 2 = -26%
+CV 2 > POS 2 = 16%
+ENV 2 > POS 2 = 8%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 83.7%

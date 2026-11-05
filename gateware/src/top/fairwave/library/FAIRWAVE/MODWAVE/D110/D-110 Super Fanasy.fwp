@@ -1,0 +1,61 @@
+FAIRWAVE PATCH 1
+NAME  = D-110 SUPER FANA
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's D-110 Super Fanasy by Ian Dixon: ID-D110.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample D-110 Fantasy.
+# Oscillator 2 is A's 2, the sample D-110 Fantasy.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/8D/481BC367.WAV
+READ = SAMPLE
+TUNE = -6
+FINE = 34
+POS = 0.0%
+EDGE = WRAP
+LOOP = 94.7%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/CF/402BD24B.WAV
+READ = SAMPLE
+TUNE = -6
+FINE = 37
+POS = 0.0%
+EDGE = WRAP
+LOOP = 94.7%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 1.133 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 1]
+RATE = 0.144 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > PITCH 2 = 0.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

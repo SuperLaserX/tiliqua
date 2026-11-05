@@ -233,6 +233,10 @@ you to flash and listen.
    files on a drive, a library of classic sounds to load, the Browser starting in a `FAIRWAVE` folder, fine tuning, and `GRAINS` put
    right. See [Sound files](#sound-files).
 
+8. **Samples and grains. Built and simulated; awaiting hardware.** Added at the user's request after playing Phase 7: the grain fade
+   moved into the gateware, a `READ = SAMPLE` mode so a recording can be played, a patch from each of 114 Fairlight voices, and
+   a much larger library. See [Samples and the fade](#samples-and-the-fade).
+
 ## Building and testing
 
 From `gateware/`, with `C:\Users\SlaserX\.venvs\tiliqua-win\Scripts` on PATH (this
@@ -263,7 +267,7 @@ nextpnr doesn't check (`fairwave/phy_check.py`), and only packs a seed that pass
 
 ```
 cd src/top/fairwave
-python -m pytest fairwave model                 (gateware against the model, 365 tests, 2 to 3 minutes)
+python -m pytest fairwave model -n 8            (gateware against the model, and the library: 1,096 tests, about a minute and a half)
 cargo test --manifest-path cpu/Cargo.toml       (logic, 256 tests)
 ```
 
@@ -752,20 +756,17 @@ about 3.8 s of boot. They take as much PSRAM again as the table itself, so the p
 | `PLAIN` | no | blended | blended | every earlier build: aliases at high pitch |
 | `STEPS` | no | blended | stepped | a PPG, with its audible steps through a table |
 | `RAW` | no | stepped | stepped | stairs, at its coarsest on a short table |
+| `SAMPLE` | no | blended | none: frames in turn | a sampler: the frames are one recording, end to end |
 
 **Grains** (`GRAIN`, on the Oscillators screen, per oscillator). `OFF`, or the LFO whose cycles make grains: at each cycle's start
 the oscillator goes back to the top of its cycle and takes up its position, holding it until the next, so a grain stays on one
-place in the table however the position moves in between. That is all the gateware does. The rest of granular synthesis comes
-from what is already here: a slot from that LFO onto the oscillator's `LEVEL`, with the LFO unipolar, is the grain's window; the
-LFO's rate, up to 105 Hz, is the grain rate; a `RANDOM` LFO onto `POS` is the spray; and with
-`LEVEL` at 0 on the Oscillators screen, the window is all there is. With no window it is a hard sync from an LFO, which is
-worth having too. The `GRAINS` preset is all of this set up.
+place in the table however the position moves in between. Its fade and its second stream came later: see
+[Samples and the fade](#samples-and-the-fade). The LFO's rate, up to 105 Hz, is the grain rate, and a `RANDOM` LFO onto `POS` is the
+spray.
 
-A cycle starts when the LFO's phase counter wraps, and its `PHASE` setting only offsets the shape it reads from that. So two things
-follow, both of which this section and the first `GRAINS` got wrong, and which the user caught as "mostly noise" (see
-[Sound files](#sound-files)). A window is only shut when a grain starts if it is a `SINE` or `TRI` at `PHASE` 270: at 0, the default,
-it is at 50% and every restart clicks. And `PHASE` can't stagger two streams: two LFOs at one rate restart on the same sample
-whatever their phases, so overlapping streams need two different rates.
+A cycle starts when the LFO's phase counter wraps, and its `PHASE` setting only offsets the shape it reads from that, which the
+first `GRAINS` got wrong twice: its window, made with a slot, wasn't shut when a grain started, and `PHASE` couldn't stagger two
+streams. The user caught those as "mostly noise". The fade in the gateware uses the counter itself, so neither can happen now.
 
 **The factory bank.** Turning on past patch 8 on the Patches screen reaches eight patches that come with the firmware
 (`cpu/src/presets.rs`): `LOAD` plays one, and it can be saved over a patch of your own; `SAVE` and `ERASE` won't touch them. All sound
@@ -961,6 +962,174 @@ about 145 BPM (145.6 by the numbers) and can't be set exactly: a gate from a seq
 loading a patch, so two in one patch keep whatever relationship they fall into until a gate restarts them; and a table's formants or filter follow the note,
 so `TALK`'s vowels are only right around C2.
 
+## Samples and the fade
+
+The user's report on Phase 7: the Hoover is like a hoover, but a hoover is the Alpha Juno's "What The" patch, and perhaps a sample
+would do it; Donk sounds like a ping, not a donk; the rest are great, with psy rolling basses ideal; Grain Spray sounded nice,
+but `GRAINS` and Grain Drift were lacking, and granular was more of a nice-to-have, so move the fade into the gateware if it
+still builds. And: more sounds, of every kind, and a patch for each Fairlight table.
+
+**The fade.** A layer's level is multiplied by a window on the clock LFO's raw phase, ahead of the VCAs, when its grain is on and
+not `SYNC`. The window is a raised parabolic sine, `window` in `model/modulation.py`, shut at 0 and full at half way; two half
+a cycle apart sum to one. It costs a state machine and a multiply in `ModMatrix`.
+
+| `ctrl` | Bits | Meaning |
+|---|---|---|
+| `grain` | 4-5 | which LFO, or none |
+| `hard` | 6 | no fade: restart only (`SYNC n`) |
+| `half` | 7 | restart when the LFO passes half way, and fade half a cycle on (`LFO n B`) |
+| `sample` | 8 | read frames as one recording |
+
+**Why a recording.** The Fairlight files turned out not to be single cycles at all: a CMI voice is 16384 8-bit samples at 30.2 kHz,
+a real recording with a short loop, and those are what the user wanted to hear, and What The's sound isn't a thing a wavetable
+can hold. Each frame of a table is a cycle to the oscillator, so a table of a recording plays something else entirely when scanned.
+
+**`READ = SAMPLE`.** Each layer has a frame counter, which moves on when the phase wraps, which is why pitch is speed. A restart sets it
+from `POS`; past the last frame, `WRAP` goes to `shift`'s whole frames, and `CLAMP` and `MIRROR` end the note, silent until a restart.
+Interpolation reads across into the next frame. The oscillator's `TURN` state does all of that between samples, and a gate starts a
+sample with `SYNC n` on an LFO synced to it at 0.01 Hz, which only wraps by itself once every 100 seconds. No new gate wiring. A
+frame is at most 2048 samples and a table 1024 frames, so a recording can be 43 s long at 48 kHz.
+
+**Tools.**
+
+| Tool | What it does |
+|---|---|
+| `tools/korg.py` | Reads Korg's Sample Builder files: start, loop, end, one-shot, root key and tuning for each zone. Its fields were worked out from the bytes |
+| `tools/modwave_schema.py` | Pulls the protobuf schema for modwave files out of the instrument's own `dwX` binary, into `tools/modwave_schema.json` |
+| `tools/modwave.py` | Reads modwave files by that schema: Performances, Programs, wavetables and everything in a bundle or backup |
+| `tools/import_modwave.py` | Translates them into patches and tables in `library/FAIRWAVE/MODWAVE`. See `library/README.md` |
+| `tools/modwave_device.py` | Copies files from a modwave over USB, using only read-only calls: its factory samples and its own library |
+| `tools/modwave_bank.py` | Reads those sample banks: multisamples, zones and audio, with Korg's unscrambled |
+| `tools/samples.py` | A recording as a table: the loop lined up to frames, and the settings that tune it |
+| `tools/make_sample.py` | That, for a recording of your own |
+| `tools/make_fairlight.py` | A table and a patch for each Fairlight set |
+| `tools/make_instruments.py` | The sampled instruments and grain patches |
+| `tools/make_rendered.py` | What The and the hoover, rendered from the patch's published settings |
+
+**A loop has to fit.** It can only start on a frame and has to end at the table's end. So a loop is resampled a little (never down),
+turned round so its start falls on a frame, and repeated if it's short. The resampling changes the pitch, which `tune_of` puts
+right. Many of these loops are only 256 samples, some are only a few cycles.
+
+**The pitches.** Measured, not taken from the metadata: 97 of 114 detect confidently, and only 25 of those are within half a semitone
+of the metadata's root and fine tune at any octave. They are mostly A sharp at some octave, near 236 Hz, 472, 944 or 118: the CMI's
+waveform memory has segments of 128 samples, and 30200 / 128 is 235.9. A root says which key plays a recording at its own speed, not what
+it sounds, which is still useful: it says what range its maker meant for it, and that picks the C at 0 V.
+
+**Modwave patches.** `dwX`, the modwave's own software, carries the protobuf descriptors of its file formats, so every field's name and
+type is known and nothing has to be guessed from the bytes. A file is `Korg`, a header naming what's in it, then each item with its size,
+and items nest. A wavetable is raw float32, frames of 2048. What the numbers mean comes from the owner's manual: morph types, modifiers,
+that a cutoff is in semitones with 60 at middle C, that a key track of +60 is an octave per octave.
+
+FairWave has no filter and can't morph or blend live, so those go into the table. If nothing moves them they're baked in and the table keeps
+its own position axis. If something does, the table is 48 frames of 1024 along the movement, with `POS` as the path, and a key track
+under 100% is `CV 1 > POS` with the path extended by up to 48 semitones to have room for it. The sub goes into oscillator 1's table,
+whose frame then holds 2 or 4 cycles with `TUNE` lowered to match. FM, AM and ring on oscillator 2 are the cross modulation. Tables are
+named by a hash of what's in them, `MODWAVE/T/XX/YYYYYYYY.WAV`, so patches that share one share a file, and at 34 characters with
+`FAIRWAVE/` the path fits the 39 a saved patch keeps. Nothing about this needed the gateware or firmware to change.
+
+Three things the numbers looked like and weren't, each found by rendering every patch through the model and looking at the outliers:
+
+- An intensity on an envelope time or LFO rate isn't in seconds or hertz. It's on the instrument's own curve, and goes as high as 17,080.
+  Added as seconds it gave an attack of three hours. The curve isn't known, so these are left out, and the patch's comments say so.
+- A stored octave of -1 is common, including in the Init Performance, though the manual says the default is 0. It's read here as an octave down:
+  of the sampled instruments whose recording is an octave above its root key, 92 uses are at -1 and 14 at 0, which is what puts them on pitch if
+  0 is natural speed, and of those whose recording matches its root, 124 are at 0 and 90 at -1. That's evidence and not proof, so it's
+  the first thing to check against an instrument: if a patch plays an octave under its modwave, this is why.
+- A parameter that's there with no value is 0 and not its default, as protobuf reads it. Taken as the default, silent layers sounded.
+
+`dwX`'s symbols are stripped and its DSP couldn't be found in reasonable time, so filters and morphs follow the manual, and FM, AM and ring
+`DEPTH` being the Morph Amount is a guess.
+
+**Factory samples.** They aren't in a backup (its `UserSampleBank` is empty) or a system update, and nothing generates them: they're on the
+instrument's flash in `/Korg/FileSystem/Internal/Collections/Sample`, 3.4 GB in five banks: Wavestate (1,486 multisamples), Wavestation (598),
+Plugin Guru (235), Modwave 1 (36) and the owner's own (373). Over USB the instrument is a network device serving `_korg-synth._tcp` (`rpcz` over
+ZeroMQ, port 50000 here), whose `ReadFile` will read any path, and that's how `tools/modwave_device.py` copies them. It refuses every call that
+isn't on its read-only list before sending anything, as the same service can also write and delete.
+
+A bank is three files named by uuid: a FlatBuffer marked `KBnk` that describes it, the audio, and a cache of the first part of each sample that
+isn't needed here. Which field is which comes from `dwX`'s accessors. Korg's audio is 16-bit PCM with each word XORed with `0x69AD`, the word `dwX` fills
+silence with for those banks; the owner's bank is plain, and trimmed to where each sample starts. A flag that would mean some other encoding is never set.
+Checked against the instrument and the owner's files: all 2,728 uuids worked out from a multisample's place in its bank are on the list the instrument
+gives (15 names differ a little, as the database has been edited since), all 1,535 zones of the owner's bank agree with their Sample Builder files on loop,
+end, one-shot, keys and rate, and their audio is within 3 steps in 65,536 of the WAVs. Korg's own loops come round cleanly, and their pitch at their rate is
+their root key, with a median error under a cent.
+
+That comparison turned up a mistake in `tools/korg.py`: a `.korgmultisample` holds tuning in tenths of a cent, and it was being read as cents. The instrument's copy of a
+set says -42.6 where its file says -426. It had put imported sets using those tunings out by up to a few semitones, and changed nothing else.
+
+Two limits a factory sample can run into. A table takes 4 bytes a sample with its levels, so `MAX_RECORDING` is 760,000 samples, about 16 seconds, for any two
+to fit: a longer one-shot is cut with a fade, and a longer loop loses its top octave to keep its length and its join. And `TUNE` only goes down to -48, so
+a sample played far under its root (a bass on a sample rooted at A#5, say) needs its frames closer together. It's sampled more finely, or if it would take too
+long to come round, cut to what plays in that time. `for_its_speed` does that, and no oscillator ends up out of tune by it.
+
+The instrument's `Database/Data` holds its live library, an object to a file. What's in no bundle or backup goes in a pack called `ONBOARD`.
+
+Of 2,568 sounds in the collection this was built on, 2,536 became patches, with 3,441 tables in 484 MB. Of the 32 others, 28 are silent as saved and 4 name a
+wavetable that's neither in a file nor on the instrument. All 2,536 parse the same in the firmware and the model, word for word.
+Thirteen ran through the whole SoC from `FAIRWAVE/MODWAVE/T`: six kinds of wavetable and recording (a baked filter path, FM, AM, ring, a filtered sample, a unison twin),
+and seven of factory samples (M1 Piano, a Wavestation grand, a Rompler Cosplay piano, a kit's kick at one pitch, a sound played far under its root, one only on the instrument, and the largest
+that fits): every table in PSRAM matched its file, and all 73,985 samples of each output matched the models. A simulation's disk sits in table memory at `0xB00000`, so it can't show a patch
+with over about 1 MB of tables; that two of the longest fit is a test on the firmware's own pool instead, as a real drive doesn't sit there.
+
+**Fixed: an ended sample silenced everything after it (2026-11-05).** The user found the engine going silent after several patches, until a restart, with the wavetable still showing and moving. A layer playing a one-shot sample sets `ended` when it runs off its end, and only a restart cleared that, and only a layer with `GRAIN` set ever restarts. So the flag stayed set through every later patch that didn't play a sample, and that oscillator was silent until a power cycle: one layer stuck thinned the sound, and two stopped it. 394 of the library's 2,811 patches have such a layer (334 on oscillator 1, 180 on oscillator 2). The bit-exact checks couldn't see it, as the model did the same, and no run had played a sample to its end and then loaded another patch.
+
+Now a layer that isn't a sample stays at its start, with `ended` clear (`start_sample` in `model/wavescan.py`, `TURN` in `fairwave/osc.py`).
+
+| Splendor Box Perc played out, then Mini MW Bass, gate high, whole SoC | Output | `ended` |
+|---|---|---|
+| Before | rms 0, peak 0 | Both stuck at 1 |
+| After | rms 5,996, peak 15,112; all 69,980 samples of each output match the models | Both 0 once the bass has loaded |
+
+Shipped on seed 5: sync 70.00 MHz of the 60 needed, `dvi5x` 462.11 of 371.33, `DATAVALID` 1.41 ns. Not yet heard on hardware.
+
+**Also checked on the way, and fine:**
+
+| Checked | Result |
+|---|---|
+| The whole library on a drive image (`tools/make_drive_image.py`, then `a_whole_drive_reads` in `cpu/src/disk.rs`) | 2,811 patches and 3,614 tables all found and byte-exact, at 4, 16, 32 and 64 KB clusters, and with every file fragmented at 4 and 32 KB. Real USB transfers aren't covered |
+| CV 1 from -1 to +5 V, gate held (311 patches, a sample of the packs) | At most 6 of 177 in `FACTORY3` drop under -50 dBA at their loudest, and Mini MW Bass gets louder as CV 1 rises |
+| Memory | Every patch's two tables fit together, the largest at 97% of the room |
+
+**Still true, and separate:**
+- A short gate never gets a slow attack far: with 5 ms, 27 to 33% of the `FACTORY` folders stay under -50 dBA at their loudest (6% of `BASSPACK`, none of `BASS` or `REESE`), and with 100 ms, 6 to 8%.
+- Mini MW Bass at 0 V is mostly 16, 32 and 65 Hz, settling at -42 dBA where Synth String settles at -30, so small speakers give little of it.
+- A patch whose two tables can't fit together would swap them forever with its outputs hushed (`find_missing` in `fw/src/main.rs`). Nothing in the library comes to that, but a user's own tables could.
+
+**What The's settings** come from a printout of `What_the.SYX` on llamamusic.com: `DCO RNG 32'`, `DCO ENV 127`, `PULSE 3`, `SAWTOOTH 3`,
+`SUB 5` at level 3, `NOISE 1`, `PW/PWM 127`, `PWM RATE 102`, `HPF 0`, `VCF FREQ 77`, `RESO 0`, `ENV 75`, `LFO 75`, `CHORUS ON` at rate 92, `LFO RATE 39`,
+`DELAY 64`, `T1 99 L1 68 T2 78 L2 127 T3 75 L3 127 T4 92`. Their Hz and seconds aren't published, so those are by ear, and so are
+the shape of the saw's holes and the sub's waveform. On 32' with `DCO ENV 127` the note starts two octaves down, and the envelope
+lifts it to pitch and lets it fall back on release, which is the hoover's swoop.
+
+**Verified.**
+
+| Check | Result |
+|---|---|
+| Fit and timing | 21,751 of 24,288 cells (89.6%, about 450 more than Phase 7). 6 of 8 seeds pass. Seed 5 shipped: sync 69.31 MHz of the 60 needed, `dvi5x` 439.95 of 371.33 |
+| Fade, `LFO n B`, `SYNC n`, `READ = SAMPLE` | gateware against the models, bit-exact, in `fairwave/test_osc.py`, `test_mod.py` and `test_peripheral.py` |
+| The tests | 1,096 in Python, including every patch's tables and every loop's join; 291 in the firmware |
+| The two parsers | all 275 patches: firmware and model agree on every word (`tools/check_library.py`) |
+| The whole SoC, bit-exact on all four outputs | Hoover (two sampled tables, restarted by gates), Fairlight Bass and Sus Strings, Freeze (grains of a recording) and Grain Drift (grains of a built-in table), `GRAINS`, Psy Snap, Reese Classic and Reese Over Sub: 63,987 to 73,986 samples each. Edit, save, change and load 55,982. Booting a saved patch, and a drive with no `FAIRWAVE` folder |
+| A sample all the way through, in the whole SoC | a gate held for 3.5 s, 207,982 samples each, with the trace read to confirm it got there: Sus Strings ran to its last frame and back to its loop frame, again and again. Fairlight Bass's recording ran out, stayed silent with its sub still playing, and restarted on the next gate. Both bit-exact |
+| Broken files | a missing table, not a patch, and slips: each says what it should |
+| Stack and deadline | 9.9 KB free after loading patches. The longest DSP sample across all the runs took 529 of its 1250 clocks |
+| The flash layout | passes the flasher's own check in all 8 slots. Firmware 238 KB of 320 |
+
+**Measured, not heard.** Every patch was rendered through the models to `build/fairwave-renders`, and checked for level, DC, pitch at 0 V
+and decay. Donk went from a 120 ms decay setting to ringing for 320 ms to -20 dB (with a 300 ms gate), with 46% of its energy under 120 Hz. All of that says a patch does what it was written to do, and nothing about whether it's any good: nobody has heard any of them.
+Expect the hoover's times and rates to need changing by ear.
+
+**What to check on hardware:**
+- Grains: `GRAINS`, then `GRAINS/Glacier` and `GRAINS/Freeze`. There should be no clicks, and Freeze should hold a steady level.
+- `CLASSIC/What The` and `Hoover` against what a hoover should be. `ATTACK` and `RELEASE` are the swoop.
+- `BASS/Donk`, and `KICKS`.
+- A few `FAIRLIGHT` patches, for tuning at 0 V: a sampled patch's pitch comes from a measurement.
+- Loading a long sample takes a moment, and the outputs stay quiet until it's done.
+
+**Known limits:** a recording's every note is that recording at another speed, so it's only natural near its own pitch; the two streams
+of grains on one clock come out about 6 dB quieter than one oscillator alone, as the mixer averages them; a table's band-limited levels
+are still made for a sample, in the background, though only `CLEAN` reads them.
+
 ## Repository notes
 
 - **Submodules.** The import into this repository dropped the submodules' git metadata, so
@@ -984,7 +1153,12 @@ so `TALK`'s vowels are only right around C2.
 - The DSP's deadline has margin, about half of it, against 1250 clocks. The status line (`dsp N/1250`) shows it.
 - Real USB hasn't run. The drive's path below the `UsbMsc` trait, the USB-C controller and VBUS are the
   bootloader's on this hardware, used the same way, but only a real drive will show.
-- Past 85% LUTs, a future gateware change may not place, however many seeds are tried.
+- 89.6% of LUTs are in use, up about 450 from Phase 7: a future gateware change may not place, however many seeds are tried.
+- `ExampleTables` is third-party audio, and git-ignored. `library/FAIRWAVE/FAIRLIGHT/WAVES`, `SAMPLES` and `MODWAVE` are derived from it and
+  from a private modwave collection, and aren't ignored, which is fine while this repository is private. `MODWAVE` also holds tables made from Korg's factory
+  samples, read off the owner's instrument and unscrambled: those especially mustn't leave a private repository. It's large for git too, and
+  `tools/import_modwave.py` remakes it, so it can be ignored instead without breaking anything: its simulation disk skips itself if it's gone.
+- No imported patch has been heard, or compared with a modwave. They've been parsed, rendered and checked by level, pitch and offset, and a few run bit-exact through the whole SoC.
 - The stack has 13.1 KB left free, with no guard under it. `dsp longest ... stack free` in the serial log
   reports what running has left; a folder on a real drive shouldn't take more than the image did, but
   that log line is worth a look.
@@ -1043,3 +1217,11 @@ so `TALK`'s vowels are only right around C2.
 | 2026-11-04 | Library tables are 64 x 1024 rather than 2048: enough for a bass, and all 13 fit at once. |
 | 2026-11-04 | Basses need a gate, as a sequenced bass line would be spoiled by a free-running one. Only sounds that are their own rhythm or drone run free. |
 | 2026-11-04 | The grain feature stays as it is for now, with `GRAINS` rebuilt on how it really works. A window built into the gateware is the user's call. |
+| 2026-11-04 | The grain fade goes in the gateware (user: if it still builds, and it did, on 6 of 8 seeds). It uses the LFO's raw phase, so its shape and `PHASE` don't matter. |
+| 2026-11-04 | `LFO n B`, restarting half a cycle on, so two streams can overlap on one clock. `SYNC n` keeps the old hard restart. |
+| 2026-11-04 | `READ = SAMPLE` rather than slicing recordings into pitch-synchronous wavetables: it's the instrument's own sound, and grains on it are real granular. Patch format stays 5, whose values only grow. |
+| 2026-11-04 | Hoover and What The from a rendering of the patch's settings (user suggested a sample), with the pitch envelope and amplitude live. An emulation, said so. |
+| 2026-11-04 | A recording's pitch is measured. The metadata only says which key plays it at its own speed. |
+| 2026-11-04 | A loop is resampled to fit whole frames, only ever upward, with the tuning putting that right. Frames are 256 samples, for the finest placing. |
+| 2026-11-04 | Modwave presets are translated, not copied, by `tools/import_modwave.py`, from a schema in the instrument's own software. It's a tool and not a change to the synth: filters and morphs are baked into tables, and what has nowhere to go is named in each patch's comments. |
+| 2026-11-04 | Factory samples are read from the owner's own instrument over USB, read-only, and unscrambled for private use: most of the sounds the owner wanted need them. Nothing is sent back to the instrument. The copies stay out of the repository, in `D:/midi/modwave`; what's made from them is in `MODWAVE`, which stays private. |

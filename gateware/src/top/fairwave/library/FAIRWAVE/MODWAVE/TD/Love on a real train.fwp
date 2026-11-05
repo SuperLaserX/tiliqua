@@ -1,0 +1,70 @@
+FAIRWAVE PATCH 1
+NAME  = LOVE ON A REAL T
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Love on a real train by Ian Dixon: TD.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: layer B oscillator 1.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/86/ABC9BE45.WAV
+READ = CLEAN
+TUNE = 0
+FINE = -1
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/DB/96C32B04.WAV
+READ = CLEAN
+TUNE = 0
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 276.000 MS
+SUSTAIN = 3%
+RELEASE = 60.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 0.0%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 793.333 MS
+SUSTAIN = 3%
+RELEASE = 62.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.011 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -39.5%
+CV 1 > POS 2 = -39.5%
+LFO 1 > POS 1 = 26.5%
+LFO 1 > POS 2 = 26.5%
+ENV 2 > POS 1 = 25%
+ENV 2 > POS 2 = 25%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

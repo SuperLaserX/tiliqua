@@ -1,0 +1,44 @@
+FAIRWAVE PATCH 1
+NAME  = HYPNOTIC LOOP
+ABOUT = RUNS BY ITSELF, ROUGHLY 135 BPM
+
+# An envelope looping on its own at sixteenths, a slow LFO on the filter under it: a riff to listen to for ten minutes.
+# Send gates to restart it, or leave it alone.
+[OSC 1]
+TABLE = TABLES/ACIDLP.WAV
+TUNE = -24
+POS = 10%
+
+[OSC 2]
+TABLE = TABLES/ACIDLP.WAV
+TUNE = -12
+FINE = 7
+POS = 6%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 70 MS
+SUSTAIN = 0%
+RELEASE = 40 MS
+D CURVE = 45
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[LFO 2]
+RATE = 0.08 HZ
+SHAPE = TRI
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 36%
+ENV 1 > POS 2 = 26%
+LFO 2 > POS 1 = 14%
+LFO 2 > POS 2 = 20%
+CV 2 > POS 1 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 30%

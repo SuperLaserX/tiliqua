@@ -1,0 +1,40 @@
+FAIRWAVE PATCH 1
+NAME  = PD ROLL
+ABOUT = PHASE DISTORTION ROLLS, 145 BPM
+
+# A sine bent into a saw and back, sixteen times a second or so: as sharp as a filter, without any of its resonance.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -24
+POS = 100%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 64 MS
+SUSTAIN = 0%
+RELEASE = 38 MS
+D CURVE = 45
+R CURVE = 0
+LOOP = FREE
+VCA = OSC 2
+
+[CROSS MOD]
+MODE = PD
+FROM = OSC 1
+DEPTH = 0%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > X DEPTH = 14%
+CV 2 > X DEPTH = 8%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

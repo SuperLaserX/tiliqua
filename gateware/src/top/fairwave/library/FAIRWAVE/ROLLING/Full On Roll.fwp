@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = FULL ON ROLL
+ABOUT = ROLLS ABOUT 145 BPM, GATE RESTARTS
+
+# Full-on psy: a bright, driven pluck in sixteenths, with a clean sub under its fundamental and the filter wide open at
+# the front of each. The period is attack + decay + release: this one's 103 ms.
+[OSC 1]
+TABLE = TABLES/ACIDLP.WAV
+TUNE = -24
+POS = 14%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 4%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 64 MS
+SUSTAIN = 0%
+RELEASE = 38 MS
+D CURVE = 40
+R CURVE = 0
+LOOP = FREE
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 40%
+CV 2 > POS 1 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 30%

@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = CMI FUZZ FALL 2
+ABOUT = PLUCKED, THEN LET RING
+
+# Fairlight CMI: Fairlight Fuzz Fall 2. no steady pitch: at its own speed.
+# Plays once from the start on each gate: GRAIN = SYNC 1, with LFO 1 as slow as it goes.
+# CV 2 moves where it starts.
+[OSC 1]
+TABLE = WAVES/FUZZFAL2.WAV
+READ = SAMPLE
+TUNE = -14
+FINE = 21
+POS = 0%
+EDGE = CLAMP
+GRAIN = SYNC 1
+
+[OSC 2]
+TABLE = WAVES/FUZZFAL2.WAV
+READ = SAMPLE
+TUNE = -14
+FINE = 27
+POS = 0%
+EDGE = CLAMP
+GRAIN = SYNC 1
+
+[ENV 1]
+ATTACK = 2 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 220 MS
+D CURVE = 40
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 12%
+CV 2 > POS 2 = 12%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50%

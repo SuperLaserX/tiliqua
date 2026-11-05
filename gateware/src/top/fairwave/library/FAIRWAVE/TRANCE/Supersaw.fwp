@@ -1,0 +1,43 @@
+FAIRWAVE PATCH 1
+NAME  = SUPERSAW
+ABOUT = THE ANTHEM. GATE 1, CV 1
+
+# Two swarms of saws an octave apart, spread a little in pitch, each on its own side, a touch of filter envelope. It wants
+# chords, but it holds a note up by itself.
+[OSC 1]
+TABLE = SWARM
+TUNE = 0
+FINE = -6
+POS = 80%
+
+[OSC 2]
+TABLE = SWARM
+TUNE = -12
+FINE = 6
+POS = 80%
+
+[ENV 1]
+ATTACK = 10 MS
+DECAY = 500 MS
+SUSTAIN = 90%
+RELEASE = 500 MS
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 300 MS
+SUSTAIN = 30%
+RELEASE = 300 MS
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 12%
+ENV 2 > POS 2 = 12%
+CV 2 > POS 1 = -30%
+CV 2 > POS 2 = -30%
+
+[MIXER]
+OUT 0 = OSC 1
+OUT 1 = OSC 2

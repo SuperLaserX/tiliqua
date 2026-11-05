@@ -1,0 +1,35 @@
+FAIRWAVE PATCH 1
+NAME  = ITALO BASS
+ABOUT = EIGHTHS, A SHARP ATTACK. GATE 1
+
+# Italo disco's octaves on a square, with the filter closing quickly, and two square waves spread a little: run it in
+# eighths, with every other note an octave higher.
+[OSC 1]
+TABLE = TABLES/PWM.WAV
+TUNE = -24
+FINE = -4
+POS = 8%
+
+[OSC 2]
+TABLE = TABLES/SQRLP.WAV
+TUNE = -24
+FINE = 4
+POS = 26%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 180 MS
+SUSTAIN = 40%
+RELEASE = 50 MS
+D CURVE = 50
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 2 = 42%
+CV 2 > POS 1 = 40%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX

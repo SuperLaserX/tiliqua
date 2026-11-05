@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = PSY KICK
+ABOUT = TIGHT, TO LEAVE ROOM. GATE 1
+
+# Short, fast and clicky, so the rolling bass has the rest of the beat to itself.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -26
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -26
+POS = 6%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 135 MS
+SUSTAIN = 0%
+RELEASE = 135 MS
+D CURVE = 60
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 24 MS
+SUSTAIN = 0%
+RELEASE = 24 MS
+D CURVE = 75
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 0%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 55%
+ENV 2 > PITCH 2 = 55%
+ENV 2 > X DEPTH = 20%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

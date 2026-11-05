@@ -1,0 +1,36 @@
+FAIRWAVE PATCH 1
+NAME  = REVERSE BASS
+ABOUT = SWELLS, THEN STOPS. OFFBEATS
+
+# A note swelling up and cut dead: a bass playing between the kicks, backwards. Send it a gate after each kick, ending at
+# the next one: it only stops when the gate falls, since the attack is long and the release short.
+[OSC 1]
+TABLE = TABLES/HARD.WAV
+TUNE = -24
+POS = 22%
+LEVEL = 70%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 3%
+LEVEL = 70%
+
+[ENV 1]
+ATTACK = 200 MS
+DECAY = 20 MS
+SUSTAIN = 100%
+RELEASE = 12 MS
+A CURVE = -65
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > POS 1 = 42%
+CV 2 > POS 1 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 40%

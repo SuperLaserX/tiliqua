@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = DIRTY LIL' PIANO
+ABOUT = PIANO/KEYS FROM MODWAVE. GATE 1, C
+
+# From the modwave's Dirty Lil' Piano(ish) by Peter Schwartz: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Inharmonic Twang, Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/AA/14360873.WAV
+READ = CLEAN
+TUNE = 0
+POS = 20.4%
+
+[OSC 2]
+TABLE = MODWAVE/T/D4/62B52D5B.WAV
+READ = CLEAN
+TUNE = 0
+POS = 20.4%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 573.333 MS
+SUSTAIN = 100%
+RELEASE = 3.572 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 2.467 S
+SUSTAIN = 0%
+RELEASE = 3.812 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 8.000 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 59%
+ENV 2 > POS 2 = 59%
+CV 1 > POS 1 = -34%
+CV 1 > POS 2 = -34%
+LFO 1 > LEVEL 1 = 25%
+LFO 1 > LEVEL 2 = 25%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 46.7%

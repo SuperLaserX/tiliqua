@@ -1,0 +1,33 @@
+FAIRWAVE PATCH 1
+NAME  = SUB DROP
+ABOUT = DOWN FOR 3 SECONDS. GATE 1
+
+# A sine, falling three octaves in three seconds: the bottom falling out before the beat. A short gate does it all.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 18%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 3.2 S
+SUSTAIN = 0%
+RELEASE = 3.2 S
+D CURVE = 25
+VCA = BOTH
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 1 > PITCH 1 = 60%
+ENV 1 > PITCH 2 = 60%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 60%

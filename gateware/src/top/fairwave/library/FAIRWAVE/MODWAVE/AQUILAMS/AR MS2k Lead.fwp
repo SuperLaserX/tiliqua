@@ -1,0 +1,57 @@
+FAIRWAVE PATCH 1
+NAME  = AR MS2K LEAD
+ABOUT = LEAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AR MS2k Lead by Aquila Rift: AquilaMSPPG.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is the other half of its 2 unison voices.
+# Not carried over: controllers, random and Kaoss Physics.
+# Its effects, which FairWave hasn't got: BATesque Bassline, Cross DDL 1.
+[OSC 1]
+TABLE = MODWAVE/T/A6/195FEE76.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -4
+POS = 58.8%
+
+[OSC 2]
+TABLE = MODWAVE/T/A6/195FEE76.WAV
+READ = CLEAN
+TUNE = -24
+FINE = 4
+POS = 58.8%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 42.667 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 780.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 1]
+RATE = 5.070 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 0.180 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > PITCH 1 = 4%
+LFO 2 > POS 1 = 2%
+LFO 2 > POS 2 = 2%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

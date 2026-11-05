@@ -1,0 +1,59 @@
+FAIRWAVE PATCH 1
+NAME  = HAUS CODE
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Haus Code by YO: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, layer B oscillator 1, layer B oscillator 2, performance modulators, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/85/9A84D565.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -5
+POS = 23.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/6D/DCCDF8FD.WAV
+READ = CLEAN
+TUNE = -5
+FINE = 2
+POS = 23.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 5.333 MS
+DECAY = 30.667 MS
+SUSTAIN = 73%
+RELEASE = 9.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 449.333 MS
+SUSTAIN = 50%
+RELEASE = 1.012 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 52.5%
+CV 2 > POS 2 = 52.5%
+CV 1 > POS 1 = 39.5%
+CV 1 > POS 2 = 39.5%
+ENV 2 > POS 1 = -22.5%
+ENV 2 > POS 2 = -22.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 49.3%

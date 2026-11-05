@@ -1,0 +1,58 @@
+FAIRWAVE PATCH 1
+NAME  = COMPUTER WORLD N
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Computer World notes by Ian Dixon: Kraftwerk.mwbundle.
+# 0 V plays what its C3 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, Stereo Image 2 SC.
+[OSC 1]
+TABLE = MODWAVE/T/62/E7CFEE2F.WAV
+READ = CLEAN
+TUNE = -24
+FINE = 2
+POS = 13.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/17/0A4A02E0.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -2
+POS = 13.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 329.333 MS
+SUSTAIN = 0%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 449.333 MS
+SUSTAIN = 50%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 74%
+ENV 2 > POS 2 = 74%
+CV 1 > POS 1 = -21.5%
+CV 1 > POS 2 = -21.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 48.7%

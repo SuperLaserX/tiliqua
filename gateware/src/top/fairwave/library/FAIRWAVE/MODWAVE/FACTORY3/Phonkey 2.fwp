@@ -1,0 +1,63 @@
+FAIRWAVE PATCH 1
+NAME  = PHONKEY
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Phonkey by YO: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, performance modulators, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 1/4 HPF, Phonkey.
+[OSC 1]
+TABLE = MODWAVE/T/98/1773EB8D.WAV
+READ = CLEAN
+TUNE = 0
+POS = 10.1%
+
+[OSC 2]
+TABLE = MODWAVE/T/FB/2C2EB59C.WAV
+READ = CLEAN
+TUNE = 12
+FINE = -16
+POS = 10.1%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 4.255 S
+SUSTAIN = 0%
+RELEASE = 857.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 17.9%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 57.333 MS
+SUSTAIN = 40%
+RELEASE = 3.021 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 79.5%
+ENV 2 > POS 2 = 79.5%
+CV 1 > POS 1 = -17%
+CV 1 > POS 2 = -17%
+CV 2 > POS 1 = 14%
+CV 2 > POS 2 = 14%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 36.6%

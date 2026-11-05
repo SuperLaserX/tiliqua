@@ -1,0 +1,67 @@
+FAIRWAVE PATCH 1
+NAME  = PART PULSE
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Part Pulse by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along morph.
+# Not carried over: 2 unison voices, an LFO past the three here, controllers, random and Kaoss Physics, modulation processors, performance modulators.
+# Its effects, which FairWave hasn't got: bpm Tape 3-Head.
+[OSC 1]
+TABLE = MODWAVE/T/4F/3D690600.WAV
+READ = CLEAN
+TUNE = -12
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/6B/3CDD0D37.WAV
+READ = CLEAN
+TUNE = 0
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 2.832 S
+SUSTAIN = 13%
+RELEASE = 216.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 4.199 S
+SUSTAIN = 50%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = SINE
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 1.000 HZ
+SHAPE = TRI
+PHASE = 359
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > LEVEL 2 = -100%
+LFO 2 > POS 2 = 50%
+CV 1 > POS 1 = 34.5%
+LFO 1 > POS 1 = 29.5%
+ENV 2 > POS 1 = -14%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 46.9%

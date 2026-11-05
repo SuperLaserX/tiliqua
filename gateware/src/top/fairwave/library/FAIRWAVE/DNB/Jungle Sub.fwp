@@ -1,0 +1,42 @@
+FAIRWAVE PATCH 1
+NAME  = JUNGLE SUB
+ABOUT = A CLEAN SINE WITH A PITCH DROP
+
+# A sub, a slight pitch drop at the front of each note: the sound of the 808 in jungle. 0 V is C2.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -24
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 14%
+
+[ENV 1]
+ATTACK = 1 MS
+DECAY = 1 S
+SUSTAIN = 60%
+RELEASE = 150 MS
+D CURVE = 30
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 70 MS
+SUSTAIN = 0%
+RELEASE = 50 MS
+D CURVE = 65
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 8%
+ENV 2 > PITCH 2 = 8%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 40%

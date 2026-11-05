@@ -1,0 +1,47 @@
+FAIRWAVE PATCH 1
+NAME  = STYLOPHONE
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Stylophone by X: the instrument's own library.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is A's 2, its wavetable.
+# Its effects, which FairWave hasn't got: AutoWobble 8va.
+[OSC 1]
+TABLE = MODWAVE/T/C1/0E5FEC7B.WAV
+READ = CLEAN
+TUNE = -12
+POS = 1.2%
+
+[OSC 2]
+TABLE = MODWAVE/T/E4/F590FA28.WAV
+READ = CLEAN
+TUNE = -12
+POS = 5.6%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 50.0%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 47.9%

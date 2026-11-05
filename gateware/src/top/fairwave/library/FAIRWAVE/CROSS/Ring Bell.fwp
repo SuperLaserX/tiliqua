@@ -1,0 +1,39 @@
+FAIRWAVE PATCH 1
+NAME  = RING BELL
+ABOUT = SUM AND DIFFERENCE. GATE 1, CV 1
+
+# Ring modulation gives only the sum and the difference, and neither of the notes it started from. At a ratio of 1.41
+# those are inharmonic, a bell's partials. A slow decay; CV 2 bends the modulator, so the bell's size.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 6
+FINE = -6
+POS = 0%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = 0
+POS = 0%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 2.6 S
+SUSTAIN = 0%
+RELEASE = 1.3 S
+D CURVE = 55
+VCA = OSC 2
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 100%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > PITCH 1 = 10%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

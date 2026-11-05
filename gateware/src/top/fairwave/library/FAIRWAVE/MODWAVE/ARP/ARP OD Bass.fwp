@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = ARP OD BASS
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's ARP OD Bass by Ian Dixon: ARP.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: 1/8 - 1/8 dot LPF, JC Amp Chorus, Vox AC30 A.
+[OSC 1]
+TABLE = MODWAVE/T/F4/7A31B4D7.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -3
+POS = 27.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/B0/9B21E5BE.WAV
+READ = CLEAN
+TUNE = 0
+FINE = 7
+POS = 27.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 95%
+RELEASE = 293.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 100.0%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 48.000 MS
+DECAY = 2.400 S
+SUSTAIN = 0%
+RELEASE = 513.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -46%
+CV 1 > POS 2 = -46%
+ENV 2 > POS 1 = 44.5%
+ENV 2 > POS 2 = 44.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 46.9%

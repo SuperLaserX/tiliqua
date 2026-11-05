@@ -1,0 +1,52 @@
+FAIRWAVE PATCH 1
+NAME  = KLANGDESTINY AIR
+ABOUT = VOCAL/AIRY FROM MODWAVE. GATE 1, C
+
+# From the modwave's KlangDestiny Air by Peter Schwartz: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 2, the sample Syn: Texture Elly 2.
+# Oscillator 2 is the other half of its 2 unison voices.
+# Not carried over: modulation processors, performance modulators, the sub oscillator.
+# Its effects, which FairWave hasn't got: Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/81/C2689697.WAV
+READ = SAMPLE
+TUNE = -31
+FINE = -19
+POS = 0.0%
+EDGE = WRAP
+LOOP = 25.1%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/81/C2689697.WAV
+READ = SAMPLE
+TUNE = -31
+FINE = -8
+POS = 0.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 929.333 MS
+DECAY = 30.245 S
+SUSTAIN = 0%
+RELEASE = 4.732 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

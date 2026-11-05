@@ -1,0 +1,70 @@
+FAIRWAVE PATCH 1
+NAME  = CS80 OFF WORLD F
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's CS80 Off World Future by Ian Dixon: cs80.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, a table made along cutoff.
+# Oscillator 2 is B's 2, a table made along cutoff.
+# Not carried over: layer A oscillator 1, layer A oscillator 2, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: JC Amp Chorus, Modern Compressor, Stereo Chorus, bpm Tape 1-Head, bpm Tape 3-Head.
+[OSC 1]
+TABLE = MODWAVE/T/29/041FAAE8.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -2
+POS = 14.5%
+
+[OSC 2]
+TABLE = MODWAVE/T/92/E3161F3F.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 4
+POS = 14.5%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 57.333 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 3.467 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 100.0%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 30.667 MS
+DECAY = 1.067 S
+SUSTAIN = 100%
+RELEASE = 71.333 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 2]
+RATE = 2.000 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 71%
+ENV 2 > POS 2 = 71%
+CV 1 > POS 1 = -24%
+CV 1 > POS 2 = -24%
+LFO 2 > PITCH 1 = 0.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 49.7%

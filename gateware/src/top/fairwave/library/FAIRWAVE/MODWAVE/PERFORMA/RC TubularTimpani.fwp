@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = RC TUBULAR/TIMPA
+ABOUT = BELL/MALLET FROM MODWAVE. GATE 1, 
+
+# From the modwave's RC Tubular/Timpani by Deborah Pickett: RC TubularTimpani.mwperf.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Bell: Tubular Bell.
+# Not carried over: the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Night, Polysix Ensemble, Stereo Delay.
+[OSC 1]
+TABLE = MODWAVE/T/3A/74FB8C44.WAV
+READ = SAMPLE
+TUNE = -27
+FINE = -15
+POS = 0.0%
+EDGE = WRAP
+LOOP = 70.6%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/3A/74FB8C44.WAV
+TUNE = -27
+POS = 0.0%
+LEVEL = 0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 57.333 MS
+DECAY = 4.267 S
+SUSTAIN = 0%
+RELEASE = 2.133 S
+A CURVE = 0
+D CURVE = 100
+R CURVE = 100
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 2 > POS 1 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

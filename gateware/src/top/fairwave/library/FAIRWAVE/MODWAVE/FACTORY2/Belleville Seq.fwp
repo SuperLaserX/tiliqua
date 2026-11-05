@@ -1,0 +1,62 @@
+FAIRWAVE PATCH 1
+NAME  = BELLEVILLE SEQ
+ABOUT = SEQ FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Belleville Seq by Airwave: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Hit: Synth Loop 2.
+# Oscillator 2 is A's 2, the sample Hit: Orch 5.
+# Not carried over: controllers, random and Kaoss Physics, performance modulators, the sub oscillator.
+# Its effects, which FairWave hasn't got: 16ths - 3,5,6, Modern Compressor, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/3C/7F6D2FDB.WAV
+READ = SAMPLE
+TUNE = -7
+FINE = -17
+POS = 0.0%
+EDGE = WRAP
+LOOP = 58.7%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/F8/955F9F97.WAV
+READ = SAMPLE
+TUNE = 3
+FINE = -23
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 549.333 MS
+SUSTAIN = 4%
+RELEASE = 285.333 MS
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[LFO 1]
+RATE = 8.000 HZ
+SHAPE = SAW DN
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 43%
+LFO 1 > LEVEL 2 = 43%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 45.7%

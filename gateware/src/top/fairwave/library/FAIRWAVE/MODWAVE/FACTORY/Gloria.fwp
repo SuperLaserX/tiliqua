@@ -1,0 +1,64 @@
+FAIRWAVE PATCH 1
+NAME  = GLORIA
+ABOUT = STRINGS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Gloria by Peter Schwartz: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, a table made along cutoff.
+# Oscillator 2 is B's 2, the sample Syn_Guru: Lost Coast.
+# Not carried over: controllers, random and Kaoss Physics, layer A oscillator 1, layer A oscillator 2, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Odd Piano, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/42/67039C02.WAV
+READ = CLEAN
+TUNE = 12
+POS = 21.4%
+
+[OSC 2]
+TABLE = MODWAVE/T/9B/64BC0B43.WAV
+READ = SAMPLE
+TUNE = -18
+FINE = 27
+POS = 0.0%
+EDGE = WRAP
+LOOP = 16.4%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 4.560 S
+DECAY = 62.347 S
+SUSTAIN = 0%
+RELEASE = 3.832 S
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 21.759 S
+SUSTAIN = 0%
+RELEASE = 2.463 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 57%
+CV 1 > POS 1 = 35.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 79.4%

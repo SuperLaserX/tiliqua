@@ -1,0 +1,66 @@
+FAIRWAVE PATCH 1
+NAME  = D50 STRINGS
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's D50 Strings by Ian Dixon: Digital.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Str_WS: Bowing.
+# Oscillator 2 is A's 2, the sample Syn: Analog Strings 2.
+# Not carried over: 3 unison voices.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/A0/F3562AC8.WAV
+READ = SAMPLE
+TUNE = -20
+FINE = 30
+POS = 0.0%
+EDGE = CLAMP
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/FD/DCCC8374.WAV
+READ = SAMPLE
+TUNE = -41
+FINE = -33
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0.7%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 600.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 88.000 MS
+DECAY = 90.000 S
+SUSTAIN = 100%
+RELEASE = 3.432 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > LEVEL 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

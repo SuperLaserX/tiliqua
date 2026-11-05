@@ -1,0 +1,65 @@
+FAIRWAVE PATCH 1
+NAME  = DESERT WALKING
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Desert Walking by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 2 unison voices, controllers, random and Kaoss Physics, modulation processors, performance modulators, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: 16ths - 3,4,6, Desert Walking.
+[OSC 1]
+TABLE = MODWAVE/T/A4/F43EA595.WAV
+READ = CLEAN
+TUNE = 0
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/8A/D31D8675.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -1
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 28.000 MS
+DECAY = 80.500 S
+SUSTAIN = 0%
+RELEASE = 624.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 26.667 MS
+DECAY = 874.667 MS
+SUSTAIN = 0%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -41.5%
+CV 1 > POS 2 = -41.5%
+LFO 1 > POS 1 = 25%
+LFO 1 > POS 2 = 25%
+ENV 2 > POS 1 = 19.5%
+ENV 2 > POS 2 = 19.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 48.9%

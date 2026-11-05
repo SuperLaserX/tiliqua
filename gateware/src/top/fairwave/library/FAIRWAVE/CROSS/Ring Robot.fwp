@@ -1,0 +1,41 @@
+FAIRWAVE PATCH 1
+NAME  = RING ROBOT
+ABOUT = A FIXED MODULATOR ON A VOICE
+
+# The carrier follows the note, but the modulator doesn't, staying at a fixed 110 Hz: the same note is a different chord
+# of partials at every pitch, and all of them metallic. The robot from the old films.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -15
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/TALK.WAV
+TUNE = 0
+POS = 30%
+
+[ENV 1]
+ATTACK = 4 MS
+DECAY = 200 MS
+SUSTAIN = 90%
+RELEASE = 100 MS
+VCA = OSC 2
+
+[LFO 1]
+RATE = 2.9 HZ
+SHAPE = TRI
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 90%
+
+[ROUTING]
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 2 = 34%
+CV 2 > PITCH 1 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

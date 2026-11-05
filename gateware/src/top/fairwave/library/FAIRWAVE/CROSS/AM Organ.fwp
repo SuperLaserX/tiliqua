@@ -1,0 +1,43 @@
+FAIRWAVE PATCH 1
+NAME  = AM ORGAN
+ABOUT = DRAWBARS, WITH A HARMONIC CURVE
+
+# An organ's drawbars AM'd by a sine at the same note, which adds to each harmonic from its neighbours: a fuller tone.
+# LFO 3 is the Leslie, moving the depth and a little of the pitch.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = 0
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/ORGAN.WAV
+TUNE = 0
+POS = 35%
+
+[ENV 1]
+ATTACK = 5 MS
+DECAY = 200 MS
+SUSTAIN = 100%
+RELEASE = 60 MS
+VCA = OSC 2
+
+[LFO 3]
+RATE = 6.1 HZ
+SHAPE = SINE
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 50%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 3 > X DEPTH = 18%
+LFO 3 > PITCH 2 = 0.5%
+CV 2 > POS 2 = 50%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

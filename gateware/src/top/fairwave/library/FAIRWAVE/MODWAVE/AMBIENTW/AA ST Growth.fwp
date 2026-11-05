@@ -1,0 +1,57 @@
+FAIRWAVE PATCH 1
+NAME  = AA ST GROWTH
+ABOUT = STRINGS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA ST Growth by Anton Anru: Korg Modwave - Ambient Worlds Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: 3 unison voices, controllers, random and Kaoss Physics, performance modulators.
+# Its effects, which FairWave hasn't got: Pad Surrounded, bpm Pattern 3.
+[OSC 1]
+TABLE = MODWAVE/T/C2/CAEFBC38.WAV
+READ = CLEAN
+TUNE = -24
+POS = 40.6%
+
+[OSC 2]
+TABLE = MODWAVE/T/A1/2932CDEB.WAV
+READ = CLEAN
+TUNE = 0
+POS = 40.6%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.689 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 3.933 S
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 2.331 S
+DECAY = 2.261 S
+SUSTAIN = 14%
+RELEASE = 2.368 S
+A CURVE = 30
+D CURVE = 20
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -67.5%
+CV 1 > POS 2 = -67.5%
+CV 2 > POS 1 = 20.5%
+CV 2 > POS 2 = 20.5%
+ENV 2 > POS 1 = 18.5%
+ENV 2 > POS 2 = 18.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 20.6%

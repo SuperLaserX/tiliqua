@@ -1,0 +1,55 @@
+FAIRWAVE PATCH 1
+NAME  = IN MEMORY
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's In Memory by Ian Dixon: ID-Analogue.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Its effects, which FairWave hasn't got: Modern Compressor, bpm Tape 1-Head.
+[OSC 1]
+TABLE = MODWAVE/T/B0/DF47F13C.WAV
+READ = CLEAN
+TUNE = -12
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/62/EEEB2ED4.WAV
+READ = CLEAN
+TUNE = 24
+POS = 38.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 740.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 98.667 MS
+DECAY = 449.333 MS
+SUSTAIN = 50%
+RELEASE = 666.667 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+CV 1 > POS 2 = -64.5%
+ENV 2 > POS 2 = 22.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 21.3%

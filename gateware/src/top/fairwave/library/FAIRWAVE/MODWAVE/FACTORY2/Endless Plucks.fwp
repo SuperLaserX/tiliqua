@@ -1,0 +1,68 @@
+FAIRWAVE PATCH 1
+NAME  = ENDLESS PLUCKS
+ABOUT = SFX FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Endless Plucks by Rodier: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, the sample Gtr: Nylon Guitar 1 f.
+# Oscillator 2 is A's 2, the sample Gtr: Steel Guitar f.
+# Not carried over: 13 unison voices, controllers, random and Kaoss Physics, modulation processors, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: Endless Plucks, Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/14/5FE2CC2C.WAV
+READ = SAMPLE
+TUNE = -8
+FINE = -14
+POS = 0.0%
+EDGE = WRAP
+LOOP = 77%
+GRAIN = SYNC 3
+
+[OSC 2]
+TABLE = MODWAVE/T/34/E53791F6.WAV
+READ = SAMPLE
+TUNE = -4
+FINE = 44
+POS = 0.0%
+EDGE = WRAP
+LOOP = 92.6%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 60.000 MS
+DECAY = 90.000 S
+SUSTAIN = 78%
+RELEASE = 500.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 88.7%
+
+[LFO 1]
+RATE = 2.000 HZ
+SHAPE = SINE
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > LEVEL 1 = 14%
+LFO 1 > LEVEL 2 = 14%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 73.9%

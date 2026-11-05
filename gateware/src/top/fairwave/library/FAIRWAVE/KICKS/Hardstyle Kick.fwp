@@ -1,0 +1,43 @@
+FAIRWAVE PATCH 1
+NAME  = HARDSTYLE KICK
+ABOUT = THE TOK AND THE TAIL. GATE 1
+
+# The tok is three and a half octaves of drop in a moment. The tail is a sine through two stages of clipping with a
+# resonance in between, on envelope 1, with a clean sine under it to hold the weight up. Tune the tail with CV 1.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -27
+POS = 0%
+
+[OSC 2]
+TABLE = TABLES/HARD.WAV
+TUNE = -27
+POS = 42%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 430 MS
+SUSTAIN = 0%
+RELEASE = 430 MS
+D CURVE = 25
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 26 MS
+SUSTAIN = 0%
+RELEASE = 26 MS
+D CURVE = 75
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 70%
+ENV 2 > PITCH 2 = 70%
+ENV 1 > POS 2 = 45%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 78%

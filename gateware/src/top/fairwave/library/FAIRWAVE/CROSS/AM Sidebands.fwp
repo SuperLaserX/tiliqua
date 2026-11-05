@@ -1,0 +1,43 @@
+FAIRWAVE PATCH 1
+NAME  = AM SIDEBANDS
+ABOUT = 3:2, A BRIGHT, HOLLOW PAD. GATE 1
+
+# A modulator a fifth up: the sidebands are a fifth away from the note. AM keeps the carrier, which Ring doesn't.
+# LFO 2 on the depth keeps it turning.
+[OSC 1]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -5
+POS = 55%
+
+[OSC 2]
+TABLE = TABLES/SAWLP.WAV
+TUNE = -12
+POS = 45%
+
+[ENV 1]
+ATTACK = 300 MS
+DECAY = 1 S
+SUSTAIN = 100%
+RELEASE = 1.1 S
+VCA = OSC 2
+
+[LFO 2]
+RATE = 0.17 HZ
+SHAPE = TRI
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 62%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 2 > X DEPTH = 34%
+LFO 2 > POS 1 = 12%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

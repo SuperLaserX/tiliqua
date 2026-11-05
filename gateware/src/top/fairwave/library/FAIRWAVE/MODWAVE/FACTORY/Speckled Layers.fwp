@@ -1,0 +1,52 @@
+FAIRWAVE PATCH 1
+NAME  = SPECKLED LAYERS
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Speckled Layers by Peter Schwartz: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, a table made along cutoff.
+# Oscillator 2 is B's 2, a table made along cutoff.
+# Not carried over: an LFO past the three here, controllers, random and Kaoss Physics, layer A oscillator 1, layer A oscillator 2, modulation processors, performance modulators, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: Fast Chorus, Odd Piano.
+[OSC 1]
+TABLE = MODWAVE/T/A5/B665ECA4.WAV
+READ = CLEAN
+TUNE = 12
+POS = 50.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/47/BAA13F65.WAV
+READ = CLEAN
+TUNE = 24
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 644.000 MS
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 2.539 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 80
+VCA = BOTH
+
+[LFO 1]
+RATE = 0.072 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -45.5%
+CV 1 > POS 2 = -45.5%
+LFO 1 > POS 1 = 22.5%
+LFO 1 > POS 2 = 22.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 14.9%

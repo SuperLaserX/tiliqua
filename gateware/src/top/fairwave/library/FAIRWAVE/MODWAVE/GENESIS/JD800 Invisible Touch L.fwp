@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = JD800 INVISIBLE
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's JD800 Invisible Touch L1 by Ian Dixon: Genesis.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Its effects, which FairWave hasn't got: Modern Compressor.
+[OSC 1]
+TABLE = MODWAVE/T/C9/1DB25A68.WAV
+READ = CLEAN
+TUNE = 0
+POS = 11.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/C9/1DB25A68.WAV
+READ = CLEAN
+TUNE = 0
+POS = 11.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 520.000 MS
+SUSTAIN = 22%
+RELEASE = 2.200 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 420.000 MS
+SUSTAIN = 72%
+RELEASE = 28.000 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 76.5%
+ENV 2 > POS 2 = 76.5%
+CV 1 > POS 1 = -19.5%
+CV 1 > POS 2 = -19.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 50.0%

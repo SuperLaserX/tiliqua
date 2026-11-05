@@ -1,0 +1,69 @@
+FAIRWAVE PATCH 1
+NAME  = BLUSH SEQUENCE
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Blush Sequence by Ian Dixon: cs80.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: the sub oscillator.
+# Its effects, which FairWave hasn't got: Modern Compressor, Stereo Chorus, bpm Pattern 4.
+[OSC 1]
+TABLE = MODWAVE/T/84/D7E111D1.WAV
+READ = CLEAN
+TUNE = 0
+POS = 19.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/16/D0D58F2B.WAV
+READ = CLEAN
+TUNE = -24
+POS = 19.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 869.333 MS
+SUSTAIN = 5%
+RELEASE = 568.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[CROSS MOD]
+MODE = RING
+FROM = OSC 1
+DEPTH = 9.9%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 449.333 MS
+SUSTAIN = 50%
+RELEASE = 53.333 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.075 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 60.5%
+ENV 2 > POS 2 = 60.5%
+CV 1 > POS 1 = -33%
+CV 1 > POS 2 = -33%
+LFO 1 > X DEPTH = 26.5%
+LFO 1 > PITCH 2 = 0.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 55.5%

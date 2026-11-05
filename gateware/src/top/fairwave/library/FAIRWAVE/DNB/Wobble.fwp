@@ -1,0 +1,40 @@
+FAIRWAVE PATCH 1
+NAME  = WOBBLE
+ABOUT = THE LFO BASS. GATE 1, CV 1
+
+# A bass opening and shutting on an LFO. Dubstep's, at the rate of the track: LFO 1's RATE, 2.2 Hz for 8ths at 132. A gate
+# restarts the wobble. CV 2 takes it from a quiet wobble to a roar.
+[OSC 1]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -24
+POS = 6%
+
+[OSC 2]
+TABLE = TABLES/GROWL.WAV
+TUNE = -24
+POS = 10%
+
+[ENV 1]
+ATTACK = 3 MS
+DECAY = 200 MS
+SUSTAIN = 100%
+RELEASE = 70 MS
+VCA = BOTH
+
+[LFO 1]
+RATE = 2.2 HZ
+SHAPE = SINE
+POLAR = UNI
+SYNC = GATE 1
+PHASE = 270
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+LFO 1 > POS 2 = 55%
+CV 2 > POS 2 = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 70%

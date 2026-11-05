@@ -1,0 +1,56 @@
+FAIRWAVE PATCH 1
+NAME  = AA BS SIGNAL
+ABOUT = BASS FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AA BS Signal by Anton Anru: Korg Modwave - Bass Pack Bundle (by Anton Anru).mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, a table made along cutoff.
+# Oscillator 2 is B's 2, a table made along cutoff.
+# Not carried over: controllers, random and Kaoss Physics, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+[OSC 1]
+TABLE = MODWAVE/T/B5/03C7F48C.WAV
+READ = CLEAN
+TUNE = -24
+POS = 36.1%
+
+[OSC 2]
+TABLE = MODWAVE/T/74/11764EDD.WAV
+READ = CLEAN
+TUNE = -24
+POS = 36.1%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 661.333 MS
+SUSTAIN = 80%
+RELEASE = 32.000 MS
+A CURVE = 0
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 77.333 MS
+SUSTAIN = 0%
+RELEASE = 57.333 MS
+A CURVE = 30
+D CURVE = 30
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -60%
+CV 1 > POS 2 = -60%
+ENV 2 > POS 1 = 27.5%
+ENV 2 > POS 2 = 27.5%
+CV 2 > POS 1 = 20.5%
+CV 2 > POS 2 = 20.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 23.1%

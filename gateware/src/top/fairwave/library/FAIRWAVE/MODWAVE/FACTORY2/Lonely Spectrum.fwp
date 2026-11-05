@@ -1,0 +1,82 @@
+FAIRWAVE PATCH 1
+NAME  = LONELY SPECTRUM
+ABOUT = PAD FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Lonely Spectrum by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, the sample Syn_WS: Spectrm3.
+# Not carried over: 3 unison voices, an LFO past the three here, controllers, random and Kaoss Physics, performance modulators, the mod wheel's scaling of a modulation, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: bpm Mband Bounce.
+[OSC 1]
+TABLE = MODWAVE/T/90/3048159F.WAV
+READ = CLEAN
+TUNE = 0
+FINE = -3
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/27/AA57FE69.WAV
+READ = SAMPLE
+TUNE = -27
+FINE = -31
+POS = 0.0%
+EDGE = WRAP
+LOOP = 0%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 728.000 MS
+DECAY = 10.193 S
+SUSTAIN = 58%
+RELEASE = 4.071 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[CROSS MOD]
+MODE = AM
+FROM = OSC 1
+DEPTH = 43.5%
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 918.667 MS
+SUSTAIN = 0%
+RELEASE = 2.936 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 4.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[LFO 2]
+RATE = 1.000 HZ
+SHAPE = RANDOM
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+LFO 2 > X DEPTH = 100%
+LFO 1 > LEVEL 1 = 100%
+LFO 1 > LEVEL 2 = 100%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 0.0%

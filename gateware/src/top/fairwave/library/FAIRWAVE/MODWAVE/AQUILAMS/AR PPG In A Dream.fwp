@@ -1,0 +1,57 @@
+FAIRWAVE PATCH 1
+NAME  = AR PPG IN A DREA
+ABOUT = PIANO/KEYS FROM MODWAVE. GATE 1, C
+
+# From the modwave's AR PPG In A Dream by Aquila Rift: AquilaMSPPG.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is B's 1, its wavetable.
+# Oscillator 2 is B's 2, its wavetable.
+# Not carried over: controllers, random and Kaoss Physics, layer A oscillator 1, layer A oscillator 2, modulation processors, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 1/8 Pan Dance, Fast EP Chorus, Glass Pad, Stereo Chorus, Stereo Delay.
+[OSC 1]
+TABLE = MODWAVE/T/30/276DE908.WAV
+READ = CLEAN
+TUNE = -12
+FINE = 2
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/CE/29189C47.WAV
+READ = CLEAN
+TUNE = -12
+FINE = -2
+POS = 3.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 16.909 S
+SUSTAIN = 0%
+RELEASE = 220.000 MS
+A CURVE = 30
+D CURVE = 100
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 3.000 S
+DECAY = 27.333 S
+SUSTAIN = 100%
+RELEASE = 3.467 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 33%
+ENV 2 > POS 2 = 16%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 40.5%

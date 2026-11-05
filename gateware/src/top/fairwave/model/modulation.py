@@ -32,7 +32,7 @@ about times in milliseconds.
 
 from dataclasses import dataclass, field
 
-from .wavescan import Cross
+from .wavescan import Cross, start_sample
 
 FS = 48000
 C4_HZ = 261.62558
@@ -101,6 +101,14 @@ def shape(u, c):
     for _ in range(2):
         u = u - ((c * ((u * (ONE - u)) >> 16)) >> 16)
     return u
+
+
+def window(x):
+    """A grain's fade at `x` (U0.16) through its cycle, as U1.16: shut at the start and the end, full half
+    way. A raised sine, so two of them half a cycle apart add up to one: two streams can overlap with no dip."""
+    y = (x - 0x4000) & 0xFFFF
+    s = y - 0x10000 if y & 0x8000 else y
+    return (((s * (0x8000 - abs(s))) >> 12) + ONE) >> 1
 
 
 def lfo_shape(kind, x, held):
@@ -191,15 +199,17 @@ class Lfo:
     held: int = 0
     out: int = 0
     wrapped: bool = False       # whether a cycle started this sample
+    halved: bool = False        # whether it passed half way this sample
 
     def step(self, rising, random17):
         rate, ctrl, amp = self.words
         offset, kind, uni, sync = ctrl & 0xFFFF, (ctrl >> 16) & 7, (ctrl >> 19) & 1, (ctrl >> 20) & 3
         total = self.phase + rate
         wrapped = (total >> 32) != 0
+        self.halved = not (self.phase >> 31) and bool((total >> 31) & 1)
         self.phase = total & 0xFFFFFFFF
         if rising & sync:
-            self.phase, wrapped = 0, True
+            self.phase, wrapped, self.halved = 0, True, False
         self.wrapped = wrapped
         if wrapped:
             self.held = random17
@@ -227,6 +237,8 @@ class Modulation:
         self.patched = 0            # the CV jacks' switches
         self.cross_word = 0         # how one layer modulates the other (`wavescan.py`)
         self.grain = [0, 0]         # per layer: 1 to 3, the LFO whose cycles restart it
+        self.hard = [0, 0]          # a restart isn't faded: a hard sync from an LFO
+        self.half = [0, 0]          # its grains are half a cycle of the LFO on: a second stream
         self.frames_m1 = [0, 0]
         self.cv_state = [0, 0]
         self.gates = 0
@@ -266,6 +278,8 @@ class Modulation:
     def ctrl(self, layer, word):
         """The part of a layer's `ctrl` register that concerns the modulation."""
         self.grain[layer] = (word >> 4) & 3
+        self.hard[layer] = (word >> 6) & 1
+        self.half[layer] = (word >> 7) & 1
 
     def inputs(self, adc):
         """`adc`: the four input channels, in DAC counts."""
@@ -307,13 +321,16 @@ class Modulation:
 
             # A grain's position is the one it started with: a window's worth of the same frame.
             g = self.grain[i]
-            self.restart[i] = g != 0 and self.lfos[g - 1].wrapped
+            clock = self.lfos[g - 1]
+            self.restart[i] = g != 0 and (clock.halved if self.half[i] else clock.wrapped)
             if g == 0 or self.restart[i]:
                 self.pos_fraction[i] = clamp(self.acc[at + POS] >> POS_SHIFT, WIDE_MIN, WIDE_MAX)
                 self.pos[i] = (self.pos_fraction[i] * self.frames_m1[i]) << POS_SHIFT
             self.shift[i] = (clamp(self.acc[at + SHIFT], WIDE_MIN, WIDE_MAX) * self.frames_m1[i]) >> 10
 
             q = clamp(self.acc[at + LEVEL], 0, ONE)
+            if g != 0 and not self.hard[i]:
+                q = (q * window((clock.phase >> 16) ^ (self.half[i] << 15))) >> 16
             for e, env in enumerate(self.envs):
                 if (self.vca[e] >> i) & 1:
                     q = (q * env.level) >> 16
@@ -354,6 +371,7 @@ class Modulation:
             layer.level = self.level[i]
             if self.restart[i]:
                 layer.phase = 0
+            start_sample(layer, self.restart[i])
 
     def cross(self):
         """How one layer modulates the other, this sample."""

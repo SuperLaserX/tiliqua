@@ -1,0 +1,63 @@
+FAIRWAVE PATCH 1
+NAME  = AA ARP ALIBI
+ABOUT = ARPEGGIO FROM MODWAVE. GATE 1, CV 
+
+# From the modwave's AA ARP Alibi by Anton Anru: Korg Modwave - Arp Waves Bundle.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along position.
+# Not carried over: 3 unison voices, an LFO past the three here, controllers, random and Kaoss Physics, what changes its envelope and LFO speeds.
+# Its effects, which FairWave hasn't got: 12-bit Decimator, Abandoned Facility, Black Phase, Sidewinder, Space Vibe.
+[OSC 1]
+TABLE = MODWAVE/T/02/4556A337.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -3
+POS = 36.3%
+
+[OSC 2]
+TABLE = MODWAVE/T/44/D4AFDA40.WAV
+READ = CLEAN
+TUNE = 0
+FINE = 5
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 97.333 MS
+SUSTAIN = 70%
+RELEASE = 56.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 518.667 MS
+SUSTAIN = 0%
+RELEASE = 60.000 MS
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[LFO 1]
+RATE = 0.267 HZ
+SHAPE = TRI
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+CV 1 > POS 1 = -60.5%
+LFO 1 > POS 2 = 50%
+ENV 2 > POS 1 = 27.5%
+CV 2 > POS 1 = 21%
+ENV 2 > POS 2 = 10.5%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 34.4%

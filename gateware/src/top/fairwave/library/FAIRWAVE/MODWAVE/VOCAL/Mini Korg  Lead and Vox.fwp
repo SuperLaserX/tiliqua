@@ -1,0 +1,63 @@
+FAIRWAVE PATCH 1
+NAME  = MINI KORG  LEAD
+ABOUT = USER FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Mini Korg  Lead and Vox by Ian Dixon: ID-Vocal.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, its wavetable.
+# Oscillator 2 is B's 1, the sample Vox: Vocoder VP.
+# Not carried over: layer A oscillator 2, layer B oscillator 2.
+# Its effects, which FairWave hasn't got: Modern Compressor, Vintage Stereo Chorus.
+[OSC 1]
+TABLE = MODWAVE/T/05/6626953C.WAV
+READ = CLEAN
+TUNE = 0
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/B2/742FB1DB.WAV
+READ = SAMPLE
+TUNE = -12
+FINE = 11
+POS = 0.0%
+EDGE = WRAP
+LOOP = 22.9%
+GRAIN = SYNC 3
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.867 S
+DECAY = 26.667 MS
+SUSTAIN = 100%
+RELEASE = 13.333 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[LFO 3]
+RATE = 0.01 HZ
+SHAPE = SAW UP
+SYNC = GATE 1
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 3.267 S
+DECAY = 55.063 S
+SUSTAIN = 0%
+RELEASE = 1.000 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 84.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 41.6%

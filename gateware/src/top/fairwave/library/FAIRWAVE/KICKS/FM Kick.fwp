@@ -1,0 +1,48 @@
+FAIRWAVE PATCH 1
+NAME  = FM KICK
+ABOUT = TWO SINES. GATE 1, CV 1 TUNES
+
+# Two sines. The modulator's depth falls in a few milliseconds, which is the click; the pitch drops three octaves, which
+# is the punch; and what's left is a sine at 49 Hz. CV 1 tunes it.
+[OSC 1]
+TABLE = MORPH 2048
+TUNE = -29
+POS = 0%
+
+[OSC 2]
+TABLE = MORPH 2048
+TUNE = -29
+POS = 0%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 320 MS
+SUSTAIN = 0%
+RELEASE = 320 MS
+D CURVE = 55
+VCA = OSC 2
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 42 MS
+SUSTAIN = 0%
+RELEASE = 42 MS
+D CURVE = 75
+
+[CROSS MOD]
+MODE = FM
+FROM = OSC 1
+DEPTH = 0%
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 55%
+ENV 2 > PITCH 2 = 55%
+ENV 2 > X DEPTH = 30%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 100%

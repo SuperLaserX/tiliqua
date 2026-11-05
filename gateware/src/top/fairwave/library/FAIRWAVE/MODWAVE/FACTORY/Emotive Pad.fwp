@@ -1,0 +1,69 @@
+FAIRWAVE PATCH 1
+NAME  = EMOTIVE PAD
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's Emotive Pad by Richard Devine: backup1.mwbackup.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along position.
+# Oscillator 2 is A's 2, a table made along morph.
+# Not carried over: 2 unison voices, an LFO past the three here, controllers, random and Kaoss Physics, layer B oscillator 1, layer B oscillator 2, performance modulators, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: 1/8 dotted LPF, Emotive Pad, Slow Phaser.
+[OSC 1]
+TABLE = MODWAVE/T/BD/01EB7FD7.WAV
+READ = CLEAN
+TUNE = 0
+POS = 0.0%
+
+[OSC 2]
+TABLE = MODWAVE/T/A8/C90B9CEE.WAV
+READ = CLEAN
+TUNE = 0
+POS = 50.0%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 2.477 S
+DECAY = 87.093 S
+SUSTAIN = 58%
+RELEASE = 3.897 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 92.000 MS
+DECAY = 90.000 S
+SUSTAIN = 100%
+RELEASE = 2.364 S
+A CURVE = 0
+D CURVE = 0
+R CURVE = 0
+
+[LFO 1]
+RATE = 0.250 HZ
+SHAPE = TRI
+PHASE = 4
+SYNC = GATE 1
+
+[LFO 3]
+RATE = 2.000 HZ
+SHAPE = TRI
+PHASE = 92
+SYNC = GATE 1
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 100%
+LFO 1 > POS 2 = 50%
+LFO 3 > LEVEL 1 = 1%
+LFO 3 > LEVEL 2 = 1%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 51.7%

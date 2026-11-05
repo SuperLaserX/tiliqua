@@ -1,0 +1,49 @@
+FAIRWAVE PATCH 1
+NAME  = RUMBLE KICK
+ABOUT = KICK AND ITS LOW RUMBLE. GATE 1
+
+# The kick, and a dark swarm under it on the same envelope, the sound of a techno kick after a long reverb and a lot of
+# saturation. LFO 1 shakes it. Move CV 2 for more of the rumble.
+[OSC 1]
+TABLE = SWARM
+TUNE = -39
+POS = 22%
+
+[OSC 2]
+TABLE = TABLES/SUBDRV.WAV
+TUNE = -28
+POS = 16%
+
+[ENV 1]
+ATTACK = 0
+DECAY = 520 MS
+SUSTAIN = 0%
+RELEASE = 520 MS
+D CURVE = 30
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 0
+DECAY = 30 MS
+SUSTAIN = 0%
+RELEASE = 30 MS
+D CURVE = 75
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > PITCH 1 = 46%
+ENV 2 > PITCH 2 = 46%
+ENV 1 > POS 2 = 25%
+LFO 1 > POS 1 = 8%
+CV 2 > BALANCE = -40%
+[LFO 1]
+RATE = 13 HZ
+SHAPE = RANDOM
+
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 72%

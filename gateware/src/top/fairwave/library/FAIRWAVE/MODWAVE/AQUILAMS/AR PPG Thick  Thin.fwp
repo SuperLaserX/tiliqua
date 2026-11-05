@@ -1,0 +1,59 @@
+FAIRWAVE PATCH 1
+NAME  = AR PPG THICK & T
+ABOUT = SYNTH FROM MODWAVE. GATE 1, CV 1
+
+# From the modwave's AR PPG Thick & Thin by Aquila Rift: AquilaMSPPG.mwbundle.
+# 0 V plays what its C4 key plays.
+# Oscillator 1 is A's 1, a table made along cutoff.
+# Oscillator 2 is A's 2, a table made along cutoff.
+# Not carried over: modulation processors, the mod wheel's scaling of a modulation.
+# Its effects, which FairWave hasn't got: Dark Triumph Buzz, Made 4 E.Pianos, Odd Piano.
+[OSC 1]
+TABLE = MODWAVE/T/A9/44C4C204.WAV
+READ = CLEAN
+TUNE = -24
+FINE = -7
+POS = 26.7%
+
+[OSC 2]
+TABLE = MODWAVE/T/DB/0FC6C82A.WAV
+READ = CLEAN
+TUNE = -24
+FINE = 7
+POS = 26.7%
+
+[ENV 1]
+GATE = GATE 1
+ATTACK = 0.000 MS
+DECAY = 26.251 S
+SUSTAIN = 0%
+RELEASE = 1.725 S
+A CURVE = 30
+D CURVE = 0
+R CURVE = 60
+VCA = BOTH
+
+[ENV 2]
+GATE = GATE 1
+ATTACK = 3.067 S
+DECAY = 20.000 S
+SUSTAIN = 0%
+RELEASE = 6.000 S
+A CURVE = 30
+D CURVE = 60
+R CURVE = 60
+
+[ROUTING]
+CV 1 > PITCH 1 = 100%
+CV 1 > PITCH 2 = 100%
+ENV 2 > POS 1 = 46.5%
+ENV 2 > POS 2 = 46.5%
+CV 1 > POS 1 = 44.5%
+CV 1 > POS 2 = 44.5%
+CV 2 > POS 1 = 25%
+CV 2 > POS 2 = 25%
+
+[MIXER]
+OUT 0 = MIX
+OUT 1 = MIX
+BALANCE = 66.7%
