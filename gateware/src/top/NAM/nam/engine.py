@@ -342,7 +342,7 @@ class Engine(wiring.Component):
         # The issuing slot (`act`) issues while the other loads from the queue, so the
         # issue decision never waits on a load: a segment's end only flips `act`. Each
         # slot works out its own "can issue" from its own registers; `act` picks one.
-        m.submodules.segq = segq = SyncFIFO(width=2 * P.WORD, depth=8)
+        m.submodules.segq = segq = SyncFIFOBuffered(width=2 * P.WORD, depth=8)   # (its head a register)
         pc = Signal(range(self.segments + 1))
         fetch_half = Signal()
         fetch_done = Signal()
@@ -648,8 +648,11 @@ class Engine(wiring.Component):
         xf_wr = Signal()
         pos_next = Signal(POS_BITS)
         m.d.comb += pos_next.eq((pos & ~ring_mask) | ((pos + burst) & ring_mask))
+        # How late the pending transfer is, as registers (a subtraction, then the
+        # comparison): checked once the request goes out, two clocks after LOOK.
         age = Signal(8)
-        m.d.comb += age.eq(sample_no - xf_due)
+        overdue = Signal()
+        m.d.sync += [age.eq(sample_no - xf_due), overdue.eq(age > self.late_after)]
         # The slot's start in the stream's region: slot 1 is a burst in.
         slot_off = Signal(5)
         m.d.comb += slot_off.eq(Mux(xf_slot, burst, 0))
@@ -673,8 +676,6 @@ class Engine(wiring.Component):
                                  xf_due.eq(pendq.r_data[6:14]), xf_pre.eq(pendq.r_data[14]), xf_t.eq(0)]
                     m.next = "LOOK"
             with m.State("LOOK"):
-                with m.If(age > self.late_after):
-                    m.d.sync += self.late.eq(1)
                 with m.If(xf_t < xr.nread):
                     m.d.sync += [xf_pi.eq(xr.stream0 + xf_t), xf_wr.eq(0)]
                     m.next = "POS"
@@ -690,22 +691,30 @@ class Engine(wiring.Component):
                 with m.Else():
                     m.next = "FETCH"
             with m.State("FETCH"):
+                with m.If(overdue):
+                    m.d.sync += self.late.eq(1)
                 with m.If(doneq.w_rdy & self.req.ready):
                     m.d.comb += [self.req.valid.eq(1), self.req.payload.write.eq(0),
                                  doneq.w_en.eq(1), pos_step.eq(1)]
                     m.d.sync += xf_t.eq(xf_t + 1)
                     m.next = "LOOK"
             with m.State("FLUSH"):
+                with m.If(overdue):
+                    m.d.sync += self.late.eq(1)
                 with m.If(doneq.w_rdy & self.req.ready):
                     m.d.comb += [self.req.valid.eq(1), self.req.payload.write.eq(1),
                                  doneq.w_en.eq(1), pos_step.eq(1)]
                     m.next = "IDLE"
 
         # Transfers finish in order; one that finishes late_after samples after it was due sets late.
+        # (the done's lateness too: the subtraction, then the comparison, a clock each)
+        done_v = Signal()
+        done_age = Signal(8)
+        m.d.sync += [done_v.eq(self.xfer_done), done_age.eq(sample_no - doneq.r_data)]
         with m.If(self.xfer_done):
             m.d.comb += doneq.r_en.eq(1)
-            with m.If((sample_no - doneq.r_data) > self.late_after):
-                m.d.sync += self.late.eq(1)
+        with m.If(done_v & (done_age > self.late_after)):
+            m.d.sync += self.late.eq(1)
 
         # ==================================================================================
         # The MAC pipeline: issue, s1 tables, s2 frame, s3 address, s4 read, s5 the memories'
