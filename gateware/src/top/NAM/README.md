@@ -53,12 +53,13 @@ Eurorack-level inputs with ±8.192 V at full scale (+17.5 dBu). Clocks: `sync`
 60 MHz (CPU, buses), `fast` 120 MHz (so far only the PSRAM's DDR PHY), `dvi`
 74.25 MHz.
 
-The SoC this builds on is FairWave's (`top/fairwave`): VexiiRiscv with 32 KB
-of block RAM, firmware in PSRAM, the 720 × 720 framebuffer, USB host for a
-drive, no persistence effect, the registered palette and fixed DVI timing.
-That SoC without FairWave's synth is about 10k LUTs, 28 block RAMs and 8
-multipliers, leaving roughly **10k LUTs, 28 block RAMs and 20 multipliers**
-for NAM.
+The SoC this builds on is FairWave's (`top/fairwave`): VexiiRiscv, firmware
+in PSRAM, the 720 × 720 framebuffer, USB host for a drive, no persistence
+effect, the registered palette and fixed DVI timing. The first plan put that
+SoC at about 10k LUTs; measured, it is about **18,300**: FairWave's bare SoC
+was 14,141 and `guh`'s USB host added about 4,200. Builds on this part start
+missing timing above about 85–89% of LUTs, so the engine's share is a few
+thousand LUTs, not ten. See [Fitting](#fitting).
 
 ## Architecture
 
@@ -79,6 +80,18 @@ block-RAM buffers by a DMA engine as BFR's delay memory is (`top/bfr`); the
 short layers (D ≤ 41, 10 block RAMs at 18 bits) stay in block RAM. PSRAM traffic
 for mono Full is 28 MB/s (one write and five reads of a 16-byte frame per layer
 per sample), beside the framebuffer's 31 MB/s.
+
+Each (ring, tap) is a read stream with a region of two bursts in the read
+buffer, and each ring a write stream in the write buffer. All of a profile's
+streams share one geometry (words per frame, per burst, per PSRAM ring, all
+powers of two), so a region's address comes from the stream's number, and a
+ring's streams step through their regions together: one position per ring,
+the rings staggered so their transfers spread over a burst's samples. PSRAM
+rings are all the same power-of-two size and aligned to it, so a stream's
+PSRAM position (the only per-stream state, 18 bits) wraps with a mask. The
+buffers are dual-clock block RAMs: the PSRAM master writes fetched words
+straight into the read buffer and takes a flush's words straight out of the
+write buffer, on the bus clock.
 
 ### The datapath
 
@@ -168,14 +181,99 @@ datapath in lockstep (8 more multipliers, a second set of accumulators, rings
 and streams; 55 MB/s of PSRAM). The engine takes a `voices` parameter; mono
 first, then stereo Lite on one datapath, then stereo Full if the build has room.
 
+## Fitting
+
+The first full build (2026-11-12) did not fit: **64 of 56 block RAMs and 108%
+of LUTs** (26,359 of 24,288 TRELLIS_COMB, plus 547 LUT-RAM write ports). A
+hierarchical synthesis split it as about 15k for the SoC, 4.4k for the USB host
+and 9.5k for the NAM peripheral.
+
+`tools/synth_engine.py` synthesises the peripheral alone in about 30 s, which
+is how each change below was measured (yosys cells; a LUT-RAM `DPR16X4` counts
+as about 6 LUT sites: 4 LUTs and a write-port slice that blocks 2 more, so a
+table with several asynchronous read ports, each a copy, is expensive). Every
+change is bit-exact: `tests/test_engine.py` (small network, 60 samples) and
+`--full` (A2-Full) still match the interpreter word for word.
+
+| Change | LUT4 | CCU2C | DPR16X4 | EBR |
+|---|---|---|---|---|
+| NAM peripheral as first built | 6,265 | 1,116 | 307 | 29 |
+| Accumulators cleared by the flip-flops' synchronous reset one stage ahead (no clear mux before the 960 adder bits); the eight H sums share one adder; post unit: rounding as an increment after the shift, saturation from the top bits (no comparators), LeakyReLU adders only as wide as their operands | 5,012 | 882 | 307 | 29 |
+| Streams: one geometry per program, regions found from the stream number, one position per ring, equal power-of-two PSRAM rings; the stream table (102 bits, four read ports) becomes an 18-bit position table with one | 4,623 | 846 | 149 | 29 |
+| Dual-clock stream buffers: the PSRAM master moves words straight to and from them (its two 64-word async FIFOs go) | 4,312 | 800 | 148 | 27 |
+
+In LUT sites (LUT4 + 2 × CCU2C + 6 × DPR16X4) that is 10,400 down to 6,800.
+Clocks per A2-Full sample went from 2,040 to 2,028 (the advance loop visits
+rings, not streams). The register bridge then went from 418 to 246 LUT4 by
+writing table entries through one shifting `twrite` register instead of five
+data registers and an address.
+
+**Timing.** The next build placed at 91% but its estimate for the engine was
+73 MHz. `tools/time_engine.py` places and routes the engine alone at 120 MHz
+(its ports fed and drained by shift registers, so nothing is optimised away)
+and prints the worst path; on an empty chip a path that fails will fail in the
+SoC. Two findings first: the `MULT18X18D` instances tied their unused pins to
+ground, which nextpnr can't route (the "arc of net `$PACKER_GND_NET`" failure,
+on an empty chip too: that, not congestion, was the routing failure), and
+yosys maps every block RAM without its output register, so a read's data comes
+5.8 ns after the clock. `nam/bram.py` instantiates the block RAMs with their
+output registers. Then, one worst path at a time, each fix bit-exact:
+
+| Worst path | Fix | Engine alone |
+|---|---|---|
+| history RAM → 10-way select → activation | memories split per block RAM, outputs registered | 82 → 86 MHz |
+| ring position read → add → write back, queue a transfer | advance loop in two stages | 99 |
+| H sum select → add → H | H accumulate in two stages (p8 read, p9 write) | 106 |
+| block RAM data (5.8 ns) → register | `BlockRam`: the RAMs' output registers | 107 |
+| stream position read → add → write back | position read into a register first | 106 |
+| post unit → history write enables (10 RAMs) | writes registered per RAM | 114 |
+| history select → source mux → activation | ring value gets its own stage (s6) | 116 |
+| stall conditions → issue → segment load | busy, idle, landing and FIFO-empty kept as registers | 118 |
+| post queue head → bank landed? → pop | buffered queue, landed and pipeline-empty as registers | 117 |
+| counters → last op? → load | "last op" kept as a register | **122.6** |
+
+The first full build with these routed (the ground-pin fix) at 90% of LUTs:
+system clock 62.8 MHz and video passed, the engine 99.2 MHz against 120: on a
+full chip, wiring costs it about 20%. So the engine needs about 140 MHz alone,
+and the harness's target went up to that (`NAM_TIME_MHZ=140`):
+
+| Worst path | Fix | Engine alone (140 target) |
+|---|---|---|
+| advance loop's update → transfer queue | a third stage: compute, then write and queue | 110 |
+| issue → end segment → segment FIFO's read logic | the next segment waits in a register, refilled when empty (a clock's bubble after a one-op segment: +27 clocks a sample) | 125 |
+| (load decodes) | the next segment's decodes made as it is fetched | 122 |
+| item counter → lane and bank select of 3 banks and H | split: each bank's lane at p0, the bank at p1 | 124 |
+| the issue loop (stall → issue → end → load → counters) | two segment slots: one issues while the other loads from the queue, a segment's end only flips the issuing slot, each slot decides from its own registers | 125 |
+| issue → in-flight counters' adders | the count takes an op a clock later; the "landing" flag takes it at once | **131.8** |
+
+On a full chip the previous netlist (before the last two rows) placed at 90%
+and its engine routed at 90 MHz, the one before that at 99: the routing is 8.7
+of 11 ns on the worst path, so placement decides much of it. Clocks per
+A2-Full sample: 2,079 of 2,500 (the two slots also took out the load bubbles).
+
+The SoC gives up three things (`nam/trim.py`, project-local overrides):
+
+- **No SPI flash controller** (about 1,150 LUTs; the user's choice, 2026-11-12):
+  settings will live in a file on the USB drive instead of the slot's option
+  storage. A stub keeps the flash window and the controller's registers, with
+  nothing behind them, so the memory map, the cached CPU netlist and the HAL's
+  driver are unchanged.
+- **No debug UART** (about 400 LUTs; the user's choice, 2026-11-12, once the
+  engine's timing showed it needs the room): a stub keeps its registers and
+  pins, transmit always ready and bytes going nowhere, so logging is a no-op.
+- **16 KB of CPU RAM** instead of 32 (8 block RAMs): the CPU is still told 32 KB
+  (its regions key the cached netlist), the RAM and the linker script have 16.
+  The firmware's data is 84 bytes; the rest is stack, and FairWave, with USB
+  and FAT, used under 11 KB of it.
+
 ## Plan
 
 | Phase | What | State |
 |---|---|---|
 | 1 | Float reference (`model/a2.py`) checked against the compiled core | done |
 | 2 | Fixed-point study and bit-exact model (`model/fixed.py`) | done |
-| 3 | Program generator and interpreter (`model/program.py`), engine gateware (`nam/engine.py`) with tests against the model | |
-| 4 | PSRAM streams, the peripheral and `top.py`; first build: resources, timing at 120 MHz, clocks per sample | |
+| 3 | Program generator and interpreter (`model/program.py`), engine gateware (`nam/engine.py`) with tests against the model | done |
+| 4 | PSRAM streams, the peripheral and `top.py`; first build: resources, timing at 120 MHz, clocks per sample | fitting (see [Fitting](#fitting)) |
 | 5 | Firmware: `.nam` parser and loader, quantisation in Rust, USB browser, prewarm | |
 | 6 | UI: level meters, input/output/gate/tone/mode/Lite-Full, round-screen design | |
 | 7 | Noise gate and tone stack (in the program), DC blocker | |
@@ -193,20 +291,35 @@ first, then stereo Lite on one datapath, then stereo Full if the build has room.
 | z width | 24 bits as two MACs | the dominant error at 18 bits; +184 clocks per sample |
 | Biases | a MAC against the constant 2¹⁶ | no separate adder path; resolution 2⁻¹⁴ or better |
 | Control | program of MAC/POST segments, generated per profile | A2's layer list, the head, gains and tone stack in one mechanism; testable in Python |
-| CPU RAM | 32 KB, FairWave's memory map | reuses the cached VexiiRiscv netlist; a new map means regenerating it with sbt |
+| CPU RAM | 16 KB of block RAM, the CPU told 32 KB (FairWave's map) | 8 block RAMs; the cached VexiiRiscv netlist is keyed on the map, a new one means sbt |
 | Persistence | removed as in FairWave | the UI is drawn incrementally |
+| SPI flash controller | removed (a stub keeps its window and registers); settings in a file on the USB drive | about 1,150 LUTs; the user's choice when the first build didn't fit |
+| Debug UART | removed (a stub keeps its registers: logging is a no-op) | about 400 LUTs; the user's choice for the engine's timing headroom (line and pixel drawing kept) |
+| Stream layout | one geometry per program, one position per ring, equal power-of-two PSRAM rings | the per-stream table with four read ports cost about 950 LUT sites |
+| Stream buffers | dual-clock block RAMs that the PSRAM master reads and writes | its two async FIFOs were 2 block RAMs and about 300 LUTs |
+| Accumulator clear | the flip-flops' synchronous reset, one stage before the clearing op lands | a mux in front of 960 adder bits was about 960 LUTs |
 
 ## Status
 
-Nothing has been built or run on hardware yet. Measured so far: the float
-model against the core (-130 dB), and the fixed-point ESRs above.
+Nothing has run on hardware yet. Measured so far: the float model against the
+core (-130 dB), the fixed-point ESRs above, the engine against the
+interpreter in simulation (bit-exact; A2-Full 2,028 clocks a sample of the
+2,500 at 120 MHz), the Rust program builder against the Python one (bit-exact,
+Lite and Full), and the fitting work above. The firmware is a skeleton: the
+engine driver, the display and input; no loader or UI yet.
 
 ## Layout
 
     model/      a2.py (loader, float reference), fixed.py (bit-exact datapath),
                 program.py (program, tables and images for the engine)
-    nam/        engine.py (datapath, post unit, sequencer), streams, peripheral,
-                project-local overrides vendored from FairWave
-    fw/         firmware (Rust): loader, UI, USB
-    tests/      engine against the model
-    tools/      check_reference.py (model against the compiled core)
+    nam/        engine.py (datapath, post unit, sequencer), streams.py (PSRAM master),
+                peripheral.py, trim.py (SoC parts left out to fit), project-local
+                overrides vendored from FairWave (video, blit, fill, psram, cpu)
+    cpu/        Rust, host-tested: .nam scanning and quantisation, the program builder
+                (checked against golden/, written by tools/dump_program.py), UI geometry
+    fw/         firmware (Rust): engine driver, display, input; loader, UI, USB to come
+    pac/        the register crate, generated by the build
+    tests/      the program against the fixed-point model, the engine against the program
+    tools/      dump_program.py (golden files for cpu/), synth_engine.py (the peripheral's
+                cost, alone). The float model's check against the compiled core was a
+                one-off outside the repo (model/a2.py says how).

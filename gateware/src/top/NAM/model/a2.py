@@ -18,8 +18,10 @@ Per sample, with `C` channels, input `x`:
     y = head_b + sum_k sum_b head_w[k][b] * hsum[t - (15-k)][b]
     out = y * head_scale
 
-This follows `NeuralAmpModelerCore/NAM/wavenet/a2_fast.cpp`, and
-`tools/check_reference.py` compares it with the compiled Core.
+This follows `NeuralAmpModelerCore/NAM/wavenet/a2_fast.cpp`. It was compared once
+with the compiled Core (built with zig c++ and Eigen 3.4.0, outside the repo) on
+the Core's example audio: -128 to -134 dB, both widths, both the A2 path and the
+generic WaveNet path. That comparison's script isn't in the repo.
 """
 
 import json
