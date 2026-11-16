@@ -1,5 +1,5 @@
 pub const UI_NAME: &str = "NAM";
-pub const UI_TAG: &str = "5bb951e-";
+pub const UI_TAG: &str = "229361a-";
 pub const HW_REV_MAJOR: u32 = 5;
 pub const USE_EXTERNAL_PLL: bool = true;
 pub const CLOCK_SYNC_HZ: u32 = 60000000;

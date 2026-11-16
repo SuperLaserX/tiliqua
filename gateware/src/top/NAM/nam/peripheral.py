@@ -179,10 +179,14 @@ class NamPeripheral(wiring.Component):
         late_sync = Signal()
         m.submodules.busy_ff = FFSynchronizer(eng.busy, busy_sync, o_domain="sync")
         m.submodules.late_ff = FFSynchronizer(eng.late, late_sync, o_domain="sync")
+        # (the pulses registered in the engine's domain: the synchronisers sit by the
+        # registers they come from, the engine's control a long way off)
+        clear_q, prefill_q, start_q = Signal(), Signal(), Signal()
+        m.d[ed] += [clear_q.eq(clear_ps.o), prefill_q.eq(prefill_ps.o), start_q.eq(start_ps.o)]
         m.d.comb += [
             clear_ps.i.eq(self._ctrl.f.clear.w_stb & self._ctrl.f.clear.w_data),
             prefill_ps.i.eq(self._ctrl.f.prefill.w_stb & self._ctrl.f.prefill.w_data),
-            eng.clear.eq(clear_ps.o), eng.prefill.eq(prefill_ps.o), eng.start.eq(start_ps.o),
+            eng.clear.eq(clear_q), eng.prefill.eq(prefill_q), eng.start.eq(start_q),
             done_ps.i.eq(eng.done),
         ]
 

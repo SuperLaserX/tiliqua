@@ -251,6 +251,68 @@ and its engine routed at 90 MHz, the one before that at 99: the routing is 8.7
 of 11 ns on the worst path, so placement decides much of it. Clocks per
 A2-Full sample: 2,079 of 2,500 (the two slots also took out the load bubbles).
 
+With the two slots and the delayed count the full build routed the engine at
+108 MHz (system 61.3, DVI 93.0, DVI 5x 398: all pass). `tools/seeds.py
+--heavy` on that netlist, eight seeds: engine 114.3, 113.3, 111.4, 110.3 and
+101.8 MHz, three didn't route. Then two more fixes, alone at 140: the
+transfers' lateness check as a subtraction then a comparison, a clock each
+(135 MHz), and the segment queue's head registered (the slots load from it
+off the issue path; 128 to 135 MHz, placement noise). That netlist's sweep
+did worse on the full chip (best 108.9 MHz), and its worst paths showed why:
+in six seeds of seven, `advancing` (read all over the chip) through the issue
+decision into the z or newest FIFO's level counter. So: `advancing` left the
+issue decision (no slot holds a segment while advancing, so it was redundant),
+the two FIFOs became `nam/fifo.py`'s (the read enable is a pointer's clock
+enable and the select of a precomputed "holds a value"), and the slots' count
+limits are set as they load. Full build: 88% of LUTs (21,559); ten seeds:
+engine 117.0, 114.9, 111.6, 110.1, then 104.8 to 108.4 MHz. The common worst
+path moved to the transfer request's handshake (queue room → position write),
+now registered.
+
+With that, the build placed at 89% and routed the engine at 117.2 MHz; twelve
+seeds: 118.7, 115.9, 115.5, 111.9, 111.7, 111.3, 110.9, 109.8, 108.6, 107.5
+and 105.4 MHz (one never finished routing), two of them also under 60 MHz on
+the system clock. Their worst paths, by how often: the issue decision through
+a slot's stall terms into the z or newest FIFO's read enable and its "holds a
+value" flag (six of thirteen: eight LUTs, 6.6 ns of routing); the post unit's
+fit test (four: its pieces chained into one another, seven LUTs); the three
+control pulses' synchronisers, by the register bridge, into the sample state
+machine and the clock counter's enable (one, 6.7 ns of routing); the segment
+fetch's end-of-program compare (one). So, each bit-exact:
+
+- **Only a segment's first op can stall.** A bank is posted only after the
+  segment into it has ended, and the post unit writes a command's z and newest
+  values a clock apart, as fast as they are read or faster. So each slot keeps
+  a register, `ok`, saying whether its first op may go, worked out from this
+  clock's registers: a stall that lifts is seen a clock late; one that falls
+  can only come from a POST queued this clock, which the register's logic
+  includes (read from the other slot's registers; worked out twice, for the
+  slot's own fields and for the queue head's, the load choosing last: in one
+  piece yosys chained it ten LUTs deep). The issue decision is three registers
+  and the slot select, and from it to the FIFO's flag is four LUTs rather than
+  eight. The check that
+  nothing is still landing in a clearing op's bank went: a POST of the bank
+  always comes between its last accumulation and the clear, and holds the bank
+  until everything has landed (`model/program.py`'s interpreter now checks
+  programs for that).
+- `nam/fifo.py`: a write lands the clock after it is offered, so the pointer
+  logic sees registers only, and "holds a value" is chosen by the read enable
+  between two registers worked out a clock ahead: the read enable reaches one
+  LUT and a clock enable.
+- The fit test's pieces (the bit groups all equal, the low bits all set) are
+  registers of a stage of their own, p7b; the test comes a stage later.
+- The control pulses are registered in the engine's domain, and the clock
+  counter is cleared throughout IDLE rather than on `start`.
+- The end-of-program compare runs against a register holding the last
+  segment's number, beside the fetch decision rather than after it.
+
+Clocks per A2-Full sample: 2,168 (a clock at the start of each z, newest and
+waiting segment for the late view of a lifted stall, and one per post for the
+stage). The peripheral: 4,128 LUT4, 807 CCU2C, 148 LUT-RAM cells and 4,369
+flip-flops (242 more). Alone at the 140 MHz target: 142.6 MHz (141.4 before),
+the sequencer gone from its worst paths, which are now the transfer machine's
+ring-table read (7.0 ns).
+
 The SoC gives up three things (`nam/trim.py`, project-local overrides):
 
 - **No SPI flash controller** (about 1,150 LUTs; the user's choice, 2026-11-12):
@@ -303,7 +365,7 @@ The SoC gives up three things (`nam/trim.py`, project-local overrides):
 
 Nothing has run on hardware yet. Measured so far: the float model against the
 core (-130 dB), the fixed-point ESRs above, the engine against the
-interpreter in simulation (bit-exact; A2-Full 2,028 clocks a sample of the
+interpreter in simulation (bit-exact; A2-Full 2,168 clocks a sample of the
 2,500 at 120 MHz), the Rust program builder against the Python one (bit-exact,
 Lite and Full), and the fitting work above. The firmware is a skeleton: the
 engine driver, the display and input; no loader or UI yet.
@@ -313,8 +375,10 @@ engine driver, the display and input; no loader or UI yet.
     model/      a2.py (loader, float reference), fixed.py (bit-exact datapath),
                 program.py (program, tables and images for the engine)
     nam/        engine.py (datapath, post unit, sequencer), streams.py (PSRAM master),
-                peripheral.py, trim.py (SoC parts left out to fit), project-local
-                overrides vendored from FairWave (video, blit, fill, psram, cpu)
+                fifo.py (the z and newest FIFOs), bram.py (block RAMs with output
+                registers), peripheral.py, trim.py (SoC parts left out to fit),
+                project-local overrides vendored from FairWave (video, blit, fill,
+                psram, cpu)
     cpu/        Rust, host-tested: .nam scanning and quantisation, the program builder
                 (checked against golden/, written by tools/dump_program.py), UI geometry
     fw/         firmware (Rust): engine driver, display, input; loader, UI, USB to come

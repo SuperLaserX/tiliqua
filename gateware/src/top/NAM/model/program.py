@@ -403,6 +403,8 @@ class Interpreter:
         self.acc = {BANK_Z0: [0] * COLUMNS, BANK_Z1: [0] * COLUMNS,
                     BANK_LIN: [0] * COLUMNS, BANK_H: [0] * COLUMNS}
         self.x = self.y = self.out = self.adc = 0
+        # Banks posted since they last accumulated (nothing is in flight at the start).
+        self.posted = {b: True for b in self.acc}
         self.zq = []
         self.newest = []
         self.trace = trace
@@ -428,6 +430,13 @@ class Interpreter:
         row = f["wrow"]
         acc = self.acc[f["bank"]]
         first = [bool(f["clear"])]
+        # The engine lets a clearing op issue once no POST holds its bank, and checks
+        # nothing else: a product still landing after the clear would be lost. So a POST
+        # of the bank must come between its last accumulation and a clear (it holds the
+        # bank until everything has landed).
+        assert not f["clear"] or self.posted[f["bank"]], \
+            f"clearing MAC into bank {f['bank']} whose last accumulation was not posted"
+        self.posted[f["bank"]] = False
 
         def op(a, lo=False, advance=True):
             w = p.aux[row[0]] if f["aux"] else p.wmem[row[0]]
@@ -478,6 +487,7 @@ class Interpreter:
         bank = f["pbank"]
         dest = f["dest"]
         ri = f["pring"]
+        self.posted[bank] = True
         for i in range(f["pcount"]):
             v = self.acc[bank][i]
             if f["leaky"]:

@@ -63,6 +63,7 @@ from model import program as P
 from model.fixed import LEAKY_TERMS
 
 from .bram import BlockRam
+from .fifo import QuickFifo
 
 ACC = 40
 ACT = 18
@@ -289,7 +290,13 @@ class Engine(wiring.Component):
             pos_init.addr.eq(self.pos_w.addr), pos_init.en.eq(self.pos_w.en), pos_init.pos.eq(self.pos_w.data),
         ]
 
-        # The streams' geometry, as masks and sizes.
+        # The streams' geometry, as masks and sizes (and the quasi-static inputs used as
+        # they are, as registers: a path from a port is a path from anywhere).
+        burst_log2 = Signal.like(self.burst_log2)
+        n_rings_used = Signal.like(self.n_rings_used)
+        late_after = Signal.like(self.late_after)
+        m.d.sync += [burst_log2.eq(self.burst_log2), n_rings_used.eq(self.n_rings_used),
+                     late_after.eq(self.late_after)]
         wpf = Signal(4)
         burst = Signal(6)
         burst_mask = Signal(5)
@@ -306,7 +313,7 @@ class Engine(wiring.Component):
             """A stream's region start plus an offset into it: `num` shifted by the
             region's size, or'd with the offset (regions are aligned to their size)."""
             out = Signal(16)
-            with m.Switch(self.burst_log2):
+            with m.Switch(burst_log2):
                 for k in range(5):
                     with m.Case(k):
                         m.d.comb += out.eq(Cat(offset[:k + 1], num))
@@ -321,8 +328,9 @@ class Engine(wiring.Component):
         banks = [[Signal(signed(ACC), name=f"acc{b}_{c}") for c in range(NC)] for b in range(3)]
         hacc = [Signal(signed(HACC), name=f"h{c}") for c in range(NC)]
         inflight = [Signal(5, name=f"inflight{b}") for b in range(3)]
-        m.submodules.zq = zq = SyncFIFO(width=24, depth=16)
-        m.submodules.nq = nq = SyncFIFO(width=ACT, depth=16)
+        # (their read enables come from the issue decision: see nam/fifo.py)
+        m.submodules.zq = zq = QuickFifo(24)
+        m.submodules.nq = nq = QuickFifo(ACT)
         running = Signal()
         advancing = Signal()
         clearing = Signal()
@@ -350,13 +358,17 @@ class Engine(wiring.Component):
         issue_fetch = Signal()
         word_v = Signal()
         word_half = Signal()
+        # (the last segment's number as a register: the compare runs beside the fetch
+        # decision, not after it)
+        last_seg = Signal.like(pc)
+        m.d.sync += last_seg.eq(self.n_segments - 1)
         m.d.comb += issue_fetch.eq(running & ~fetch_done & (segq.w_level < 5))
         m.d.comb += prog.r_addr.eq(Cat(fetch_half, pc))
         with m.If(issue_fetch):
             m.d.sync += fetch_half.eq(~fetch_half)
             with m.If(fetch_half):
                 m.d.sync += pc.eq(pc + 1)
-                with m.If(pc + 1 == self.n_segments):
+                with m.If(pc == last_seg):
                     m.d.sync += fetch_done.eq(1)
         # The program memory's word comes two clocks after its address.
         word2_v = Signal()
@@ -401,20 +413,25 @@ class Engine(wiring.Component):
             s.zb = Signal(name=f"zq_bias{k}")
             s.nq = Signal(name=f"nq_op{k}")
             s.last = Signal(name=f"last_op{k}")
-            taps_m1 = Signal(4, name=f"taps_m1_{k}")
-            count_m1 = Signal(3, name=f"count_m1_{k}")
-            m.d.comb += [taps_m1.eq(f["taps"] - 1), count_m1.eq(f["count"] - 1)]
+            # (taps and count less one and two, set as the slot loads; minus two wraps
+            # to a value the counters never reach when there is no such position)
+            s.taps_m1 = taps_m1 = Signal(4, name=f"taps_m1_{k}")
+            s.taps_m2 = taps_m2 = Signal(4, name=f"taps_m2_{k}")
+            s.count_m1 = count_m1 = Signal(3, name=f"count_m1_{k}")
+            s.count_m2 = count_m2 = Signal(4, name=f"count_m2_{k}")
+            s.count_one = count_one = Signal(name=f"count_one_{k}")
             src, bank = f["src"], f["bank"]
 
-            # Can this slot's next op issue (if it is the issuing one)?
+            # Can this slot's next op issue (if it is the issuing one)? Only a segment's
+            # first op can stall: `ok`, a register (below the loads), says whether it may
+            # go. The ops after it follow a clock apart, which nothing can hold up: a
+            # bank is posted only after the segment into it has ended, and the post unit
+            # writes a command's z and newest values a clock apart, as fast as they are
+            # read or faster.
+            s.ok = Signal(name=f"ok{k}")
+            s.rz = Signal(name=f"reads_z{k}")      # the op pops the z FIFO (a low part)
             s.ci = Signal(name=f"can_issue{k}")
-            m.d.comb += s.ci.eq(
-                s.v & ~f["kind"] & ~advancing & ~busy_q.bit_select(bank, 1)
-                & ~(s.first & f["wait"] & ~idle_q)
-                & ~((s.zq & ~s.zb & ~zq_ne) | (s.nq & ~nq_ne))
-                # (a clearing op resets its bank a stage before it lands, so nothing else
-                # may be on its way into it)
-                & ~(s.first & f["clear"] & landing_q.bit_select(bank, 1)))
+            m.d.comb += s.ci.eq(s.v & ~f["kind"] & (~s.first | s.ok))
             s.ce = Signal(name=f"issue{k}")
             m.d.comb += s.ce.eq(s.ci & (act == k))
             s.post_ready = s.v & f["kind"]
@@ -424,8 +441,8 @@ class Engine(wiring.Component):
             at_count = s.ch == count_m1
             with m.Switch(src):
                 with m.Case(P.SRC_RING, P.SRC_NEWEST):
-                    m.d.comb += last_after.eq(Mux(at_count, (s.tap + 1 == taps_m1) & (count_m1 == 0),
-                                                  (s.tap == taps_m1) & (s.ch + 1 == count_m1)))
+                    m.d.comb += last_after.eq(Mux(at_count, (s.tap == taps_m2) & count_one,
+                                                  (s.tap == taps_m1) & (s.ch == count_m2)))
                 with m.Case(P.SRC_XC):
                     m.d.comb += last_after.eq(1)
                 with m.Case(P.SRC_ZQ):
@@ -457,27 +474,31 @@ class Engine(wiring.Component):
                             m.d.sync += [s.ch.eq(0), s.tap.eq(s.tap + 1), s.delay.eq(s.delay - f["dil"])]
                         with m.Else():
                             m.d.sync += s.ch.eq(s.ch + 1)
-                        with m.If(s.nq):
-                            m.d.comb += nq.r_en.eq(1)
                     with m.Case(P.SRC_XC):
                         m.d.sync += s.phase.eq(1)
                     with m.Case(P.SRC_ZQ):
                         with m.If(~s.zb):
-                            m.d.sync += s.phase.eq(~s.phase)
+                            # (the next op pops if it is a low part; none does once the
+                            # bias op is reached)
+                            m.d.sync += [s.phase.eq(~s.phase), s.rz.eq(~s.phase)]
                             with m.If(s.phase):
-                                m.d.comb += zq.r_en.eq(1)
                                 with m.If(at_count):
                                     m.d.sync += [s.ch.eq(0), s.tap.eq(1), s.zb.eq(1)]
                                 with m.Else():
                                     m.d.sync += s.ch.eq(s.ch + 1)
             slots.append(s)
+        # The FIFOs' reads: every op of a newest segment, the low part of each z.
+        m.d.comb += [nq.r_en.eq((slots[0].ce & slots[0].nq) | (slots[1].ce & slots[1].nq)),
+                     zq.r_en.eq((slots[0].ce & slots[0].rz) | (slots[1].ce & slots[1].rz))]
 
         op = Signal(OpLayout)
         op_v = Signal()
         m.d.comb += [op.eq(Mux(act, slots[1].op, slots[0].op)), op_v.eq(Mux(act, slots[1].ci, slots[0].ci))]
 
         # A POST goes into the queue; the sequencer moves on.
-        post_go = Mux(act, slots[1].post_ready, slots[0].post_ready) & postq.w_rdy & ~advancing
+        # (no slot holds a segment while advancing: they're emptied at the start and loads
+        # wait for the advance loop, so neither this nor the issue decision checks it)
+        post_go = Mux(act, slots[1].post_ready, slots[0].post_ready) & postq.w_rdy
         post_cmd = Signal(PostCmd)
         pf = {name: Mux(act, slots[1].f[name], slots[0].f[name]) for name in P.POST_FIELDS}
         m.d.comb += [
@@ -510,9 +531,12 @@ class Engine(wiring.Component):
         ]
         for s, ld in ((s0, load0), (s1, load1)):
             with m.If(ld):
+                m.d.sync += [s.taps_m1.eq(rf["taps"] - 1), s.taps_m2.eq(rf["taps"] - 2),
+                             s.count_m1.eq(rf["count"] - 1), s.count_m2.eq(rf["count"] - 2),
+                             s.count_one.eq(rf["count"] == 1)]
                 m.d.sync += [s.seg.eq(segq.r_data), s.v.eq(1), s.tap.eq(0), s.ch.eq(0), s.phase.eq(0),
                              s.row.eq(rf["wrow"]), s.delay.eq(rf["delay0"]), s.first.eq(1),
-                             s.zq.eq(~rf["kind"] & (rf["src"] == P.SRC_ZQ)), s.zb.eq(0),
+                             s.zq.eq(~rf["kind"] & (rf["src"] == P.SRC_ZQ)), s.zb.eq(0), s.rz.eq(0),
                              s.nq.eq(~rf["kind"] & (rf["src"] == P.SRC_NEWEST))]
                 # The first op is the last: a single op, or a ring/newest segment of one.
                 with m.Switch(rf["src"]):
@@ -522,6 +546,30 @@ class Engine(wiring.Component):
                         m.d.sync += s.last.eq(0)
                     with m.Default():
                         m.d.sync += s.last.eq(1)
+
+        # Whether a slot's first op may issue next clock, from this clock's registers
+        # (the segment's fields from the queue's head while the slot loads): its bank not
+        # held by a POST, the post unit idle if it waits for that, its FIFO holding a
+        # value. A stall that lifts this clock is seen a clock later; one that falls this
+        # clock can only come from a POST queued now, the two terms with `post_go`. (The
+        # FIFO flags can't fall: only this segment reads its FIFO, and hasn't started. A
+        # clearing op's bank has nothing landing in it: a POST of the bank comes between
+        # its last accumulation and the clear, and holds it until everything has landed;
+        # `model/program.py` checks programs for that.)
+        # (Worked out twice, for the slot's own fields and for the head's, the load
+        # choosing last; the POST queued this clock can only be the other slot's, read
+        # from its registers: whether the queue has room is left out, which only holds
+        # this slot while the other, the issuing one, is held too.)
+        def may_go(bank, wait, reads_z, reads_newest, other):
+            posting = (act == other) & slots[other].v & slots[other].f["kind"]
+            return (~(busy_q.bit_select(bank, 1) | (posting & (slots[other].f["pbank"] == bank)))
+                    & ~(wait & (~idle_q | posting))
+                    & ~(reads_z & ~zq_ne) & ~(reads_newest & ~nq_ne))
+
+        for k, (s, ld) in enumerate(((s0, load0), (s1, load1))):
+            m.d.sync += s.ok.eq(Mux(
+                ld, may_go(rf["bank"], rf["wait"], rf["src"] == P.SRC_ZQ, rf["src"] == P.SRC_NEWEST, 1 - k),
+                may_go(s.f["bank"], s.f["wait"], s.zq, s.nq, 1 - k)))
 
         # ==================================================================================
         # Sample control: start -> advance loop -> run -> done; clear; prefill
@@ -543,6 +591,7 @@ class Engine(wiring.Component):
 
         with m.FSM():
             with m.State("IDLE"):
+                m.d.sync += clk_count.eq(0)
                 with m.If(self.clear):
                     m.d.sync += [clearing.eq(1), clr_i.eq(0), self.late.eq(0), sample_no.eq(0)]
                     m.next = "CLEAR"
@@ -551,7 +600,7 @@ class Engine(wiring.Component):
                     m.next = "PREFILL"
                 with m.Elif(self.start):
                     m.d.sync += [adc_reg.eq(self.adc), sample_no.eq(sample_no + 1),
-                                 adv_i.eq(0), advancing.eq(1), clk_count.eq(0),
+                                 adv_i.eq(0), advancing.eq(1),
                                  running.eq(1), pc.eq(0), fetch_half.eq(0), fetch_done.eq(0),
                                  slots[0].v.eq(0), slots[1].v.eq(0), act.eq(0)]
                     m.next = "ADVANCE"
@@ -566,7 +615,7 @@ class Engine(wiring.Component):
             with m.State("PREFILL"):
                 # Every PSRAM ring's read streams: slot 1, then slot 0 (the ring's entry
                 # read here, used from a register in PREFILL2).
-                with m.If(adv_i == self.n_rings_used):
+                with m.If(adv_i == n_rings_used):
                     m.d.sync += prefilling.eq(0)
                     m.next = "IDLE"
                 with m.Else():
@@ -589,7 +638,7 @@ class Engine(wiring.Component):
                 # stages, a ring a clock: its entry is read here, the next one is worked
                 # out and then written (below), from registers.
                 m.d.sync += clk_count.eq(clk_count + 1)
-                with m.If(adv_i < self.n_rings_used):
+                with m.If(adv_i < n_rings_used):
                     m.d.sync += [ra_q.eq(ra), da_q.eq(da), adv_j.eq(adv_i), adv_v.eq(1),
                                  adv_i.eq(adv_i + 1)]
                 with m.Else():
@@ -652,16 +701,19 @@ class Engine(wiring.Component):
         # comparison): checked once the request goes out, two clocks after LOOK.
         age = Signal(8)
         overdue = Signal()
-        m.d.sync += [age.eq(sample_no - xf_due), overdue.eq(age > self.late_after)]
+        m.d.sync += [age.eq(sample_no - xf_due), overdue.eq(age > late_after)]
         # The slot's start in the stream's region: slot 1 is a burst in.
         slot_off = Signal(5)
         m.d.comb += slot_off.eq(Mux(xf_slot, burst, 0))
         slot_buf = region(xf_pi[:5], slot_off)
+        # (the write's address and data don't depend on whether it happens)
         pos_step = Signal()
-        with m.If(pos_step):
-            m.d.comb += [spos_wp.addr.eq(xf_pi), spos_wp.data.eq(pos_next), spos_wp.en.eq(1)]
-        with m.If(pos_init.en):
-            m.d.comb += [spos_wp.addr.eq(pos_init.addr), spos_wp.data.eq(pos_init.pos), spos_wp.en.eq(1)]
+        m.d.comb += [spos_wp.addr.eq(Mux(pos_init.en, pos_init.addr, xf_pi)),
+                     spos_wp.data.eq(Mux(pos_init.en, pos_init.pos, pos_next)),
+                     spos_wp.en.eq(pos_init.en | pos_step)]
+        # Room for a request, as a register: only this machine queues requests and dones,
+        # so room seen a clock ago is still there.
+        room = Signal()
         m.d.comb += [
             self.req.payload.addr.eq(Cat(pos, C(self.pring_base >> POS_BITS, 22 - POS_BITS))),
             self.req.payload.words.eq(burst), self.req.payload.buf.eq(slot_buf),
@@ -685,7 +737,7 @@ class Engine(wiring.Component):
                 with m.Else():
                     m.next = "IDLE"
             with m.State("POS"):
-                m.d.sync += pos.eq(spos_rd.data)
+                m.d.sync += [pos.eq(spos_rd.data), room.eq(doneq.w_rdy & self.req.ready)]
                 with m.If(xf_wr):
                     m.next = "FLUSH"
                 with m.Else():
@@ -693,18 +745,22 @@ class Engine(wiring.Component):
             with m.State("FETCH"):
                 with m.If(overdue):
                     m.d.sync += self.late.eq(1)
-                with m.If(doneq.w_rdy & self.req.ready):
+                with m.If(room):
                     m.d.comb += [self.req.valid.eq(1), self.req.payload.write.eq(0),
                                  doneq.w_en.eq(1), pos_step.eq(1)]
                     m.d.sync += xf_t.eq(xf_t + 1)
                     m.next = "LOOK"
+                with m.Else():
+                    m.d.sync += room.eq(doneq.w_rdy & self.req.ready)
             with m.State("FLUSH"):
                 with m.If(overdue):
                     m.d.sync += self.late.eq(1)
-                with m.If(doneq.w_rdy & self.req.ready):
+                with m.If(room):
                     m.d.comb += [self.req.valid.eq(1), self.req.payload.write.eq(1),
                                  doneq.w_en.eq(1), pos_step.eq(1)]
                     m.next = "IDLE"
+                with m.Else():
+                    m.d.sync += room.eq(doneq.w_rdy & self.req.ready)
 
         # Transfers finish in order; one that finishes late_after samples after it was due sets late.
         # (the done's lateness too: the subtraction, then the comparison, a clock each)
@@ -713,7 +769,7 @@ class Engine(wiring.Component):
         m.d.sync += [done_v.eq(self.xfer_done), done_age.eq(sample_no - doneq.r_data)]
         with m.If(self.xfer_done):
             m.d.comb += doneq.r_en.eq(1)
-        with m.If(done_v & (done_age > self.late_after)):
+        with m.If(done_v & (done_age > late_after)):
             m.d.sync += self.late.eq(1)
 
         # ==================================================================================
@@ -862,13 +918,12 @@ class Engine(wiring.Component):
             m.d.sync += [inc_q.eq(inc), inflight[b].eq(inflight[b] + inc_q - dec)]
             m.d.sync += landing_q[b].eq(
                 ~(((inflight[b] == 0) & ~inc_q) | ((inflight[b] == 1) & dec & ~inc_q)) | inc)
-        # Exactly whether each FIFO will hold anything.
-        for q, ne in ((zq, zq_ne), (nq, nq_ne)):
-            m.d.sync += ne.eq(~(((q.r_level == 0) & ~q.w_en) | ((q.r_level == 1) & q.r_en & ~q.w_en)))
+        m.d.comb += [zq_ne.eq(zq.ne), nq_ne.eq(nq.ne)]
 
         # ==================================================================================
         # The post unit: queue, p0 the item's lane of each bank, p1 its value, p2-p5 leaky,
-        # p6-p7 shift, p8 round, saturate and write, p9 the H sums' write-back
+        # p6-p7 shift, p7b round and the fit test's pieces, p8 saturate and write, p9 the
+        # H sums' write-back
         # ==================================================================================
         cmd = Signal(PostCmd)
         cmd_v = Signal()
@@ -987,22 +1042,31 @@ class Engine(wiring.Component):
         p7, p7_v = stage(p6, p6_v, "p7")
         w7 = Signal(signed(ACC + 1))
         m.d.sync += w7.eq(w6 >> Cat(C(0, 3), p6.shift[3:]))
-        p8, p8_v = stage(p7, p7_v, "p8")
+        # The fit test in two stages: its pieces (the bit groups all equal, the low bits
+        # all set) as registers at p7b, the test itself from them. In one stage the
+        # pieces chained into one another, seven LUTs deep.
+        p7b, p7b_v = stage(p7, p7_v, "p7b")
+        r7b = Signal(signed(24))
+        neg7b = Signal()
+        top0, top1, m18_0, m18_1, m16_0, m16_1, lo16 = (
+            Signal(name=n) for n in ("top0", "top1", "m18_0", "m18_1", "m16_0", "m16_1", "lo16"))
+        m.d.sync += [top0.eq(w7[24:] == 0), top1.eq(w7[24:].all()),
+                     m18_0.eq(w7[18:24] == 0), m18_1.eq(w7[18:24].all()),
+                     m16_0.eq(w7[16:18] == 0), m16_1.eq(w7[16:18].all()), lo16.eq(w7[:16].all()),
+                     r7b.eq((w7[:25].as_signed() + 1) >> 1), neg7b.eq(w7[ACC])]
+        p8, p8_v = stage(p7b, p7b_v, "p8")
         r8 = Signal(signed(24))
         sat8 = Signal()
         neg8 = Signal()
-        top0, top1 = w7[24:] == 0, w7[24:].all()
-        m18_0, m18_1 = w7[18:24] == 0, w7[18:24].all()
-        m16_0, m16_1 = w7[16:18] == 0, w7[16:18].all()
         hi0 = {0: top0 & m18_0 & m16_0, 1: top0 & m18_0, 2: top0}
         hi1 = {0: top1 & m18_1 & m16_1, 1: top1 & m18_1, 2: top1}
-        lo1 = {0: w7[:16].all(), 1: w7[:18].all(), 2: w7[:24].all()}
-        sat7 = Signal()
-        with m.Switch(p7.bits):
+        lo1 = {0: lo16, 1: lo16 & m16_1, 2: lo16 & m16_1 & m18_1}
+        sat7b = Signal()
+        with m.Switch(p7b.bits):
             for code in (0, 1, 2):
                 with m.Case(code):
-                    m.d.comb += sat7.eq(~(hi0[code] | hi1[code]) | (hi0[code] & lo1[code]))
-        m.d.sync += [r8.eq((w7[:25].as_signed() + 1) >> 1), sat8.eq(sat7), neg8.eq(w7[ACC])]
+                    m.d.comb += sat7b.eq(~(hi0[code] | hi1[code]) | (hi0[code] & lo1[code]))
+        m.d.sync += [r8.eq(r7b), sat8.eq(sat7b), neg8.eq(neg7b)]
 
         res = Signal(signed(24))
         m.d.comb += res.eq(r8)
@@ -1029,6 +1093,13 @@ class Engine(wiring.Component):
                 m.d.sync += hacc[c].eq(0)
             with m.Elif(p9_acc & (p9_i == c)):
                 m.d.sync += hacc[c].eq(p9_h + p9_res)
+        # The FIFOs' write enables are registers, decoded a stage early: the post unit
+        # sits by the block RAMs, the FIFOs by the sequencer, 4 ns of wire apart.
+        nq_w8 = Signal()
+        zq_w8 = Signal()
+        m.d.sync += [nq_w8.eq(p7b_v & (p7b.dest == P.DST_RING) & p7b.newest),
+                     zq_w8.eq(p7b_v & (p7b.dest == P.DST_ZQ))]
+        m.d.comb += [nq.w_data.eq(res[:ACT]), nq.w_en.eq(nq_w8), zq.w_data.eq(res), zq.w_en.eq(zq_w8)]
         with m.If(p8_v):
             with m.Switch(p8.dest):
                 with m.Case(P.DST_RING):
@@ -1037,9 +1108,6 @@ class Engine(wiring.Component):
                     with m.Else():
                         m.d.comb += [sbw_wp.addr.eq(p8.saddr), sbw_wp.data.eq(Cat(res[:16], res[:16])),
                                      sbw_wp.en.eq(Mux(p8.half, 0b10, 0b01))]
-                    m.d.comb += [nq.w_data.eq(res[:ACT]), nq.w_en.eq(p8.newest)]
-                with m.Case(P.DST_ZQ):
-                    m.d.comb += [zq.w_data.eq(res), zq.w_en.eq(1)]
                 with m.Case(P.DST_X):
                     m.d.sync += x_reg.eq(res[:ACT])
                 with m.Case(P.DST_Y):
