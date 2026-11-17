@@ -17,5 +17,6 @@ pub mod nav;
 pub mod program;
 pub mod quant;
 pub mod scope;
+pub mod seed;
 pub mod text;
 pub mod tone_tables;

@@ -10,6 +10,8 @@ pub const TAB_AUX: u32 = 1;
 pub const TAB_PROG: u32 = 2;
 pub const TAB_RING: u32 = 3;
 pub const TAB_POS: u32 = 4;
+/// The scope's capture ring's entries.
+pub const CAP_LEN: usize = 1 << 10;
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
 pub struct Status {
@@ -19,6 +21,8 @@ pub struct Status {
     pub clocks: u16,
     /// A tone stack swap asked for and not yet made (it is, at the next sample).
     pub tone_pending: bool,
+    /// The capture ring's next entry: the oldest, the next sample's.
+    pub cap_ptr: u16,
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
@@ -111,6 +115,7 @@ impl Engine {
     /// The tone stack's four sections (bass, middle, treble, DC blocker; `nam_cpu::tone_tables`),
     /// written into the bank not playing and swapped in at the next sample. A swap still pending
     /// is waited for first (a sample at most), so a bank about to play is never written.
+    #[inline(never)]
     pub fn write_tone(&mut self, sections: &[[i32; 5]; 4]) {
         for _ in 0..100_000u32 {
             if !self.status().tone_pending {
@@ -124,6 +129,48 @@ impl Engine {
             }
         }
         self.regs.tswap().write(|w| unsafe { w.bits(1) });
+    }
+
+    /// The latest samples, input and output, oldest first (as many as `dry` holds, at most
+    /// `CAP_LEN`), from the capture ring, which keeps every one: no waiting for them.
+    ///
+    /// The reads start one after the oldest entry and take it last: it is the next sample's, and
+    /// by then that sample, the one after the newest, is there (waited for, if not). Reads are a
+    /// fraction of a microsecond, samples 20.8 us apart, so the ones ahead of the writer stay so;
+    /// the first few go with interrupts off, so that an interrupt can't hold them back that long.
+    /// False if the samples have stopped.
+    pub fn capture(&mut self, dry: &mut [i16], wet: &mut [i16]) -> bool {
+        let n = dry.len().min(wet.len()).min(CAP_LEN);
+        if n == 0 {
+            return true;
+        }
+        fn read(regs: &pac::NAM) -> (i16, i16) {
+            let t = regs.cap().read().bits();
+            (t as i16, (t >> 16) as i16)
+        }
+        const HEAD: usize = 16;
+        let head = (n - 1).min(HEAD);
+        let ptr = critical_section::with(|_| {
+            let ptr = self.status().cap_ptr as usize;
+            let first = (ptr + CAP_LEN - n + 1) % CAP_LEN;
+            self.regs.cap().write(|w| unsafe { w.bits(first as u32) });
+            for i in 0..head {
+                (dry[i], wet[i]) = read(&self.regs);
+            }
+            ptr
+        });
+        for i in head..n - 1 {
+            (dry[i], wet[i]) = read(&self.regs);
+        }
+        let mut polls = 0u32;
+        while self.status().cap_ptr as usize == ptr {
+            polls += 1;
+            if polls > 20_000 {
+                return false;
+            }
+        }
+        (dry[n - 1], wet[n - 1]) = read(&self.regs);
+        true
     }
 
     fn write_ctrl(&mut self, pulses: u32) {
@@ -162,7 +209,8 @@ impl Engine {
 
     pub fn status(&self) -> Status {
         let s = self.regs.status().read().bits();
-        Status { busy: s & 1 != 0, late: s & 2 != 0, clocks: (s >> 2) as u16, tone_pending: s & (1 << 18) != 0 }
+        Status { busy: s & 1 != 0, late: s & 2 != 0, clocks: (s >> 2) as u16, tone_pending: s & (1 << 18) != 0,
+                 cap_ptr: ((s >> 19) & (CAP_LEN as u32 - 1)) as u16 }
     }
 
     /// Reading clears the longest-sample figure and the overrun count.

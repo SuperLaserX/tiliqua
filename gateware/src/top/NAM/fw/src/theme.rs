@@ -48,7 +48,7 @@ pub struct Theme {
 }
 
 /// In `nam_cpu::controls::THEMES`'s order.
-pub const ALL: [Theme; 6] = [
+pub const ALL: [Theme; 17] = [
     // SLATE: cool white on a blue-black ground, amber for what the encoder is on.
     Theme { ground: (6, 8, 14), hues: [(150, 170, 200), (236, 242, 255), (255, 170, 50), (70, 220, 190), (255, 70, 60)],
             bezel: Bezel::Plain },
@@ -64,6 +64,40 @@ pub const ALL: [Theme; 6] = [
     // STAGE: white on black, red for what the encoder is on, yellow levels.
     Theme { ground: (0, 0, 0), hues: [(150, 150, 150), (255, 255, 255), (255, 52, 40), (244, 230, 64), (255, 128, 0)],
             bezel: Bezel::Ticks },
+    // AMBER: an amber terminal.
+    Theme { ground: (16, 7, 0), hues: [(150, 84, 16), (255, 186, 72), (255, 240, 190), (255, 140, 20), (255, 64, 40)],
+            bezel: Bezel::Ticks },
+    // OCEAN: pale blue on deep navy, coral for what the encoder is on, aqua levels.
+    Theme { ground: (2, 12, 30), hues: [(64, 116, 168), (212, 236, 255), (255, 128, 96), (40, 220, 220), (255, 64, 96)],
+            bezel: Bezel::Double },
+    // GLACIER: ice white on blue-grey, sky blue and mint.
+    Theme { ground: (14, 22, 32), hues: [(104, 134, 160), (226, 244, 255), (120, 200, 255), (150, 255, 210), (255, 100, 120)],
+            bezel: Bezel::Plain },
+    // FOREST: parchment on a dark green, honey and leaf.
+    Theme { ground: (6, 16, 8), hues: [(104, 140, 96), (232, 240, 212), (244, 190, 80), (128, 224, 96), (244, 84, 52)],
+            bezel: Bezel::Double },
+    // COPPER: warm white on dark bronze, copper and verdigris.
+    Theme { ground: (22, 11, 5), hues: [(164, 104, 72), (255, 228, 204), (236, 128, 64), (96, 204, 184), (255, 64, 40)],
+            bezel: Bezel::Ticks },
+    // CRIMSON: rose white on a dark wine, gold, orchid levels.
+    Theme { ground: (22, 2, 6), hues: [(156, 84, 96), (255, 228, 226), (255, 200, 72), (240, 128, 176), (255, 96, 0)],
+            bezel: Bezel::Glow },
+    // SUNSET: cream on plum, orange and a twilight blue.
+    Theme { ground: (26, 8, 22), hues: [(172, 104, 128), (255, 236, 214), (255, 128, 48), (140, 196, 255), (255, 48, 112)],
+            bezel: Bezel::Glow },
+    // ROYAL: white on indigo, gold and lavender.
+    Theme { ground: (10, 6, 32), hues: [(128, 120, 204), (240, 236, 255), (255, 208, 80), (156, 140, 255), (255, 72, 96)],
+            bezel: Bezel::Plain },
+    // GRAPHITE: a neutral dark grey, orange and blue, like a studio rack.
+    Theme { ground: (30, 30, 33), hues: [(124, 124, 130), (238, 238, 238), (255, 144, 0), (0, 196, 255), (255, 56, 56)],
+            bezel: Bezel::Double },
+    // FOG: ink on a soft grey, between the dark grounds and paper (colours dark enough that
+    // their faint intensities still show on it).
+    Theme { ground: (156, 158, 162), hues: [(40, 46, 60), (14, 18, 26), (168, 64, 0), (0, 92, 80), (160, 20, 20)],
+            bezel: Bezel::Double },
+    // SAND: brown ink on warm sand, lighter than FOG and short of paper.
+    Theme { ground: (180, 166, 138), hues: [(52, 42, 28), (28, 22, 14), (156, 52, 16), (16, 92, 104), (168, 16, 16)],
+            bezel: Bezel::Double },
     // DAYLIGHT: ink on paper, for a bright room.
     Theme { ground: (232, 226, 212), hues: [(84, 90, 108), (20, 24, 32), (204, 88, 0), (0, 124, 104), (200, 30, 30)],
             bezel: Bezel::Double },
@@ -84,6 +118,7 @@ fn mix(ground: Rgb, color: Rgb, k: u32) -> Rgb {
 }
 
 /// Writes theme `t` into the hardware palette.
+#[inline(never)]
 pub fn write_palette(d: &mut impl DMAFramebuffer, t: usize) {
     let theme = &ALL[t % ALL.len()];
     for hue in 0..16u8 {
@@ -124,6 +159,7 @@ pub fn ring(t: usize) -> HI8 {
 
 /// The bezel of theme `t`, drawn after the screen clears, with `page`'s part of the rim lit
 /// (none for the switcher, which lights its own).
+#[inline(never)]
 pub fn bezel<D: DrawTarget<Color = HI8>>(d: &mut D, cx: i32, cy: i32, t: usize, page: Option<Page>) {
     let theme = &ALL[t % ALL.len()];
     let base = ring(t);

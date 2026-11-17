@@ -17,16 +17,18 @@ Registers (32-bit, byte addressed):
     0x08 config    n_rings (6), n_segments (9), late_after (4), and the streams' geometry
                    as powers of two: words per frame (2), per burst (3), per PSRAM ring (5)
     0x0C ctrl      enable (1), bypass (1), clear (1, pulse), prefill (1, pulse)
-    0x10 status    busy (1), late (1), clocks of the last sample (16)
+    0x10 status    busy (1), late (1), clocks of the last sample (16), tone_pending (1),
+                   cap_ptr (10)
     0x14 stats     longest sample in clocks since last read (16), overruns (8), samples (8)
     0x18 meters    input peak (16), output peak (16), held since last read
     0x1C tone      a tone stack coefficient (`nam/tone.py`): value (27, Q3.23), index (5:
                    section * 5 + tap), into the bank not playing
     0x20 tswap     (pulse) the bank written plays from the next sample; status's
                    tone_pending until then
-    0x24 tap       the last input sample (16) and the output going out with it (16), for the
-                   scope: taken together as each input sample arrives; status's tap_count
-                   (8, wraps) counts them, and the CPU reads `tap` when it moves
+    0x24 cap       the scope's capture ring: the last 1024 input samples (16), each with the
+                   output going out as it arrived (16), written at status's cap_ptr (the next
+                   entry, so the oldest). Writing sets where reads start (10); each read returns
+                   that entry and moves on to the next.
 
 The tables are written while the engine is disabled; `clear` zeroes the
 block-RAM history (and the write pointers follow table writes), `prefill`
@@ -37,6 +39,7 @@ keeps its own copies of what it writes.
 from amaranth import *
 from amaranth.lib import data, stream, wiring
 from amaranth.lib.cdc import FFSynchronizer, PulseSynchronizer
+from amaranth.lib.memory import Memory
 from amaranth.lib.wiring import In, Out
 from amaranth_soc import csr
 
@@ -47,6 +50,21 @@ from .streams import PsramMaster, bus_signature
 from .tone import COEF_BITS, ToneStack
 
 N_CHANNELS = 4
+CAP_LOG2 = 10       # the capture ring's entries, as a power of two
+
+
+class ReadWrite(csr.FieldAction):
+    """A field read and written as two separate things: `r_data`/`r_stb` and `w_data`/`w_stb`."""
+    def __init__(self, shape):
+        super().__init__(shape, access="rw", members={
+            "r_data": In(shape), "r_stb": Out(1), "w_data": Out(shape), "w_stb": Out(1),
+        })
+
+    def elaborate(self, platform):
+        m = Module()
+        m.d.comb += [self.port.r_data.eq(self.r_data), self.r_stb.eq(self.port.r_stb),
+                     self.w_data.eq(self.port.w_data), self.w_stb.eq(self.port.w_stb)]
+        return m
 TAB_WMEM, TAB_AUX, TAB_PROG, TAB_RING, TAB_POS = range(5)
 
 
@@ -78,7 +96,7 @@ class NamPeripheral(wiring.Component):
         late: csr.Field(csr.action.R, unsigned(1))
         clocks: csr.Field(csr.action.R, unsigned(16))
         tone_pending: csr.Field(csr.action.R, unsigned(1))
-        tap_count: csr.Field(csr.action.R, unsigned(8))
+        cap_ptr: csr.Field(csr.action.R, unsigned(CAP_LOG2))
 
     class Tone(csr.Register, access="w"):
         value: csr.Field(csr.action.W, unsigned(COEF_BITS))
@@ -87,9 +105,8 @@ class NamPeripheral(wiring.Component):
     class TSwap(csr.Register, access="w"):
         swap: csr.Field(csr.action.W, unsigned(1))
 
-    class Tap(csr.Register, access="r"):
-        dry: csr.Field(csr.action.R, unsigned(16))
-        wet: csr.Field(csr.action.R, unsigned(16))
+    class Cap(csr.Register, access="rw"):
+        entry: csr.Field(ReadWrite, unsigned(32))
 
     class Stats(csr.Register, access="r"):
         clocks_max: csr.Field(csr.action.R, unsigned(16))
@@ -116,7 +133,7 @@ class NamPeripheral(wiring.Component):
         self._meters = regs.add("meters", self.Meters(), offset=0x18)
         self._tone = regs.add("tone", self.Tone(), offset=0x1C)
         self._tswap = regs.add("tswap", self.TSwap(), offset=0x20)
-        self._tap = regs.add("tap", self.Tap(), offset=0x24)
+        self._cap = regs.add("cap", self.Cap(), offset=0x24)
         self.tone = ToneStack()
         self._bridge = csr.Bridge(regs.as_memory_map())
         super().__init__({
@@ -269,14 +286,25 @@ class NamPeripheral(wiring.Component):
         with m.If(self.o.valid & self.o.ready & ~new_sample):
             m.d.sync += pending_out.eq(0)
 
-        # The scope's tap: each input sample, with the output going out as it arrives.
-        tap_dry = Signal(16)
-        tap_wet = Signal(16)
-        tap_n = Signal(8)
+        # The scope's capture ring: each input sample, with the output going out as it arrives.
+        # (A read takes the entry at `cap_rd` the register's shadow latches, then moves on: the
+        # block RAM's registered output has the next one long before the CPU's next read.)
+        m.submodules.cap_ring = ring = Memory(shape=32, depth=1 << CAP_LOG2, init=[])
+        cap_w = ring.write_port()
+        cap_r = ring.read_port(transparent_for=())
+        cap_ptr = Signal(CAP_LOG2)
+        cap_rd = Signal(CAP_LOG2)
+        cap_rd_next = Signal(CAP_LOG2)
+        cf = self._cap.f.entry
+        # (the block RAM reads where `cap_rd` is going, so its output is the entry a read takes
+        # however soon after an address write or another read it comes)
+        m.d.comb += cap_rd_next.eq(Mux(cf.w_stb, cf.w_data[:CAP_LOG2], Mux(cf.r_stb, cap_rd + 1, cap_rd)))
+        m.d.sync += cap_rd.eq(cap_rd_next)
+        m.d.comb += [cap_w.addr.eq(cap_ptr), cap_w.data.eq(Cat(self.i.payload[0].as_value(), out)),
+                     cap_w.en.eq(self.i.valid), cap_r.addr.eq(cap_rd_next)]
         with m.If(self.i.valid):
-            m.d.sync += [tap_dry.eq(self.i.payload[0].as_value()), tap_wet.eq(out), tap_n.eq(tap_n + 1)]
-        m.d.comb += [self._tap.f.dry.r_data.eq(tap_dry), self._tap.f.wet.r_data.eq(tap_wet),
-                     self._status.f.tap_count.r_data.eq(tap_n)]
+            m.d.sync += cap_ptr.eq(cap_ptr + 1)
+        m.d.comb += [cf.r_data.eq(cap_r.data), self._status.f.cap_ptr.r_data.eq(cap_ptr)]
 
         def peak(sig, value):
             mag = Signal(16)

@@ -6,6 +6,11 @@
 //! (smoothed between blocks, and never more than `MAX_GAIN`, so silence stays flat). The spectra
 //! are the block through a Hann window and a radix-2 FFT in integers (the CPU has no FPU), each
 //! band the loudest bin in it, in dB of full scale.
+//!
+//! For speed (the CPU's data cache is 4 KB, the working space in PSRAM): one FFT gives both
+//! spectra (the input as its real part, the output as its imaginary part, separated after by the
+//! symmetry of real signals' spectra), its values kept as interleaved (re, im) pairs and its
+//! twiddles as 16-bit pairs.
 
 use crate::gate::power_db;
 use crate::geometry::sin_cos;
@@ -27,14 +32,14 @@ const MAX_GAIN_Q8: i32 = 64 * 256;
 /// The tables and the working space, all plain integers (the firmware keeps it in PSRAM, zeroed,
 /// then `init`).
 pub struct Scope {
-    cos: [i32; N / 2],
-    sin: [i32; N / 2],
-    window: [i32; N],
+    /// (cos, sin) of each twiddle, Q15.
+    tw: [[i16; 2]; N / 2],
+    window: [i16; N],
     /// Each band's bins, [first, last].
     bands: [(u16, u16); BANDS],
     reference_db: i32,
-    pub re: [i32; N],
-    pub im: [i32; N],
+    /// The FFT's values, (re, im) side by side.
+    z: [[i32; 2]; N],
     /// The traces' gains (Q8), carried from block to block.
     gain: [i32; 2],
 }
@@ -44,13 +49,12 @@ impl Scope {
     pub fn init(&mut self) {
         for k in 0..N / 2 {
             let (s, c) = sin_cos(k as f32 / N as f32);
-            self.cos[k] = (c * 32767.0) as i32;
-            self.sin[k] = (s * 32767.0) as i32;
+            self.tw[k] = [(c * 32767.0) as i16, (s * 32767.0) as i16];
         }
         for i in 0..N {
             // Hann: (1 - cos(2 pi i / N)) / 2
             let (_, c) = sin_cos(i as f32 / N as f32);
-            self.window[i] = ((1.0 - c) * 0.5 * 32767.0) as i32;
+            self.window[i] = ((1.0 - c) * 0.5 * 32767.0) as i16;
         }
         let ratio = BAND_HIGH_HZ / BAND_LOW_HZ;
         for b in 0..BANDS {
@@ -69,50 +73,63 @@ impl Scope {
 
     /// The spectrum of `x` in dB of full scale (1/256 dB), a value a band.
     pub fn spectrum(&mut self, x: &[i16]) -> [i32; BANDS] {
+        self.spectra(Some(x), None).0
+    }
+
+    /// The spectra of `x` and `y` (either may be left out), with one FFT: `x` its real part and
+    /// `y` its imaginary. For real signals X[k] = (Z[k] + conj Z[N-k]) / 2 and
+    /// Y[k] = (Z[k] - conj Z[N-k]) / 2i.
+    pub fn spectra(&mut self, x: Option<&[i16]>, y: Option<&[i16]>) -> ([i32; BANDS], [i32; BANDS]) {
         for i in 0..N {
-            self.re[i] = ((x[i] as i32 * self.window[i]) >> 15) << 14;
-            self.im[i] = 0;
+            let w = self.window[i] as i32;
+            let take = |s: Option<&[i16]>| s.map_or(0, |s| ((s[i] as i32 * w) >> 15) << 14);
+            self.z[i] = [take(x), take(y)];
         }
         self.fft();
-        let mut out = [FLOOR_DB * 256; BANDS];
+        let mut out = ([FLOOR_DB * 256; BANDS], [FLOOR_DB * 256; BANDS]);
         for (b, &(lo, hi)) in self.bands.iter().enumerate() {
-            let mut best = 0u64;
-            for k in lo..=hi {
-                let (r, i) = (self.re[k as usize] as i64, self.im[k as usize] as i64);
-                best = best.max((r * r + i * i) as u64);
+            let (mut bx, mut by) = (0u64, 0u64);
+            for k in lo as usize..=hi as usize {
+                let [ar, ai] = self.z[k];
+                let [br, bi] = self.z[N - k];
+                let (ar, ai, br, bi) = (ar as i64, ai as i64, br as i64, bi as i64);
+                // (both halved: the sums are twice the spectra)
+                let (xr, xi) = ((ar + br) >> 1, (ai - bi) >> 1);
+                let (yr, yi) = ((ai + bi) >> 1, (br - ar) >> 1);
+                bx = bx.max((xr * xr + xi * xi) as u64);
+                by = by.max((yr * yr + yi * yi) as u64);
             }
-            if best > 0 {
-                out[b] = (power_db(best) - self.reference_db).max(FLOOR_DB * 256);
-            }
+            let db = |p: u64| if p > 0 { (power_db(p) - self.reference_db).max(FLOOR_DB * 256) } else { FLOOR_DB * 256 };
+            out.0[b] = db(bx);
+            out.1[b] = db(by);
         }
         out
     }
 
-    /// In place on `re`, `im`: decimation in time, the input bit-reversed first, each stage halved.
+    /// In place on `z`: decimation in time, the input bit-reversed first, each stage halved.
     fn fft(&mut self) {
         for i in 0..N {
-            let j = (i as u32).reverse_bits() >> (32 - LOG2_N);
-            if (j as usize) > i {
-                self.re.swap(i, j as usize);
-                self.im.swap(i, j as usize);
+            let j = ((i as u32).reverse_bits() >> (32 - LOG2_N)) as usize;
+            if j > i {
+                self.z.swap(i, j);
             }
         }
         let mut len = 2;
         while len <= N {
             let step = N / len;
+            let half = len / 2;
             for start in (0..N).step_by(len) {
-                for k in 0..len / 2 {
-                    let (wc, ws) = (self.cos[k * step] as i64, self.sin[k * step] as i64);
-                    let (a, b) = (start + k, start + k + len / 2);
-                    let (br, bi) = (self.re[b] as i64, self.im[b] as i64);
+                for k in 0..half {
+                    let [wc, ws] = self.tw[k * step];
+                    let (wc, ws) = (wc as i64, ws as i64);
+                    let [br, bi] = self.z[start + k + half];
+                    let (br, bi) = (br as i64, bi as i64);
                     // b times e^(-2 pi i k / len)
                     let tr = ((br * wc + bi * ws) >> 15) as i32;
                     let ti = ((bi * wc - br * ws) >> 15) as i32;
-                    let (ar, ai) = (self.re[a], self.im[a]);
-                    self.re[a] = (ar >> 1) + (tr >> 1);
-                    self.im[a] = (ai >> 1) + (ti >> 1);
-                    self.re[b] = (ar >> 1) - (tr >> 1);
-                    self.im[b] = (ai >> 1) - (ti >> 1);
+                    let [ar, ai] = self.z[start + k];
+                    self.z[start + k] = [(ar >> 1) + (tr >> 1), (ai >> 1) + (ti >> 1)];
+                    self.z[start + k + half] = [(ar >> 1) - (tr >> 1), (ai >> 1) - (ti >> 1)];
                 }
             }
             len *= 2;
@@ -161,6 +178,32 @@ fn ln(x: f64) -> f64 {
     2.0 * sum + k as f64 * core::f64::consts::LN_2
 }
 
+/// A trigger watched sample by sample, for a capture that stops once it has what a trace needs:
+/// armed below -`hyst`, firing where the signal next rises through zero.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Trigger {
+    pub hyst: i32,
+    armed: bool,
+    last: i16,
+}
+
+impl Trigger {
+    /// `hyst` from the last block's peak (an eighth of it, at least 16).
+    pub fn new(last_peak: i32) -> Trigger {
+        Trigger { hyst: (last_peak / 8).max(16), armed: false, last: 0 }
+    }
+
+    /// The next sample; whether the trigger fires on it.
+    pub fn feed(&mut self, v: i16) -> bool {
+        let fired = self.armed && self.last < 0 && v >= 0;
+        if (v as i32) < -self.hyst {
+            self.armed = true;
+        }
+        self.last = v;
+        fired
+    }
+}
+
 /// Where the input first rises through zero (with some hysteresis) in the first part of the block,
 /// so the trace starts there; 0 if it doesn't.
 pub fn trigger(x: &[i16]) -> usize {
@@ -190,8 +233,8 @@ mod tests {
 
     fn scope() -> Box<Scope> {
         let mut s = Box::new(Scope {
-            cos: [0; N / 2], sin: [0; N / 2], window: [0; N], bands: [(0, 0); BANDS], reference_db: 0,
-            re: [0; N], im: [0; N], gain: [0; 2],
+            tw: [[0; 2]; N / 2], window: [0; N], bands: [(0, 0); BANDS], reference_db: 0,
+            z: [[0; 2]; N], gain: [0; 2],
         });
         s.init();
         s
@@ -230,6 +273,36 @@ mod tests {
         assert!(((loud - quiet) as f64 / 256.0 - 60.0).abs() < 1.0, "{}", (loud - quiet) as f64 / 256.0);
         let silence = s.spectrum(&[0; N]);
         assert!(silence.iter().all(|&d| d == FLOOR_DB * 256));
+    }
+
+    #[test]
+    fn one_fft_gives_both_spectra_as_two_would() {
+        let mut s = scope();
+        let x = sine(187.5, 20000.0);
+        let y: std::vec::Vec<i16> = sine(4921.875, 3000.0).iter().zip(sine(750.0, 9000.0))
+            .map(|(a, b)| a.saturating_add(b)).collect();
+        let (bx, by) = s.spectra(Some(&x), Some(&y));
+        let ax = s.spectrum(&x);
+        let ay = s.spectrum(&y);
+        for b in 0..BANDS {
+            // (where a band is far under its signal, the other's rounding shows: a few dB at -80)
+            if ax[b] > -70 * 256 {
+                assert!((bx[b] - ax[b]).abs() < 256 / 4, "x band {b}: {} vs {}", bx[b], ax[b]);
+            }
+            if ay[b] > -70 * 256 {
+                assert!((by[b] - ay[b]).abs() < 256 / 4, "y band {b}: {} vs {}", by[b], ay[b]);
+            }
+        }
+        let (_, none) = s.spectra(Some(&x), None);
+        assert!(none.iter().all(|&d| d == FLOOR_DB * 256));
+    }
+
+    #[test]
+    fn a_trigger_fed_sample_by_sample_fires_where_the_block_search_does() {
+        let x = sine(110.0, 8000.0);
+        let mut t = Trigger::new(8000);
+        let at = (0..N).find(|&i| t.feed(x[i])).unwrap();
+        assert_eq!(at, trigger(&x));
     }
 
     #[test]

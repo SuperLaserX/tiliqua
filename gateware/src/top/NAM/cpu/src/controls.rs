@@ -443,8 +443,102 @@ impl ToneCursor {
 
 // ---- The System screen ---------------------------------------------------------------------
 
-/// The themes, by name (their colours are the firmware's, `fw/src/theme.rs`, in this order).
-pub const THEMES: [&str; 6] = ["SLATE", "TWEED", "NEON", "PHOSPHOR", "STAGE", "DAYLIGHT"];
+/// The themes, by name (their colours are the firmware's, `fw/src/theme.rs`, in this order):
+/// the dark ones, then the light.
+pub const THEMES: [&str; 17] = [
+    "SLATE", "TWEED", "NEON", "PHOSPHOR", "STAGE", "AMBER", "OCEAN", "GLACIER", "FOREST", "COPPER",
+    "CRIMSON", "SUNSET", "ROYAL", "GRAPHITE", "FOG", "SAND", "DAYLIGHT",
+];
+/// The theme before one is picked (and the one the user chose as the default).
+pub const THEME_DEFAULT: usize = 3;
+const _: () = assert!(THEME_DEFAULT < THEMES.len());
+/// Themes the pick at power-up leaves out (they can still be chosen): a white screen is a lot
+/// to be met with.
+pub const THEMES_NOT_PICKED: [&str; 1] = ["DAYLIGHT"];
+
+/// The theme for this start, picked from `entropy` (any 32 bits, well mixed): one of the themes
+/// not left out, each as likely.
+pub fn picked_theme(entropy: u32) -> usize {
+    let pool = THEMES.iter().filter(|n| !THEMES_NOT_PICKED.contains(n)).count();
+    let k = ((entropy as u64 * pool as u64) >> 32) as usize;
+    THEMES.iter().enumerate().filter(|(_, n)| !THEMES_NOT_PICKED.contains(n)).nth(k).map_or(THEME_DEFAULT, |(i, _)| i)
+}
+
+// ---- The Scope screen ----------------------------------------------------------------------
+
+/// Which signals the Scope screen shows.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum ScopeShow {
+    #[default]
+    Both,
+    Output,
+    Input,
+}
+
+/// Which pictures: waves and spectra, or one of them (the waves alone need no FFT, and stop
+/// capturing once they have a screenful).
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum ScopeDisplay {
+    #[default]
+    All,
+    Waves,
+    Spectra,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub struct ScopeControls {
+    pub show: ScopeShow,
+    pub display: ScopeDisplay,
+}
+
+impl ScopeControls {
+    pub fn input(&self) -> bool {
+        self.show != ScopeShow::Output
+    }
+    pub fn output(&self) -> bool {
+        self.show != ScopeShow::Input
+    }
+    pub fn waves(&self) -> bool {
+        self.display != ScopeDisplay::Spectra
+    }
+    pub fn spectra(&self) -> bool {
+        self.display != ScopeDisplay::Waves
+    }
+
+    /// Turning picks the signals, a click the pictures; whether anything changed.
+    pub fn event(&mut self, e: Event) -> bool {
+        const SHOWS: [ScopeShow; 3] = [ScopeShow::Both, ScopeShow::Output, ScopeShow::Input];
+        const DISPLAYS: [ScopeDisplay; 3] = [ScopeDisplay::All, ScopeDisplay::Waves, ScopeDisplay::Spectra];
+        match e {
+            Event::Turn(n) => {
+                let i = SHOWS.iter().position(|s| *s == self.show).unwrap_or(0) as i32;
+                self.show = SHOWS[(i + n).rem_euclid(3) as usize];
+                n % 3 != 0
+            }
+            Event::Click => {
+                let i = DISPLAYS.iter().position(|d| *d == self.display).unwrap_or(0);
+                self.display = DISPLAYS[(i + 1) % 3];
+                true
+            }
+            Event::Hold => false,
+        }
+    }
+
+    /// What is shown, in words.
+    pub fn text(&self) -> &'static str {
+        match (self.show, self.display) {
+            (ScopeShow::Both, ScopeDisplay::All) => "IN AND OUT, WAVES AND SPECTRA",
+            (ScopeShow::Both, ScopeDisplay::Waves) => "IN AND OUT, WAVES",
+            (ScopeShow::Both, ScopeDisplay::Spectra) => "IN AND OUT, SPECTRA",
+            (ScopeShow::Output, ScopeDisplay::All) => "OUT, WAVE AND SPECTRUM",
+            (ScopeShow::Output, ScopeDisplay::Waves) => "OUT, WAVE",
+            (ScopeShow::Output, ScopeDisplay::Spectra) => "OUT, SPECTRUM",
+            (ScopeShow::Input, ScopeDisplay::All) => "IN, WAVE AND SPECTRUM",
+            (ScopeShow::Input, ScopeDisplay::Waves) => "IN, WAVE",
+            (ScopeShow::Input, ScopeDisplay::Spectra) => "IN, SPECTRUM",
+        }
+    }
+}
 
 /// Where the encoder is on the System screen: its one setting, the theme. A click edits it,
 /// turning then picks.
@@ -498,6 +592,43 @@ mod tone_tests {
     }
 
     #[test]
+    fn the_scope_turns_through_its_signals_and_clicks_through_its_pictures() {
+        let mut s = ScopeControls::default();
+        assert!(s.input() && s.output() && s.waves() && s.spectra());
+        assert!(s.event(Event::Turn(1)));
+        assert_eq!(s.show, ScopeShow::Output);
+        assert!(!s.input() && s.output());
+        s.event(Event::Turn(1));
+        assert!(s.input() && !s.output());
+        assert!(!s.event(Event::Turn(3)), "a whole turn round: no change");
+        assert!(s.event(Event::Click));
+        assert!(s.waves() && !s.spectra());
+        s.event(Event::Click);
+        assert!(!s.waves() && s.spectra());
+        assert_eq!(s.text(), "IN, SPECTRUM");
+        s.event(Event::Click);
+        assert_eq!(s.display, ScopeDisplay::All);
+        assert!(!s.event(Event::Hold));
+        assert_eq!(THEMES[THEME_DEFAULT], "PHOSPHOR");
+    }
+
+    #[test]
+    fn the_startup_pick_reaches_every_theme_but_daylight_about_equally() {
+        let mut counts = [0u32; THEMES.len()];
+        for i in 0..17_000u32 {
+            counts[picked_theme(crate::seed::fmix(i))] += 1;
+        }
+        for (t, n) in counts.iter().enumerate() {
+            if THEMES[t] == "DAYLIGHT" {
+                assert_eq!(*n, 0);
+            } else {
+                assert!((800..1350).contains(n), "{}: {n}", THEMES[t]);
+            }
+        }
+        assert!(THEMES.iter().all(|n| n.len() <= 8));
+    }
+
+    #[test]
     fn the_theme_turns_round_only_while_editing() {
         let mut k = SystemCursor::default();
         let mut theme = 0;
@@ -514,14 +645,14 @@ mod tone_tests {
     fn the_gate_switches_and_its_threshold_stays_in_range() {
         let mut c = ToneControls::default();
         let mut k = ToneCursor::default();
-        assert!(c.gate && c.threshold_db == -80);
+        assert!(c.gate && c.threshold_db == -39);
         assert!(!k.event(Event::Turn(1), &mut c));
         assert_eq!(k.setting(), ToneSetting::Threshold);
         k.event(Event::Click, &mut c);
         assert!(k.event(Event::Turn(-5), &mut c));
-        assert_eq!(c.threshold_db, -85);
-        assert_eq!(c.text(ToneSetting::Threshold).as_str(), "-85 DB");
-        assert!(k.event(Event::Turn(-50), &mut c));
+        assert_eq!(c.threshold_db, -44);
+        assert_eq!(c.text(ToneSetting::Threshold).as_str(), "-44 DB");
+        assert!(k.event(Event::Turn(-80), &mut c));
         assert_eq!(c.threshold_db, -100);
         assert!(!k.event(Event::Turn(-1), &mut c));
         k.event(Event::Click, &mut c);

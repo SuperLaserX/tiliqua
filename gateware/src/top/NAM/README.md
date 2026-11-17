@@ -284,9 +284,9 @@ Host tests check the dB arithmetic to a hundredth of a dB and the gate against
 the plugin's algorithm in floating point to half a dB (a note into hiss: it
 opens within 5 ms and doesn't close until the note is under the threshold).
 
-The TONE screen: NOISE GATE on or off and THRESHOLD (-100 to 0 dB, -80 by
-default, as the plugin), what the gate is doing, the level it hears on the
-left arc and how far it has closed on the right.
+The TONE screen: NOISE GATE on or off and THRESHOLD (-100 to 0 dB; on at -39 dB
+by default, the user's choice, where the plugin starts at -80), what the gate is
+doing, the level it hears on the left arc and how far it has closed on the right.
 
 ### Tone stack and DC blocker: not in the program
 
@@ -350,17 +350,57 @@ seed passes.
 
     python src/top/NAM/tools/ship.py [--seeds 1-24] [--jobs N] [--all]   (from gateware/)
 
+Its first run (2026-11-17, the tone stack, DC blocker and scope tap): synthesis
+in 2 minutes, eleven seeds started, seed 11 the first to finish and passing
+everything (engine 133.1 MHz, system 66.2, DVI 98.4, DVI 5x 421.8, data-valid
+1.20 ns), the rest stopped, the archive made: 10 minutes in all, untouched.
+87% of LUT4s (21,303), 55 of 56 block RAMs, 18 of 28 multipliers.
+
 ### Themes
 
-Six, picked on the SYSTEM screen (click THEME, turn, click): SLATE (the
+Seven, picked on the SYSTEM screen (click THEME, turn, click): SLATE (the
 first look, on a blue-black ground), TWEED (cream and gold on brown), NEON
-(magenta and cyan on violet), PHOSPHOR (a green screen), STAGE (white, red and
-yellow on black) and DAYLIGHT (ink on paper, for a bright room). A theme is a
+(magenta and cyan on violet), PHOSPHOR (a green screen, the default), STAGE
+(white, red and yellow on black), FOG (ink on a soft grey: the user found
+DAYLIGHT's white jarring) and DAYLIGHT (ink on paper, for a bright room). A theme is a
 ground colour, the five colours drawn on it, and a bezel round the rim (a
 ring, two rings, a knob's skirt of ticks, or a glow). Every colour's
 intensities run from the ground to its full value, so faint things fade into
 the ground and every erase is the ground; switching is a palette write and a
-redraw. The theme resets to SLATE at power-up (nothing is kept yet).
+redraw. The theme resets to PHOSPHOR at power-up (nothing is kept yet).
+
+### The scope (phase 10)
+
+The SCOPE screen: the input and the output as waveforms in one box, their
+spectra in another (40 Hz to 20 kHz on a log scale, -90 to 0 dBFS, lines at
+-30 and -60 dB and marks at 100 Hz, 1 kHz and 10 kHz). The CPU couldn't see the
+output's samples, so the peripheral has a tap (`tap` register: the input
+sample and the output going out with it, latched as each input sample
+arrives; status's `tap_count` counts them): about 130 LUT4, a second register
+for the count having cost twice that in the CSR read mux. Every 80 ms on that
+screen the firmware polls the count and reads 1,024 consecutive pairs (21 ms),
+starts the traces at the input's first rising zero crossing (with hysteresis,
+so hiss doesn't trigger it) so a note stands still, scales each to its own
+peak (down at once, up slowly, at most 36 dB so silence stays flat), and runs
+a 1,024-point FFT on each (`cpu/src/scope.rs`: integers, a Hann window, each
+stage halved, the input at << 14 so a -60 dBFS sine keeps its level); each of
+48 log-spaced bands is its loudest bin. Host tests: a full-scale sine at 0 dB
+within a dB, a -60 dBFS one 60 dB under it within a dB, the window's skirt two
+octaves off under -60 dB, the trigger, the scaling.
+
+It was too slow to be useful on the instrument (the user, 2026-11-17): a
+frame captured 21 ms by polling, then two FFTs whose working space (16 KB in
+PSRAM) is four times the CPU's data cache, then about 800 lines, every 80 ms.
+Now: turning on the screen picks the signals (IN AND OUT, OUT, IN) and a click
+the pictures (WAVES AND SPECTRA, WAVES, SPECTRA); with the waves alone there is
+no FFT and the capture stops once the trigger has fired and a trace's worth has
+come (about 7 to 12 ms for a guitar's notes); one FFT gives both spectra (the
+input its real part, the output its imaginary part, separated after: within a
+quarter of a dB of two FFTs in the host tests), its values as interleaved
+pairs and its twiddles 16-bit; a frame starts every 30 ms; and the screen says
+how many ms a frame took. If that is still not real time, the next step is
+gateware: a capture buffer in the last block RAM (about 60 LUT4), so the
+capture runs while the CPU draws.
 
 ## Fitting
 
@@ -662,10 +702,10 @@ The SoC gives up three things (`nam/trim.py`, project-local overrides):
 | 4 | PSRAM streams, the peripheral and `top.py`; first build: resources, timing at 120 MHz, clocks per sample | done: fits at 86%, the engine meets 120 MHz on every seed (see [Fitting](#fitting)) |
 | 5 | Firmware: `.nam` parser and loader, quantisation in Rust, USB browser, prewarm | done; runs on the instrument (see Status) |
 | 6 | UI: level meters, input/output/gate/tone/mode/Lite-Full, round-screen design | done in code and host tests, not yet on the instrument; gate and tone controls go with their DSP in phase 7 |
-| 7 | Noise gate and tone stack (in the program), DC blocker | noise gate on the CPU; tone stack and DC blocker in gateware (they don't work in the program); built and tested in simulation, the bitstream from `tools/ship.py` |
+| 7 | Noise gate and tone stack (in the program), DC blocker | noise gate on the CPU; tone stack and DC blocker in gateware (they don't work in the program); built, shipped on seed 11, not yet on the instrument |
 | 8 | Whole-SoC simulation and hardware check; calibration pass | |
 | 9 | Stereo: Lite on one datapath, Full with a second | |
-| 10 | Visualisation: oscilloscope and spectrum of in and out | |
+| 10 | Visualisation: oscilloscope and spectrum of in and out | built (a tap in the peripheral, the rest firmware), shipped on seed 11, not yet on the instrument |
 
 ## Decisions
 
@@ -698,6 +738,7 @@ The SoC gives up three things (`nam/trim.py`, project-local overrides):
 | Tone stack and DC blocker | gateware, 32-bit signals and 27-bit coefficients, one multiplier, two coefficient banks | in the program they were the largest error even flat; the user's choice of the three options |
 | Builds | `tools/ship.py`: build, seeds as soon as there is a netlist, first passing seed shipped | the last rounds took a day of watching; the user asked for builds that run unattended |
 | Themes | palette and bezel; the ground is every colour's intensity 0 | erases stay clean on any ground; switching needs no new drawing code |
+| Scope's samples | a tap register in the peripheral, read by polling its count in bursts | the CPU couldn't see the output; a tap is far smaller than a capture buffer, and the CPU has time to poll |
 | Drive that doesn't answer | powered off for 600 ms and tried again, three times | the user had to replug until it read; FairWave, with the same USB host and code, hasn't shown it, and the shipped seed's USB pin timing is like FairWave's |
 | Parsing a profile | each JSON object walked once for all its keys, the weights parsed once and kept | a load took 6 to 7 s on the instrument; the file was walked about seven times and every weight parsed twice |
 

@@ -349,3 +349,21 @@ pub fn system<D: DrawTarget<Color = HI8>>(d: &mut D, lines: &mut Lines<N_LINES>,
     lines.set(d, after, at_spot(&layout::HINT, cx, cy, "CLICK: PICK A THEME   HOLD: SCREENS", theme::RIM));
     blank_from(d, lines, after + 1);
 }
+
+/// The Scope screen's words: its title, which colour is which, the spectra's frequency marks, what
+/// is shown and how long a frame takes.
+pub fn scope<D: DrawTarget<Color = HI8>>(d: &mut D, lines: &mut Lines<N_LINES>, cx: i32, cy: i32,
+                                         c: &nam_cpu::controls::ScopeControls, frame_ms: u32) {
+    lines.set(d, 0, at_spot(&layout::AMP_BRAND, cx, cy, "NAM", theme::DIM));
+    lines.set(d, 1, at_spot(&layout::AMP_TITLE, cx, cy, "SCOPE", theme::TITLE));
+    lines.set(d, 2, if c.input() { at_spot(&layout::SCOPE_LEGEND_IN, cx, cy, "IN", crate::scopeview::IN) } else { None });
+    lines.set(d, 3, if c.output() { at_spot(&layout::SCOPE_LEGEND_OUT, cx, cy, "OUT", crate::scopeview::OUT) } else { None });
+    for (i, (hz, label)) in [(100.0, "100"), (1000.0, "1K"), (10000.0, "10K")].iter().enumerate() {
+        lines.set(d, 4 + i, at_spot(&layout::scope_freq(layout::spectrum_x(*hz)), cx, cy, label, theme::DIM));
+    }
+    let mut mode: String<64> = String::new();
+    core::fmt::write(&mut mode, format_args!("{}   {} MS A FRAME", c.text(), frame_ms)).ok();
+    lines.set(d, 7, at_spot(&layout::SCOPE_MODE, cx, cy, mode.as_str(), theme::DIM));
+    lines.set(d, 8, at_spot(&layout::HINT, cx, cy, "TURN: SIGNALS   CLICK: PICTURES", theme::RIM));
+    blank_from(d, lines, 9);
+}

@@ -25,16 +25,20 @@ use tiliqua_lib::color::HI8;
 use nam_cpu::browser::{arrange, row_of, selectable, BrowserAction, BrowserCursor, DrivePath, Info, Row};
 use nam_cpu::disk::{Entry, HOME_FOLDER, MAX_ENTRIES};
 use nam_cpu::namfile::{self, Verdict};
-use nam_cpu::controls::{meter_thresholds, tone_sections, AmpCursor, Change, Controls, Meter, Offers, Setting,
-                        SystemCursor, ToneControls, ToneCursor, ToneSetting, THEMES};
+use nam_cpu::controls::{meter_thresholds, tone_sections, AmpCursor, Change, Controls, Meter, Offers, ScopeControls,
+                        Setting, SystemCursor, ToneControls, ToneCursor, ToneSetting, picked_theme, THEMES,
+                        THEME_DEFAULT};
 use nam_cpu::gate::{self, Gate};
 use nam_cpu::loader::{self, level_words, post_shift, Levels, Loaded, Prepared, Width, MAX_WEIGHTS};
 use nam_cpu::program::{AUX_GAIN_IN, AUX_GAIN_OUT};
 use nam_cpu::nav::{Event, Nav, Page};
+use nam_cpu::scope::{self, Scope};
+use nam_cpu::seed::{fmix, Seed};
 use pac::constants::*;
-use tiliqua_fw::engine::{self as engine_regs, Engine};
+use tiliqua_fw::engine::{self as engine_regs, Engine, CAP_LEN};
 use tiliqua_fw::glyphs::{Glyphs, SHEET_BYTES};
 use tiliqua_fw::input::Input;
+use tiliqua_fw::scopeview::{self, ScopeView};
 use tiliqua_fw::screen::{clear_framebuffer, Fill, Lines};
 use tiliqua_fw::theme;
 use tiliqua_fw::ui::{self, AmpView, Arcs, BrowserView, Screen, ToneView, N_LINES};
@@ -85,6 +89,20 @@ const INFOS_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0x2_0000;
 const ROWS_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0x3_0000;
 const ORDER_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0x3_1000;
 const LINES_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0x3_8000;
+/// The Scope screen: the FFT's tables and work, the captured block, what is drawn.
+const SCOPE_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0x4_0000;
+const CAPTURE_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0x4_8000;
+const SCOPEVIEW_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0x4_A000;
+/// A word carried from one start to the next (PSRAM keeps it through a reset), then words
+/// nothing writes (what the chip woke with, after power-up): randomness for the startup theme.
+const SEED_ADDR: usize = PSRAM_BASE + PSRAM_UI_SCRATCH + 0xF_F000;
+const SEED_WORDS: usize = 64;
+const _: () = assert!(core::mem::size_of::<Scope>() <= 0x8000);
+const _: () = assert!(scope::N * 2 * 2 <= 0x2000);
+const _: () = assert!(core::mem::size_of::<ScopeView>() <= 0x2000);
+/// How often the Scope screen starts a frame (one takes from about 10 ms, waves alone, to about
+/// 40, everything; it shows how long).
+const SCOPE_MS: u32 = 20;
 /// The list's rows: every entry and a heading for each tone.
 const MAX_ROWS: usize = MAX_ENTRIES + 6;
 const _: () = assert!(MAX_WEIGHTS * 4 <= WEIGHTS_BYTES);
@@ -131,6 +149,7 @@ struct App {
     /// settings (its coefficients).
     theme_changed: bool,
     tone_changed: bool,
+    scope: ScopeControls,
 }
 
 impl App {
@@ -185,7 +204,9 @@ impl App {
                         self.theme_changed = true;
                     }
                 }
-                _ => {}
+                Page::Scope => {
+                    self.scope.event(e);
+                }
             }
         }
     }
@@ -669,7 +690,7 @@ fn boot() -> Booted {
     );
     info!("boot: display {} x {}", display.size().width, display.size().height);
 
-    theme::write_palette(&mut display, 0);
+    theme::write_palette(&mut display, THEME_DEFAULT);
     clear_framebuffer(&mut display, &mut fill, fb_words);
     let scratch = PSRAM_BASE + PSRAM_UI_SCRATCH;
     let glyph_sheet = Glyphs::new(unsafe { &mut *(scratch as *mut [u8; SHEET_BYTES]) });
@@ -686,6 +707,9 @@ fn boot() -> Booted {
     let mut engine = Engine::new(peripherals.NAM);
     engine.enable(false);
     engine.bypass(true);
+    let theme_now = startup_theme(&mut engine);
+    theme::write_palette(&mut display, theme_now);
+    info!("boot: theme {}", THEMES[theme_now]);
     let app = App {
         encoder: Encoder0::new(peripherals.ENCODER0),
         input: Input::default(),
@@ -707,9 +731,10 @@ fn boot() -> Booted {
         peaks: (0, 0),
         ticks: 0,
         system_cursor: SystemCursor::default(),
-        theme: 0,
+        theme: theme_now,
         theme_changed: false,
         tone_changed: false,
+        scope: ScopeControls::default(),
     };
     critical_section::with(|cs| APP.borrow(cs).replace(Some(app)));
     Booted { timer, display, fill, fb_words, engine }
@@ -745,6 +770,14 @@ fn run(booted: Booted) -> ! {
         let mut player = Player { engine, sound: Sound::Dry, current: None, width: Width::Full,
                                   levels: Levels::default(), load_ms: 0, steps: [0; 6], file: None };
         let mut arcs = Arcs::default();
+        let scope_work: &'static mut Scope = unsafe {
+            let p = SCOPE_ADDR as *mut Scope;
+            core::ptr::write_bytes(p, 0, 1);
+            &mut *p
+        };
+        scope_work.init();
+        let scope_view = unsafe { ScopeView::place(SCOPEVIEW_ADDR) };
+        let mut last_scope = 0u32;
         let mut switch_lit: Option<Page> = None;
         let thresholds = meter_thresholds();
         let (mut meter_in, mut meter_out) = (Meter::default(), Meter::default());
@@ -856,6 +889,7 @@ fn run(booted: Booted) -> ! {
                     clear_framebuffer(&mut display, &mut fill, fb_words);
                     lines.forget();
                     arcs.forget();
+                    scope_view.forget();
                     switch_lit = None;
                     ui::rim(&mut display, cx, cy, theme_now, match screen {
                         Screen::Page(p) => Some(p),
@@ -866,6 +900,12 @@ fn run(booted: Booted) -> ! {
                 let amp_state = AmpState { cursor: amp, controls, meter_in, meter_out };
                 draw(&mut display, lines, &mut arcs, &mut switch_lit, cx, cy, screen, cursor, &amp_state, &shelf, &player,
                      &drive, &figures);
+                if screen == Screen::Page(Page::Scope) && now.wrapping_sub(last_scope) >= SCOPE_MS {
+                    last_scope = now;
+                    let c = with_app(|app| app.scope);
+                    let ms = scope_frame(&mut display, cx, cy, &mut player.engine, scope_work, scope_view, c);
+                    ui::scope(&mut display, lines, cx, cy, &c, ms);
+                }
                 if shelf.job.is_some() {
                     shelf.announced = true;
                 }
@@ -877,6 +917,74 @@ fn run(booted: Booted) -> ! {
             }
         }
     })
+}
+
+/// This start's theme, picked at random from the input's noise (the capture ring's block, once
+/// it has filled: 21 ms), PSRAM's power-up contents and the word carried from the last start,
+/// which is moved on for the next.
+#[inline(never)]
+fn startup_theme(engine: &mut Engine) -> usize {
+    let mut seed = Seed::default();
+    let words = SEED_ADDR as *mut u32;
+    for i in 0..SEED_WORDS {
+        seed.add(unsafe { words.add(i).read_volatile() });
+    }
+    let mut moved = 0;
+    let mut last = engine.status().cap_ptr;
+    for _ in 0..1_000_000u32 {
+        let now = engine.status().cap_ptr;
+        if now != last {
+            last = now;
+            moved += 1;
+            if moved > CAP_LEN {
+                break;
+            }
+        }
+    }
+    let (dry, wet) = unsafe {
+        let p = CAPTURE_ADDR as *mut i16;
+        (core::slice::from_raw_parts_mut(p, scope::N), core::slice::from_raw_parts_mut(p.add(scope::N), scope::N))
+    };
+    if engine.capture(dry, wet) {
+        for (a, b) in dry.iter().zip(wet.iter()) {
+            seed.add(*a as u16 as u32 | (*b as u16 as u32) << 16);
+        }
+    }
+    let h = seed.finish();
+    unsafe { words.write_volatile(fmix(h ^ 0x9E37_79B9)) };
+    picked_theme(h)
+}
+
+/// The latest block from the capture ring, made into what the Scope screen shows, and drawn; how
+/// long it took, in ms. (The ring keeps every sample, so the block is there at once: the time is
+/// the FFT's, which the waves alone skip, and the drawing's. Out of line: its arrays are a
+/// kilobyte and a half of stack, only while it runs.)
+#[inline(never)]
+fn scope_frame(d: &mut DMAFramebuffer0, cx: i32, cy: i32, engine: &mut Engine, work: &mut Scope,
+               view: &mut ScopeView, c: ScopeControls) -> u32 {
+    let started = uptime_ms();
+    let (dry, wet) = unsafe {
+        let p = CAPTURE_ADDR as *mut i16;
+        (core::slice::from_raw_parts_mut(p, scope::N), core::slice::from_raw_parts_mut(p.add(scope::N), scope::N))
+    };
+    if !engine.capture(dry, wet) {
+        return uptime_ms().wrapping_sub(started);
+    }
+    let start = scope::trigger(dry);
+    let traces = if c.waves() {
+        [c.input().then(|| work.trace(0, dry, start, scopeview::HALF)),
+         c.output().then(|| work.trace(1, wet, start, scopeview::HALF))]
+    } else {
+        [None, None]
+    };
+    let spectra = if c.spectra() {
+        let (x, y) = work.spectra(c.input().then_some(&dry[..]), c.output().then_some(&wet[..]));
+        [c.input().then(|| ScopeView::heights(&x)), c.output().then(|| ScopeView::heights(&y))]
+    } else {
+        [None, None]
+    };
+    view.update(d, cx, cy, &traces, &spectra);
+    uptime_ms().wrapping_sub(started)
 }
 
 /// The Amp screen's state, as the main loop has it this time round.
@@ -969,6 +1077,6 @@ fn draw(d: &mut DMAFramebuffer0, lines: &mut Lines<N_LINES>, arcs: &mut Arcs, sw
             ui::tone(d, lines, arcs, cx, cy, &ToneView { values: &values, cursor, gate: tone.gate, playing,
                                                          level, reduction, threshold: tone.threshold_db });
         }
-        Screen::Page(p) => ui::text_page(d, lines, cx, cy, p.name(), &["IN A LATER PHASE"]),
+        Screen::Page(Page::Scope) => {}
     }
 }

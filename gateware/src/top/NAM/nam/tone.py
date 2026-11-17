@@ -77,7 +77,9 @@ class ToneStack(wiring.Component):
         # writes a setting (and with firmware that never does).
         flat = [v for section in model.stack(on=False) for v in section]
         init = (flat + [0] * (32 - len(flat))) * 2
-        m.submodules.coefs = coefs = Memory(shape=signed(COEF_BITS), depth=64, init=init)
+        # (in LUT RAM: the block RAM it would take holds the scope's capture ring)
+        m.submodules.coefs = coefs = Memory(shape=signed(COEF_BITS), depth=64, init=init,
+                                            attrs={"ram_style": "distributed"})
         m.submodules.hist = hist = Memory(shape=signed(STATE_BITS), depth=16, init=[])
         cw = coefs.write_port()
         cr = coefs.read_port(domain="comb")

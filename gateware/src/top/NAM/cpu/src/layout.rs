@@ -207,6 +207,8 @@ pub const SCOPE_BOX: Rect = Rect { x: -240, y: -176, w: 480, h: 160 };
 pub const SPECTRUM_BOX: Rect = Rect { x: -240, y: 20, w: 480, h: 140 };
 pub const SCOPE_LEGEND_IN: Spot = Spot::centre(TEXT, -60, -206, 5);
 pub const SCOPE_LEGEND_OUT: Spot = Spot::centre(TEXT, 60, -206, 6);
+/// What is shown and how long a frame takes, between the boxes.
+pub const SCOPE_MODE: Spot = Spot::centre(SMALL, 0, 2, 52);
 
 /// A frequency label under the spectra, at `x` (its band's place).
 pub const fn scope_freq(x: i32) -> Spot {
@@ -219,9 +221,9 @@ pub fn spectrum_x(hz: f64) -> i32 {
     SPECTRUM_BOX.x + (b * SPECTRUM_BOX.w as f64 / (crate::scope::BANDS - 1) as f64) as i32
 }
 
-pub fn scope_spots() -> [Spot; 8] {
+pub fn scope_spots() -> [Spot; 9] {
     [AMP_BRAND, AMP_TITLE, SCOPE_LEGEND_IN, SCOPE_LEGEND_OUT, scope_freq(spectrum_x(100.0)),
-     scope_freq(spectrum_x(1000.0)), scope_freq(spectrum_x(10000.0)), HINT]
+     scope_freq(spectrum_x(1000.0)), scope_freq(spectrum_x(10000.0)), SCOPE_MODE, HINT]
 }
 
 // ---- The switcher ----

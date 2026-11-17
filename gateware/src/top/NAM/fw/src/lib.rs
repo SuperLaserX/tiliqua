@@ -17,6 +17,7 @@ pub mod handlers;
 pub mod engine;
 pub mod glyphs;
 pub mod input;
+pub mod scopeview;
 pub mod screen;
 pub mod theme;
 pub mod ui;

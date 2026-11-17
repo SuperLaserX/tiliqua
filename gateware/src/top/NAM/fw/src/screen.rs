@@ -94,8 +94,12 @@ impl<const N: usize> Lines<N> {
     /// # Safety
     /// `addr` is PSRAM nothing else uses, aligned for `Lines`.
     pub unsafe fn place(addr: usize) -> &'static mut Lines<N> {
+        // (each line written where it lives: built whole, `Lines` would pass through the stack)
         let p = addr as *mut Lines<N>;
-        p.write(Lines { shown: [const { None }; N] });
+        let shown = core::ptr::addr_of_mut!((*p).shown) as *mut Option<Line>;
+        for i in 0..N {
+            shown.add(i).write(None);
+        }
         &mut *p
     }
 

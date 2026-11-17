@@ -13,9 +13,10 @@
 pub const TICK_US: u32 = 250;
 /// dB in fixed point: 1/256 dB.
 pub const DB: i32 = 256;
-/// The threshold's range and default (the plugin's), in dB.
+/// The threshold's range (the plugin's) and default (the user's choice: the plugin's -80 let
+/// through the hiss of a Eurorack input turned up for a guitar), in dB.
 pub const THRESHOLD_RANGE: (i32, i32) = (-100, 0);
-pub const THRESHOLD_DEFAULT: i32 = -80;
+pub const THRESHOLD_DEFAULT: i32 = -39;
 
 const RATIO_TENTHS: i64 = 1; // 0.1 dB per dB squared
 const FLOOR_DB: i32 = -120 * DB;
@@ -303,8 +304,8 @@ mod tests {
         for _ in 0..1000 {
             assert_eq!(g.tick(10_000, 0), 65536);
         }
-        // the input gain counts: a quiet input turned up 40 dB is above -80
-        let mut g = Gate::default();
+        // the input gain counts: a quiet input (-81 dBFS) turned up 40 dB is above -80
+        let mut g = Gate { threshold: -80 * DB, ..Gate::default() };
         for _ in 0..1000 {
             g.tick(3, 40 * DB);
         }
