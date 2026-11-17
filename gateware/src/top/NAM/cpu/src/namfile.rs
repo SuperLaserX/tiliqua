@@ -149,23 +149,24 @@ impl<'a> Json<'a> {
         match self.at(i).ok_or(NotA2::NotJson)? {
             b'"' => self.skip_string(i),
             b'{' | b'[' => {
-                // Nesting without recursion: strings are skipped whole.
+                // Nesting without recursion: strings are skipped whole. (A tight loop: a weights
+                // array is most of a file, and the CPU walks it byte by byte.)
+                let bytes = self.bytes;
                 let mut depth = 0i32;
                 let mut j = i;
-                while let Some(b) = self.at(j) {
-                    match b {
-                        b'"' => {
-                            j = self.skip_string(j)?;
-                            continue;
+                while j < bytes.len() {
+                    let b = bytes[j];
+                    let folded = b | 0x20;
+                    if folded == b'{' {
+                        depth += 1;
+                    } else if folded == b'}' {
+                        depth -= 1;
+                        if depth == 0 {
+                            return Ok(j + 1);
                         }
-                        b'{' | b'[' => depth += 1,
-                        b'}' | b']' => {
-                            depth -= 1;
-                            if depth == 0 {
-                                return Ok(j + 1);
-                            }
-                        }
-                        _ => {}
+                    } else if b == b'"' {
+                        j = self.skip_string(j)?;
+                        continue;
                     }
                     j += 1;
                 }
@@ -215,6 +216,43 @@ impl<'a> Json<'a> {
             let value_end = self.skip_value(i)?;
             if name == key.as_bytes() {
                 return Ok(Some(Span { start: i, end: value_end }));
+            }
+            i = value_end;
+        }
+    }
+
+    /// The values of `keys` in the object starting at `obj` (its `{`), the first of each, found in
+    /// one walk through it; and where the object ends.
+    pub fn fields<const N: usize>(&self, obj: usize, keys: [&str; N]) -> JResult<([Option<Span>; N], usize)> {
+        let mut out = [None; N];
+        let mut i = self.skip_ws(obj);
+        if self.at(i) != Some(b'{') {
+            return Err(NotA2::NotJson);
+        }
+        i += 1;
+        loop {
+            i = self.skip_ws(i);
+            match self.at(i) {
+                Some(b'}') => return Ok((out, i + 1)),
+                Some(b',') => {
+                    i += 1;
+                    continue;
+                }
+                Some(b'"') => {}
+                _ => return Err(NotA2::NotJson),
+            }
+            let key_end = self.skip_string(i)?;
+            let name = &self.bytes[i + 1..key_end - 1];
+            i = self.skip_ws(key_end);
+            if self.at(i) != Some(b':') {
+                return Err(NotA2::NotJson);
+            }
+            i = self.skip_ws(i + 1);
+            let value_end = self.skip_value(i)?;
+            if let Some(k) = keys.iter().position(|k| k.as_bytes() == name) {
+                if out[k].is_none() {
+                    out[k] = Some(Span { start: i, end: value_end });
+                }
             }
             i = value_end;
         }
@@ -491,54 +529,86 @@ fn check_shape(j: &Json, config: Span) -> JResult<usize> {
     Ok(c)
 }
 
-/// One `WaveNet` entry (a whole file, or a submodel).
-fn wavenet(j: &Json, entry: Span) -> JResult<Network> {
-    let Some(arch) = j.get(entry, "architecture")? else { return Err(NotA2::NotNam) };
+/// The keys of a model object a `WaveNet` entry needs, in `wavenet_from`'s order.
+const MODEL_KEYS: [&str; 5] = ["architecture", "config", "weights", "metadata", "sample_rate"];
+
+/// A number value, or None for null.
+fn opt_value(j: &Json, v: Option<Span>) -> JResult<Option<f64>> {
+    match v {
+        Some(v) if !j.is_null(v) => Ok(Some(j.number(v)?)),
+        _ => Ok(None),
+    }
+}
+
+/// One `WaveNet` entry (a whole file, or a submodel), from its keys' values (`MODEL_KEYS`).
+fn wavenet_from(j: &Json, f: &[Option<Span>; 5]) -> JResult<Network> {
+    let [arch, config, weights, meta, rate] = *f;
+    let Some(arch) = arch else { return Err(NotA2::NotNam) };
     if !j.str_eq(arch, "WaveNet") {
         return Err(NotA2::Architecture);
     }
-    let Some(config) = j.get(entry, "config")? else { return Err(NotA2::NotNam) };
+    let Some(config) = config else { return Err(NotA2::NotNam) };
     let channels = check_shape(j, config)?;
-    let Some(weights) = j.get(entry, "weights")? else { return Err(NotA2::NotNam) };
+    let Some(weights) = weights else { return Err(NotA2::NotNam) };
     if !j.starts_with(weights, b'[') {
         return Err(NotA2::NotNam);
     }
     let head_scale = j.number(j.get(config, "head_scale")?.unwrap())?;
     let (mut loudness, mut input_level_dbu, mut output_level_dbu) = (None, None, None);
-    if let Some(meta) = j.get(entry, "metadata")? {
+    if let Some(meta) = meta {
         if j.starts_with(meta, b'{') {
             loudness = opt_number(j, meta, "loudness")?;
             input_level_dbu = opt_number(j, meta, "input_level_dbu")?;
             output_level_dbu = opt_number(j, meta, "output_level_dbu")?;
         }
     }
-    let sample_rate = opt_number(j, entry, "sample_rate")?;
+    let sample_rate = opt_value(j, rate)?;
     Ok(Network { channels, weights, head_scale, loudness, input_level_dbu, output_level_dbu, sample_rate })
 }
 
 /// Every A2 network in a `.nam` (`a2.load_nam`): a plain WaveNet file gives one, a
 /// SlimmableContainer one per A2 submodel, the container's metadata filling what a submodel
 /// leaves out. The error is the last reason a network was refused.
+///
+/// Each object is walked once for all the keys it is asked for: a file is mostly its weights, and
+/// walking past them is most of the work.
 pub fn scan(bytes: &[u8]) -> Result<Networks, NotA2> {
     let j = Json::new(bytes);
-    let doc = Span { start: 0, end: bytes.len() };
     let i = j.skip_ws(0);
     if j.at(i) != Some(b'{') {
         return Err(NotA2::NotJson);
     }
-    let doc = Span { start: i, end: doc.end };
-    let Some(arch) = j.get(doc, "architecture")? else { return Err(NotA2::NotNam) };
+    let (doc, _) = j.fields(i, MODEL_KEYS)?;
+    let Some(arch) = doc[0] else { return Err(NotA2::NotNam) };
     let mut out = Networks::default();
     if j.str_eq(arch, "SlimmableContainer") {
-        let Some(config) = j.get(doc, "config")? else { return Err(NotA2::NotNam) };
-        let Some(subs) = j.get(config, "submodels")? else { return Err(NotA2::NotNam) };
-        let top_meta = j.get(doc, "metadata")?.filter(|m| j.starts_with(*m, b'{'));
-        let top_rate = opt_number(&j, doc, "sample_rate")?;
+        let Some(config) = doc[1] else { return Err(NotA2::NotNam) };
+        // (where the submodels start, without walking past them: they are walked one by one)
+        let Some(subs) = j.value_at(config.start, "submodels")? else { return Err(NotA2::NotNam) };
+        let top_meta = doc[3].filter(|m| j.starts_with(*m, b'{'));
+        let top_rate = opt_value(&j, doc[4])?;
         let mut last = NotA2::NotNam;
-        for sub in j.items(subs) {
-            let sub = sub?;
-            let Some(model) = j.get(sub, "model")? else { continue };
-            match wavenet(&j, model) {
+        let mut at = j.skip_ws(subs);
+        if j.at(at) != Some(b'[') {
+            return Err(NotA2::NotJson);
+        }
+        at += 1;
+        loop {
+            at = j.skip_ws(at);
+            match j.at(at) {
+                Some(b']') => break,
+                Some(b',') => {
+                    at += 1;
+                    continue;
+                }
+                Some(_) => {}
+                None => return Err(NotA2::NotJson),
+            }
+            let ([model], end) = j.fields(at, ["model"])?;
+            at = end;
+            let Some(model) = model else { continue };
+            let (f, _) = j.fields(model.start, MODEL_KEYS)?;
+            match wavenet_from(&j, &f) {
                 Ok(mut n) => {
                     if let Some(meta) = top_meta {
                         if n.loudness.is_none() {
@@ -565,7 +635,7 @@ pub fn scan(bytes: &[u8]) -> Result<Networks, NotA2> {
             return Err(last);
         }
     } else {
-        out.add(wavenet(&j, doc)?);
+        out.add(wavenet_from(&j, &doc)?);
     }
     Ok(out)
 }
@@ -671,10 +741,20 @@ pub fn each_weight(bytes: &[u8], n: &Network, mut f: impl FnMut(usize, f64)) -> 
 
 /// The first pass: the largest magnitude of every class, and the head scale.
 pub fn maxes(bytes: &[u8], n: &Network) -> JResult<(Maxes, f64)> {
+    read_weights(bytes, n, &mut [])
+}
+
+/// `maxes`, keeping every value it parses in `values` too (if it is long enough: `weight_count`),
+/// for `quantise_values`: parsing is the slow part, and this way it happens once.
+pub fn read_weights(bytes: &[u8], n: &Network, values: &mut [f64]) -> JResult<(Maxes, f64)> {
     let layout = Layout::new(n.channels);
     let mut m = Maxes { layers: [LayerMax::default(); MAX_LAYERS], ..Default::default() };
     let mut head_scale = n.head_scale;
+    let keep = values.len() >= layout.total;
     let count = each_weight(bytes, n, |i, v| {
+        if keep {
+            values[i] = v;
+        }
         let a = if v < 0.0 { -v } else { v };
         let max = |slot: &mut f64| if a > *slot { *slot = a };
         match layout.class_of(i) {
@@ -700,8 +780,26 @@ pub fn maxes(bytes: &[u8], n: &Network) -> JResult<(Maxes, f64)> {
 pub fn quantise(bytes: &[u8], n: &Network, fmt: &quant::Formats, plan: &[quant::LayerPlan],
                 e: &quant::Exponents, out: &mut [i32]) -> JResult<()> {
     let layout = Layout::new(n.channels);
+    let count = each_weight(bytes, n, |i, v| quantise_one(&layout, fmt, plan, e, i, v, out))?;
+    if count != layout.total {
+        return Err(NotA2::WrongWeightCount);
+    }
+    Ok(())
+}
+
+/// `quantise` from the values `read_weights` kept.
+pub fn quantise_values(values: &[f64], n: &Network, fmt: &quant::Formats, plan: &[quant::LayerPlan],
+                       e: &quant::Exponents, out: &mut [i32]) {
+    let layout = Layout::new(n.channels);
+    for (i, &v) in values[..layout.total].iter().enumerate() {
+        quantise_one(&layout, fmt, plan, e, i, v, out);
+    }
+}
+
+fn quantise_one(layout: &Layout, fmt: &quant::Formats, plan: &[quant::LayerPlan], e: &quant::Exponents, i: usize,
+                v: f64, out: &mut [i32]) {
     let cs = quant::CONST_SHIFT as i32;
-    let count = each_weight(bytes, n, |i, v| {
+    {
         let frac = match layout.class_of(i) {
             Class::Rechannel => e.lin_frac - fmt.x_frac as i32,
             Class::ConvW(l) => e.conv_frac[l],
@@ -717,12 +815,298 @@ pub fn quantise(bytes: &[u8], n: &Network, fmt: &quant::Formats, plan: &[quant::
             }
         };
         out[i] = quant::to_q(v, frac);
-    })?;
-    if count != layout.total {
-        return Err(NotA2::WrongWeightCount);
     }
     let _ = MAX_CHANNELS;
-    Ok(())
+}
+
+// ---- What a file is, from its first bytes ---------------------------------------------------
+//
+// The browser looks at the start of every `.nam` in a folder (one read each) to leave out what
+// isn't A2 and to show and sort profiles by their metadata. The networks' configs and metadata
+// come before their weights, so the start says enough; only a key's value has to be complete,
+// not the objects it's in.
+
+use heapless::String;
+
+/// The metadata's `tone_type`, in order of gain.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum Tone {
+    Clean,
+    Crunch,
+    Overdrive,
+    HiGain,
+    Fuzz,
+}
+
+impl Tone {
+    pub const ALL: [Tone; 5] = [Tone::Clean, Tone::Crunch, Tone::Overdrive, Tone::HiGain, Tone::Fuzz];
+
+    fn from_key(s: &[u8]) -> Option<Tone> {
+        Some(match s {
+            b"clean" => Tone::Clean,
+            b"crunch" => Tone::Crunch,
+            b"overdrive" => Tone::Overdrive,
+            b"hi_gain" => Tone::HiGain,
+            b"fuzz" => Tone::Fuzz,
+            _ => return None,
+        })
+    }
+
+    pub const fn text(self) -> &'static str {
+        match self {
+            Tone::Clean => "CLEAN",
+            Tone::Crunch => "CRUNCH",
+            Tone::Overdrive => "OVERDRIVE",
+            Tone::HiGain => "HIGH GAIN",
+            Tone::Fuzz => "FUZZ",
+        }
+    }
+}
+
+/// The metadata's `gear_type`.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Gear {
+    Amp,
+    Pedal,
+    PedalAmp,
+    AmpCab,
+    AmpPedalCab,
+    Preamp,
+    Studio,
+}
+
+impl Gear {
+    fn from_key(s: &[u8]) -> Option<Gear> {
+        Some(match s {
+            b"amp" => Gear::Amp,
+            b"pedal" => Gear::Pedal,
+            b"pedal_amp" => Gear::PedalAmp,
+            b"amp_cab" => Gear::AmpCab,
+            b"amp_pedal_cab" => Gear::AmpPedalCab,
+            b"preamp" => Gear::Preamp,
+            b"studio" => Gear::Studio,
+            _ => return None,
+        })
+    }
+
+    pub const fn text(self) -> &'static str {
+        match self {
+            Gear::Amp => "AMP",
+            Gear::Pedal => "PEDAL",
+            Gear::PedalAmp => "PEDAL AND AMP",
+            Gear::AmpCab => "AMP AND CAB",
+            Gear::AmpPedalCab => "AMP, PEDAL AND CAB",
+            Gear::Preamp => "PREAMP",
+            Gear::Studio => "STUDIO",
+        }
+    }
+}
+
+/// A profile's metadata, as much as the screens show. Text is ASCII (the fonts'), anything else
+/// a question mark.
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
+pub struct Meta {
+    pub name: String<48>,
+    pub make: String<32>,
+    pub model: String<32>,
+    pub by: String<32>,
+    pub gear: Option<Gear>,
+    pub tone: Option<Tone>,
+}
+
+/// Whether a file runs here, as far as its first bytes say.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Verdict {
+    A2,
+    NotA2(NotA2),
+    /// What was read ended before it could tell. Listed: loading reads it all and says.
+    Unsure,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct Summary {
+    pub verdict: Verdict,
+    pub meta: Meta,
+}
+
+impl<'a> Json<'a> {
+    /// Where `key`'s value starts in the object starting at `obj` (its `{`). The values before it
+    /// have to be complete; the value itself, and the object, may run past what was read.
+    pub fn value_at(&self, obj: usize, key: &str) -> JResult<Option<usize>> {
+        let mut i = self.skip_ws(obj);
+        if self.at(i) != Some(b'{') {
+            return Err(NotA2::NotJson);
+        }
+        i += 1;
+        loop {
+            i = self.skip_ws(i);
+            match self.at(i) {
+                Some(b'}') => return Ok(None),
+                Some(b',') => {
+                    i += 1;
+                    continue;
+                }
+                Some(b'"') => {}
+                _ => return Err(NotA2::NotJson),
+            }
+            let key_end = self.skip_string(i)?;
+            let name = &self.bytes[i + 1..key_end - 1];
+            i = self.skip_ws(key_end);
+            if self.at(i) != Some(b':') {
+                return Err(NotA2::NotJson);
+            }
+            i = self.skip_ws(i + 1);
+            if name == key.as_bytes() {
+                return Ok(Some(i));
+            }
+            i = self.skip_value(i)?;
+        }
+    }
+
+    /// `key`'s value in the object at `obj`, complete.
+    fn value_of(&self, obj: usize, key: &str) -> JResult<Option<Span>> {
+        match self.value_at(obj, key)? {
+            Some(start) => Ok(Some(Span { start, end: self.skip_value(start)? })),
+            None => Ok(None),
+        }
+    }
+
+    /// A string value's text: escapes undone, ASCII kept, anything else as `?`, cut to fit.
+    /// False if `v` isn't a string.
+    pub fn text_into<const N: usize>(&self, v: Span, out: &mut String<N>) -> bool {
+        out.clear();
+        let s = &self.bytes[v.start..v.end];
+        if s.len() < 2 || s[0] != b'"' {
+            return false;
+        }
+        let s = &s[1..s.len() - 1];
+        let mut i = 0;
+        let mut put = |c: char| {
+            let _ = out.push(c);
+        };
+        while i < s.len() {
+            let b = s[i];
+            if b == b'\\' && i + 1 < s.len() {
+                let e = s[i + 1];
+                i += 2;
+                match e {
+                    b'n' | b'r' | b't' | b'b' | b'f' => put(' '),
+                    b'u' => {
+                        let code = s.get(i..i + 4).and_then(|h| core::str::from_utf8(h).ok())
+                            .and_then(|h| u16::from_str_radix(h, 16).ok());
+                        i += 4;
+                        match code {
+                            Some(c @ 0x20..=0x7E) => put(c as u8 as char),
+                            Some(0xDC00..=0xDFFF) => {} // a surrogate pair's second half
+                            _ => put('?'),
+                        }
+                    }
+                    other => put(other as char),
+                }
+            } else if b < 0x80 {
+                put(if b < 0x20 { ' ' } else { b as char });
+                i += 1;
+            } else {
+                // a UTF-8 sequence: one mark for it
+                if b >= 0xC0 {
+                    put('?');
+                }
+                i += 1;
+            }
+        }
+        true
+    }
+}
+
+/// The metadata object at `meta` into `m`, keeping what is already there where it has nothing.
+fn read_meta(j: &Json, meta: Span, m: &mut Meta) {
+    if !j.starts_with(meta, b'{') {
+        return;
+    }
+    let text = |key: &str, out: &mut dyn FnMut(Span)| {
+        if let Ok(Some(v)) = j.get(meta, key) {
+            if j.starts_with(v, b'"') {
+                out(v);
+            }
+        }
+    };
+    text("name", &mut |v| { if m.name.is_empty() { j.text_into(v, &mut m.name); } });
+    text("gear_make", &mut |v| { if m.make.is_empty() { j.text_into(v, &mut m.make); } });
+    text("gear_model", &mut |v| { if m.model.is_empty() { j.text_into(v, &mut m.model); } });
+    text("modeled_by", &mut |v| { if m.by.is_empty() { j.text_into(v, &mut m.by); } });
+    let key = |key: &str| -> Option<&[u8]> {
+        let v = j.get(meta, key).ok()??;
+        let s = &j.bytes[v.start..v.end];
+        (s.len() >= 2 && s[0] == b'"').then(|| &s[1..s.len() - 1])
+    };
+    if m.gear.is_none() {
+        m.gear = key("gear_type").and_then(Gear::from_key);
+    }
+    if m.tone.is_none() {
+        m.tone = key("tone_type").and_then(Tone::from_key);
+    }
+}
+
+/// A WaveNet model object at `model`: its metadata into `m`, and whether it is an A2 (None: its
+/// config wasn't all there).
+fn look_at_model(j: &Json, model: usize, m: &mut Meta) -> Option<Result<(), NotA2>> {
+    if let Ok(Some(meta)) = j.value_of(model, "metadata") {
+        read_meta(j, meta, m);
+    }
+    let arch = j.value_of(model, "architecture").ok()??;
+    if !j.str_eq(arch, "WaveNet") {
+        return Some(Err(NotA2::Architecture));
+    }
+    let config = j.value_of(model, "config").ok()??;
+    Some(check_shape(j, config).map(|_| ()))
+}
+
+/// What a file is, from its first bytes (`whole`: they are all of it, so nothing is unsure).
+/// For a whole file the verdict is `scan`'s, exactly what loading it would say.
+pub fn summarise(bytes: &[u8], whole: bool) -> Summary {
+    let mut meta = Meta::default();
+    let j = Json::new(bytes);
+    let top = j.skip_ws(0);
+    let mut verdict = Verdict::Unsure;
+    if j.at(top) != Some(b'{') {
+        verdict = if bytes.is_empty() && !whole { Verdict::Unsure } else { Verdict::NotA2(NotA2::NotJson) };
+    } else if let Ok(Some(arch)) = j.value_of(top, "architecture") {
+        if j.str_eq(arch, "SlimmableContainer") {
+            // The first submodel: A2 profiles have Lite then Full, both A2.
+            let first = j.value_at(top, "config").ok().flatten()
+                .and_then(|c| j.value_at(c, "submodels").ok().flatten())
+                .map(|s| j.skip_ws(s))
+                .filter(|&s| j.at(s) == Some(b'['))
+                .map(|s| j.skip_ws(s + 1))
+                .and_then(|s| j.value_at(s, "model").ok().flatten());
+            if let Some(model) = first {
+                if let Some(Ok(())) = look_at_model(&j, model, &mut meta) {
+                    verdict = Verdict::A2;
+                }
+            }
+        } else if j.str_eq(arch, "WaveNet") {
+            match look_at_model(&j, top, &mut meta) {
+                Some(Ok(())) => verdict = Verdict::A2,
+                Some(Err(e)) => verdict = Verdict::NotA2(e),
+                None => {}
+            }
+        } else {
+            verdict = Verdict::NotA2(NotA2::Architecture);
+        }
+    }
+    // The file's own metadata, if it was read (a container's is often last).
+    if j.at(top) == Some(b'{') {
+        if let Ok(Some(m)) = j.value_of(top, "metadata") {
+            read_meta(&j, m, &mut meta);
+        }
+    }
+    if whole {
+        verdict = match scan(bytes) {
+            Ok(_) => Verdict::A2,
+            Err(e) => Verdict::NotA2(e),
+        };
+    }
+    Summary { verdict, meta }
 }
 
 #[cfg(test)]
@@ -763,5 +1147,81 @@ mod tests {
         assert_eq!(j.len(j.get(j.get(doc, "config").unwrap().unwrap(), "submodels").unwrap().unwrap()).unwrap(), 1);
         assert_eq!(scan(b"  [1, 2]"), Err(NotA2::NotJson));
         assert_eq!(scan(b"{\"a\": 1}"), Err(NotA2::NotNam));
+    }
+
+    fn example(name: &str) -> std::vec::Vec<u8> {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../NeuralAmpModelerCore/example_models");
+        std::fs::read(dir.join(name)).unwrap()
+    }
+
+    /// The browser reads this much of a file.
+    const HEAD: usize = 32 * 1024;
+
+    #[test]
+    fn a_summary_agrees_with_loading_and_a_start_never_contradicts_it() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../NeuralAmpModelerCore/example_models");
+        let mut seen = 0;
+        for f in std::fs::read_dir(dir).unwrap() {
+            let path = f.unwrap().path();
+            let bytes = std::fs::read(&path).unwrap();
+            let loads = scan(&bytes).is_ok();
+            let whole = summarise(&bytes, true);
+            assert_eq!(whole.verdict == Verdict::A2, loads, "{path:?}");
+            for cut in [HEAD, 16 * 1024, 4096, 600, 10] {
+                if cut >= bytes.len() {
+                    continue;
+                }
+                match summarise(&bytes[..cut], false).verdict {
+                    Verdict::A2 => assert!(loads, "{path:?} at {cut}: A2 but doesn't load"),
+                    Verdict::NotA2(_) => assert!(!loads, "{path:?} at {cut}: refused but loads"),
+                    Verdict::Unsure => {}
+                }
+            }
+            seen += 1;
+        }
+        assert!(seen >= 5);
+    }
+
+    #[test]
+    fn the_start_of_an_a2_profile_says_so() {
+        let nam = example("A2.nam");
+        assert_eq!(summarise(&nam[..HEAD], false).verdict, Verdict::A2);
+        // (its first config ends 12.8 KB in)
+        assert_eq!(summarise(&nam[..4096], false).verdict, Verdict::Unsure);
+        assert!(matches!(summarise(&example("wavenet_a1_standard.nam")[..HEAD], false).verdict,
+                         Verdict::NotA2(NotA2::Shape(_))));
+        assert_eq!(summarise(&example("lstm.nam"), true).verdict, Verdict::NotA2(NotA2::Architecture));
+    }
+
+    #[test]
+    fn metadata_comes_from_the_first_network_and_fills_from_the_container() {
+        let s = summarise(&example("slimmable_container.nam"), true);
+        assert_eq!(s.meta.name.as_str(), "Test LSTM");
+        assert_eq!((s.meta.make.as_str(), s.meta.model.as_str()), ("Darkglass Electronics", "Microtubes 900 v2"));
+        assert_eq!(s.meta.by.as_str(), "Steve");
+        assert_eq!((s.meta.gear, s.meta.tone), (Some(Gear::Amp), Some(Tone::Clean)));
+        let s = summarise(&example("wavenet_a2_feature_test.nam"), true);
+        assert_eq!(s.meta.name.as_str(), "Generated WaveNet Model");
+        let s = summarise(&example("A2.nam"), true);
+        assert_eq!((s.verdict, s.meta.name.as_str(), s.meta.tone), (Verdict::A2, "", None));
+    }
+
+    #[test]
+    fn metadata_text_is_ascii_with_escapes_undone() {
+        let doc = "{\"version\": \"0.7.0\", \"metadata\": {\"name\": \"Br\\u00fcder \\\"Plexi\\\"\\nCrunch \u{1F3B8}\", \
+                   \"tone_type\": \"hi_gain\", \"gear_type\": \"amp_cab\", \"gear_make\": null, \"modeled_by\": \"Gr\u{fc}n\"}, \
+                   \"architecture\": \"LSTM\", \"config\": {}, \"weights\": [1]}";
+        let s = summarise(doc.as_bytes(), true);
+        assert_eq!(s.verdict, Verdict::NotA2(NotA2::Architecture));
+        assert_eq!(s.meta.name.as_str(), "Br?der \"Plexi\" Crunch ?");
+        assert_eq!(s.meta.by.as_str(), "Gr?n");
+        assert_eq!((s.meta.tone, s.meta.gear, s.meta.make.as_str()), (Some(Tone::HiGain), Some(Gear::AmpCab), ""));
+        let long = std::format!("{{\"metadata\": {{\"name\": \"{}\"}}}}", "x".repeat(80));
+        assert_eq!(summarise(long.as_bytes(), true).meta.name.len(), 48);
+        let unknown = "{\"metadata\": {\"tone_type\": \"spicy\", \"gear_type\": 3}}";
+        let s = summarise(unknown.as_bytes(), true);
+        assert_eq!((s.meta.tone, s.meta.gear), (None, None));
+        assert_eq!(summarise(b"", false).verdict, Verdict::Unsure);
+        assert_eq!(summarise(b"[1, 2]", true).verdict, Verdict::NotA2(NotA2::NotJson));
     }
 }

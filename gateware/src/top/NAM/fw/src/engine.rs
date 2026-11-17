@@ -1,6 +1,8 @@
 //! The NAM peripheral's registers (nam/peripheral.py): the engine's tables, its control
 //! and what it reports.
 
+use nam_cpu::program::{Built, Tables, AUX_GAIN_IN, AUX_GAIN_OUT, COLUMNS};
+
 use crate::pac;
 
 pub const TAB_WMEM: u32 = 0;
@@ -15,6 +17,8 @@ pub struct Status {
     pub late: bool,
     /// The last sample's computation, in engine clocks (120 MHz).
     pub clocks: u16,
+    /// A tone stack swap asked for and not yet made (it is, at the next sample).
+    pub tone_pending: bool,
 }
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
@@ -38,12 +42,15 @@ impl Engine {
     }
 
     /// One entry of a table: its words, least significant first (as many as the table's
-    /// entries have), then the commit with the table and index.
+    /// entries have), then the commit with the table and index. A critical section: the gate's
+    /// interrupt writes an entry through the same two registers (`write_aux_from_isr`).
     fn table(&mut self, table: u32, index: u32, words: &[u32]) {
-        for word in words {
-            self.regs.twrite().write(|w| unsafe { w.bits(*word) });
-        }
-        self.regs.tcommit().write(|w| unsafe { w.bits((table | index << 3) as u16) });
+        critical_section::with(|_| {
+            for word in words {
+                self.regs.twrite().write(|w| unsafe { w.bits(*word) });
+            }
+            self.regs.tcommit().write(|w| unsafe { w.bits((table | index << 3) as u16) });
+        });
     }
 
     /// A row of the weight memory: eight 18-bit lanes.
@@ -89,6 +96,36 @@ impl Engine {
         self.regs.config().write(|w| unsafe { w.bits(word) });
     }
 
+    /// The program's shape, as the build says.
+    pub fn configure(&mut self, b: &Built) {
+        self.config(b.n_rings, b.n_segments, b.late_after, b.wpf_log2, b.burst_log2, b.ring_log2);
+    }
+
+    /// The input and output gain words, while running: one word each, so a sample sees the
+    /// old or the new one, never half of either.
+    pub fn set_gains(&mut self, gain_in: i32, gain_out: i32) {
+        self.write_aux(AUX_GAIN_IN, gain_in);
+        self.write_aux(AUX_GAIN_OUT, gain_out);
+    }
+
+    /// The tone stack's four sections (bass, middle, treble, DC blocker; `nam_cpu::tone_tables`),
+    /// written into the bank not playing and swapped in at the next sample. A swap still pending
+    /// is waited for first (a sample at most), so a bank about to play is never written.
+    pub fn write_tone(&mut self, sections: &[[i32; 5]; 4]) {
+        for _ in 0..100_000u32 {
+            if !self.status().tone_pending {
+                break;
+            }
+        }
+        for (k, section) in sections.iter().enumerate() {
+            for (j, value) in section.iter().enumerate() {
+                let word = (*value as u32 & ((1 << 27) - 1)) | ((k * 5 + j) as u32) << 27;
+                self.regs.tone().write(|w| unsafe { w.bits(word) });
+            }
+        }
+        self.regs.tswap().write(|w| unsafe { w.bits(1) });
+    }
+
     fn write_ctrl(&mut self, pulses: u32) {
         self.regs.ctrl().write(|w| unsafe { w.bits((self.ctrl | pulses) as u8) });
     }
@@ -125,7 +162,7 @@ impl Engine {
 
     pub fn status(&self) -> Status {
         let s = self.regs.status().read().bits();
-        Status { busy: s & 1 != 0, late: s & 2 != 0, clocks: (s >> 2) as u16 }
+        Status { busy: s & 1 != 0, late: s & 2 != 0, clocks: (s >> 2) as u16, tone_pending: s & (1 << 18) != 0 }
     }
 
     /// Reading clears the longest-sample figure and the overrun count.
@@ -139,4 +176,38 @@ impl Engine {
         let m = self.regs.meters().read().bits();
         (m as u16, (m >> 16) as u16)
     }
+}
+
+/// The program builder writes straight into the engine.
+impl Tables for Engine {
+    fn weights(&mut self, row: u32, lanes: &[i32; COLUMNS]) {
+        self.write_weights(row, lanes);
+    }
+    fn aux(&mut self, index: u32, value: i32) {
+        self.write_aux(index, value);
+    }
+    fn program(&mut self, index: u32, word: u64) {
+        self.write_program(index, word);
+    }
+    fn ring(&mut self, index: u32, entry: u64) {
+        self.write_ring(index, entry);
+    }
+    fn pos(&mut self, index: u32, pos: u32) {
+        self.write_pos(index, pos);
+    }
+}
+
+/// An aux word written from the interrupt (the gate's output gain). The main loop's entries are
+/// critical sections, so this never lands between the words of one.
+pub fn write_aux_from_isr(index: u32, value: i32) {
+    let regs = unsafe { pac::NAM::steal() };
+    regs.twrite().write(|w| unsafe { w.bits((value as u32) & 0x3FFFF) });
+    regs.tcommit().write(|w| unsafe { w.bits((TAB_AUX | index << 3) as u16) });
+}
+
+/// The input and output peaks since the last read, read (and so cleared) by the interrupt, which
+/// is the only reader: the gate needs every one.
+pub fn meters_from_isr() -> (u16, u16) {
+    let m = unsafe { pac::NAM::steal() }.meters().read().bits();
+    (m as u16, (m >> 16) as u16)
 }

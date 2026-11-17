@@ -31,6 +31,11 @@ pub enum Face {
 impl Face {
     const ALL: [Face; 3] = [Face::Big, Face::Text, Face::Small];
 
+    /// The face of a layout's font (by its cell; the three differ).
+    pub fn of(font: Font) -> Face {
+        Face::ALL.into_iter().find(|f| f.font() == font).unwrap_or(Face::Text)
+    }
+
     pub const fn font(self) -> Font {
         match self {
             Face::Big => layout::BIG,

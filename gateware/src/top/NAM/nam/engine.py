@@ -246,10 +246,9 @@ class Engine(wiring.Component):
         # One write port in front of all the history's (the post unit's, the clear's),
         # registered once per block RAM: they are spread over the chip. (Nothing reads
         # a frame the clock after it is written: this sample's go by the newest FIFO.)
-        hist_wp = Signal(data.StructLayout({"addr": ceil_log2(self.hist_words), "data": ACT, "en": 1}))
-        for k, mem in enumerate(hists):
-            m.d.sync += [mem.w_addr.eq(hist_wp.addr[:10]), mem.w_data.eq(hist_wp.data),
-                         mem.w_en.eq(hist_wp.en & (hist_wp.addr[10:] == k))]
+        hist_we8 = Signal(len(hists))   # the post unit's write, decoded per RAM a stage early
+        sbw_we8 = Signal(2)             # the same for the stream buffer's two halves
+        # (the write ports are driven below the post unit, which sets these)
         m.d.comb += [sbuf_r.w_addr.eq(self.sbr_w.addr), sbuf_r.w_data.eq(self.sbr_w.data),
                      sbuf_r.w_en.eq(self.sbr_w.en)]
         sbw_rp = sbuf_w.read_port(domain=self.bus_domain, transparent_for=())
@@ -333,6 +332,10 @@ class Engine(wiring.Component):
         m.submodules.nq = nq = QuickFifo(ACT)
         running = Signal()
         advancing = Signal()
+        # `running & ~advancing` as a register kept in step (set as the advance loop
+        # ends, cleared with `running`): the loads read it, and the sample state
+        # machine sits a long way from the slots.
+        loads_ok = Signal()
         clearing = Signal()
         prefilling = Signal()
         m.d.comb += self.busy.eq(running | advancing | clearing | prefilling)
@@ -430,6 +433,7 @@ class Engine(wiring.Component):
             # read or faster.
             s.ok = Signal(name=f"ok{k}")
             s.rz = Signal(name=f"reads_z{k}")      # the op pops the z FIFO (a low part)
+            s.osrc = Signal(3, name=f"op_src{k}")  # the op's source (XC: x, then the constant)
             s.ci = Signal(name=f"can_issue{k}")
             m.d.comb += s.ci.eq(s.v & ~f["kind"] & (~s.first | s.ok))
             s.ce = Signal(name=f"issue{k}")
@@ -454,8 +458,7 @@ class Engine(wiring.Component):
             # The op this slot would issue.
             s.op = Signal(OpLayout, name=f"op{k}")
             m.d.comb += [
-                s.op.src.eq(Mux(((src == P.SRC_XC) & s.phase) | s.zb, P.SRC_CONST,
-                                Mux(src == P.SRC_XC, P.SRC_X, src))),
+                s.op.src.eq(s.osrc),
                 s.op.ring.eq(f["ring"]), s.op.tap.eq(s.tap + f["tap0"]), s.op.delay.eq(s.delay),
                 s.op.ch.eq(s.ch), s.op.row.eq(s.row), s.op.bank.eq(bank),
                 s.op.clear.eq(s.first & f["clear"]), s.op.lo.eq(s.zq & s.phase & ~s.zb),
@@ -475,7 +478,7 @@ class Engine(wiring.Component):
                         with m.Else():
                             m.d.sync += s.ch.eq(s.ch + 1)
                     with m.Case(P.SRC_XC):
-                        m.d.sync += s.phase.eq(1)
+                        m.d.sync += [s.phase.eq(1), s.osrc.eq(P.SRC_CONST)]
                     with m.Case(P.SRC_ZQ):
                         with m.If(~s.zb):
                             # (the next op pops if it is a low part; none does once the
@@ -483,7 +486,7 @@ class Engine(wiring.Component):
                             m.d.sync += [s.phase.eq(~s.phase), s.rz.eq(~s.phase)]
                             with m.If(s.phase):
                                 with m.If(at_count):
-                                    m.d.sync += [s.ch.eq(0), s.tap.eq(1), s.zb.eq(1)]
+                                    m.d.sync += [s.ch.eq(0), s.tap.eq(1), s.zb.eq(1), s.osrc.eq(P.SRC_CONST)]
                                 with m.Else():
                                     m.d.sync += s.ch.eq(s.ch + 1)
             slots.append(s)
@@ -525,19 +528,26 @@ class Engine(wiring.Component):
         load0 = Signal()
         load1 = Signal()
         m.d.comb += [
-            load0.eq(segq.r_rdy & running & ~advancing & ~s0.v & ((act == 0) | s1.v)),
-            load1.eq(segq.r_rdy & running & ~advancing & ~s1.v & ((act == 1) | s0.v) & ~load0),
+            load0.eq(segq.r_rdy & loads_ok & ~s0.v & ((act == 0) | s1.v)),
+            load1.eq(segq.r_rdy & loads_ok & ~s1.v & ((act == 1) | s0.v) & ~load0),
             segq.r_en.eq(load0 | load1),
         ]
+        # An empty slot takes the queue's head every clock, its fields and what is worked
+        # out from them (so their enables come from the `v` register, not from the load
+        # decision, which only pops the queue and marks the slot full); the head taken as
+        # the slot fills is the one popped.
         for s, ld in ((s0, load0), (s1, load1)):
             with m.If(ld):
+                m.d.sync += s.v.eq(1)
+            with m.If(~s.v):
                 m.d.sync += [s.taps_m1.eq(rf["taps"] - 1), s.taps_m2.eq(rf["taps"] - 2),
                              s.count_m1.eq(rf["count"] - 1), s.count_m2.eq(rf["count"] - 2),
                              s.count_one.eq(rf["count"] == 1)]
-                m.d.sync += [s.seg.eq(segq.r_data), s.v.eq(1), s.tap.eq(0), s.ch.eq(0), s.phase.eq(0),
+                m.d.sync += [s.seg.eq(segq.r_data), s.tap.eq(0), s.ch.eq(0), s.phase.eq(0),
                              s.row.eq(rf["wrow"]), s.delay.eq(rf["delay0"]), s.first.eq(1),
                              s.zq.eq(~rf["kind"] & (rf["src"] == P.SRC_ZQ)), s.zb.eq(0), s.rz.eq(0),
-                             s.nq.eq(~rf["kind"] & (rf["src"] == P.SRC_NEWEST))]
+                             s.nq.eq(~rf["kind"] & (rf["src"] == P.SRC_NEWEST)),
+                             s.osrc.eq(Mux(rf["src"] == P.SRC_XC, P.SRC_X, rf["src"]))]
                 # The first op is the last: a single op, or a ring/newest segment of one.
                 with m.Switch(rf["src"]):
                     with m.Case(P.SRC_RING, P.SRC_NEWEST):
@@ -576,10 +586,22 @@ class Engine(wiring.Component):
         # ==================================================================================
         clk_count = Signal(16)
         adv_i = Signal(range(self.n_rings + 1))
+        adv_more = Signal()             # adv_i < n_rings_used, kept as adv_i is set
+        adv_first = n_rings_used != 0
+        adv_next = (adv_i + 1) < n_rings_used
         # Pending transfers, one entry per ring and burst: ring, slot, due, prefill.
         m.submodules.pendq = pendq = SyncFIFOBuffered(width=5 + 1 + 8 + 1, depth=16)
         pre_slot = Signal()
         clr_i = Signal(range(max(self.hist_words, self.sbuf_w_words) + 1))
+        # The clear's write enables, decoded for the next index as the index is set:
+        # registers kept beside it, so each RAM's port register is one LUT from registers.
+        clr_next = Signal.like(clr_i)
+        m.d.comb += clr_next.eq(clr_i + 1)
+        clr_we8 = Signal(len(hists))
+        clr_sbw = Signal()
+        clr_dec = [clr_we8.eq(Cat(*[(clr_next < self.hist_words) & (clr_next[10:] == k)
+                                    for k in range(len(hists))])),
+                   clr_sbw.eq(clr_next < self.sbuf_w_words)]
         ra = ring_rd_adv.data
         da = rdyn_rd_adv.data
         ra_q = Signal(RingEntry)
@@ -593,29 +615,28 @@ class Engine(wiring.Component):
             with m.State("IDLE"):
                 m.d.sync += clk_count.eq(0)
                 with m.If(self.clear):
-                    m.d.sync += [clearing.eq(1), clr_i.eq(0), self.late.eq(0), sample_no.eq(0)]
+                    m.d.sync += [clearing.eq(1), clr_i.eq(0), self.late.eq(0), sample_no.eq(0),
+                                 clr_we8.eq(int(self.hist_words > 0)), clr_sbw.eq(int(self.sbuf_w_words > 0))]
                     m.next = "CLEAR"
                 with m.Elif(self.prefill):
-                    m.d.sync += [prefilling.eq(1), adv_i.eq(0), pre_slot.eq(1)]
+                    m.d.sync += [prefilling.eq(1), adv_i.eq(0), adv_more.eq(adv_first), pre_slot.eq(1)]
                     m.next = "PREFILL"
                 with m.Elif(self.start):
                     m.d.sync += [adc_reg.eq(self.adc), sample_no.eq(sample_no + 1),
-                                 adv_i.eq(0), advancing.eq(1),
+                                 adv_i.eq(0), adv_more.eq(adv_first), advancing.eq(1),
                                  running.eq(1), pc.eq(0), fetch_half.eq(0), fetch_done.eq(0),
                                  slots[0].v.eq(0), slots[1].v.eq(0), act.eq(0)]
                     m.next = "ADVANCE"
             with m.State("CLEAR"):
-                m.d.comb += [hist_wp.addr.eq(clr_i), hist_wp.data.eq(0), hist_wp.en.eq(clr_i < self.hist_words),
-                             sbw_wp.addr.eq(clr_i), sbw_wp.data.eq(0),
-                             sbw_wp.en.eq(Mux(clr_i < self.sbuf_w_words, 0b11, 0))]
-                m.d.sync += clr_i.eq(clr_i + 1)
+                # (the write ports take clr_i and the enables decoded for it: see below)
+                m.d.sync += [clr_i.eq(clr_next)] + clr_dec
                 with m.If(clr_i == max(self.hist_words, self.sbuf_w_words) - 1):
                     m.d.sync += clearing.eq(0)
                     m.next = "IDLE"
             with m.State("PREFILL"):
                 # Every PSRAM ring's read streams: slot 1, then slot 0 (the ring's entry
                 # read here, used from a register in PREFILL2).
-                with m.If(adv_i == n_rings_used):
+                with m.If(~adv_more):
                     m.d.sync += prefilling.eq(0)
                     m.next = "IDLE"
                 with m.Else():
@@ -623,14 +644,14 @@ class Engine(wiring.Component):
                     m.next = "PREFILL2"
             with m.State("PREFILL2"):
                 with m.If(~ra_q.psram):
-                    m.d.sync += adv_i.eq(adv_i + 1)
+                    m.d.sync += [adv_i.eq(adv_i + 1), adv_more.eq(adv_next)]
                     m.next = "PREFILL"
                 with m.Elif(pendq.w_rdy):
                     m.d.comb += [pendq.w_data.eq(Cat(adv_i[:5], pre_slot, sample_no, C(1, 1))),
                                  pendq.w_en.eq(1)]
                     m.d.sync += pre_slot.eq(~pre_slot)
                     with m.If(~pre_slot):
-                        m.d.sync += adv_i.eq(adv_i + 1)
+                        m.d.sync += [adv_i.eq(adv_i + 1), adv_more.eq(adv_next)]
                         m.next = "PREFILL"
             with m.State("ADVANCE"):
                 # Step every ring's write pointer, and every PSRAM ring's position in
@@ -638,18 +659,18 @@ class Engine(wiring.Component):
                 # stages, a ring a clock: its entry is read here, the next one is worked
                 # out and then written (below), from registers.
                 m.d.sync += clk_count.eq(clk_count + 1)
-                with m.If(adv_i < n_rings_used):
+                with m.If(adv_more):
                     m.d.sync += [ra_q.eq(ra), da_q.eq(da), adv_j.eq(adv_i), adv_v.eq(1),
-                                 adv_i.eq(adv_i + 1)]
+                                 adv_i.eq(adv_i + 1), adv_more.eq(adv_next)]
                 with m.Else():
                     m.d.sync += adv_v.eq(0)
                     with m.If(~adv_v & ~adv_v2):
-                        m.d.sync += advancing.eq(0)
+                        m.d.sync += [advancing.eq(0), loads_ok.eq(1)]
                         m.next = "RUN"
             with m.State("RUN"):
                 m.d.sync += clk_count.eq(clk_count + 1)
                 with m.If(post_done_evt):
-                    m.d.sync += [running.eq(0), self.clocks.eq(clk_count)]
+                    m.d.sync += [running.eq(0), loads_ok.eq(0), self.clocks.eq(clk_count)]
                     m.d.comb += [self.done.eq(1), self.clocks_stb.eq(1)]
                     m.next = "IDLE"
         # The advance loop's second stage works out a ring's next position (and whether
@@ -690,8 +711,12 @@ class Engine(wiring.Component):
         xf_pre = Signal()
         xf_t = Signal(4)
         xf_pi = Signal(range(self.n_pos))       # the stream's entry in the position table
-        xr = ring_rd_xfer.data
-        m.d.comb += [ring_rd_xfer.addr.eq(xf_ring), spos_rd.addr.eq(xf_pi)]
+        # The ring's entry, read as the pending transfer is taken (the queue's head is a
+        # register) and kept in a register for the states that use it.
+        xr = Signal(RingEntry)
+        m.d.comb += [ring_rd_xfer.addr.eq(Mux(pendq.r_en, pendq.r_data[:5], xf_ring)),
+                     spos_rd.addr.eq(xf_pi)]
+        m.d.sync += xr.eq(ring_rd_xfer.data)
         # The stream's position is read into a register (POS) before it's used.
         pos = Signal(POS_BITS)
         xf_wr = Signal()
@@ -714,11 +739,14 @@ class Engine(wiring.Component):
         # Room for a request, as a register: only this machine queues requests and dones,
         # so room seen a clock ago is still there.
         room = Signal()
-        m.d.comb += [
-            self.req.payload.addr.eq(Cat(pos, C(self.pring_base >> POS_BITS, 22 - POS_BITS))),
-            self.req.payload.words.eq(burst), self.req.payload.buf.eq(slot_buf),
-            doneq.w_data.eq(xf_due),
-        ]
+        # The request as registers (the master's queue is a long way off): offered the
+        # clock after the decision, which `room` still covers.
+        req_v = Signal()
+        req_p = Signal(Req)
+        m.d.comb += [self.req.valid.eq(req_v), self.req.payload.eq(req_p), doneq.w_data.eq(xf_due)]
+        m.d.sync += req_v.eq(0)
+        req_go = [req_v.eq(1), req_p.addr.eq(Cat(pos, C(self.pring_base >> POS_BITS, 22 - POS_BITS))),
+                  req_p.words.eq(burst), req_p.buf.eq(slot_buf)]
 
         with m.FSM():
             with m.State("IDLE"):
@@ -746,9 +774,8 @@ class Engine(wiring.Component):
                 with m.If(overdue):
                     m.d.sync += self.late.eq(1)
                 with m.If(room):
-                    m.d.comb += [self.req.valid.eq(1), self.req.payload.write.eq(0),
-                                 doneq.w_en.eq(1), pos_step.eq(1)]
-                    m.d.sync += xf_t.eq(xf_t + 1)
+                    m.d.comb += [doneq.w_en.eq(1), pos_step.eq(1)]
+                    m.d.sync += req_go + [req_p.write.eq(0), xf_t.eq(xf_t + 1)]
                     m.next = "LOOK"
                 with m.Else():
                     m.d.sync += room.eq(doneq.w_rdy & self.req.ready)
@@ -756,8 +783,8 @@ class Engine(wiring.Component):
                 with m.If(overdue):
                     m.d.sync += self.late.eq(1)
                 with m.If(room):
-                    m.d.comb += [self.req.valid.eq(1), self.req.payload.write.eq(1),
-                                 doneq.w_en.eq(1), pos_step.eq(1)]
+                    m.d.comb += [doneq.w_en.eq(1), pos_step.eq(1)]
+                    m.d.sync += req_go + [req_p.write.eq(1)]
                     m.next = "IDLE"
                 with m.Else():
                     m.d.sync += room.eq(doneq.w_rdy & self.req.ready)
@@ -842,13 +869,17 @@ class Engine(wiring.Component):
                      s5_hsel.eq(s4_hsel), s5_wsel.eq(s4_wsel)]
 
         # z and newest values are taken from their FIFO's head when issued, and ride along.
+        # (both heads captured as the op issues, the choice between them a stage later
+        # from s1's fields: the op's source is decided late, and far from the FIFOs)
+        nq_head = Signal(signed(ACT))
+        zq_head = Signal(24)
+        m.d.sync += [nq_head.eq(nq.r_data), zq_head.eq(zq.r_data)]
         zq_hi = Signal(signed(ACT))
         zq_lo = Signal(signed(ACT))
-        m.d.comb += [zq_hi.eq(zq.r_data[6:24].as_signed()), zq_lo.eq(zq.r_data[0:6])]
+        m.d.comb += [zq_hi.eq(zq_head[6:24].as_signed()), zq_lo.eq(zq_head[0:6])]
         fifo_pipe = [Signal(signed(ACT), name=f"fifop{i}") for i in range(6)]
-        m.d.sync += fifo_pipe[0].eq(Mux(op.src == P.SRC_NEWEST, nq.r_data.as_signed(),
-                                        Mux(op.lo, zq_lo, zq_hi)))
-        for i in range(1, 6):
+        m.d.sync += fifo_pipe[1].eq(Mux(s1.src == P.SRC_NEWEST, nq_head, Mux(s1.lo, zq_lo, zq_hi)))
+        for i in range(2, 6):
             m.d.sync += fifo_pipe[i].eq(fifo_pipe[i - 1])
 
         # s6: the ring value, from whichever block RAM (or read buffer half) holds it.
@@ -958,8 +989,11 @@ class Engine(wiring.Component):
             m.d.sync += queued[b].eq(queued[b] + (post_go & (post_cmd.bank == b)) - (pop & (head_bank == b)))
         # The command is an H post, as a register (it selects the H sums' read).
         hpost = Signal()
+        last_pi = Signal(4)             # the command's count less one
+        at_last = pi == last_pi
         with m.If(pop):
-            m.d.sync += [cmd.eq(head), cmd_v.eq(1), pi.eq(0), armed.eq(0), hpost.eq(head.bank == P.BANK_H)]
+            m.d.sync += [cmd.eq(head), cmd_v.eq(1), pi.eq(0), armed.eq(0), hpost.eq(head.bank == P.BANK_H),
+                         last_pi.eq(head.count - 1)]
         with m.If(cmd_v & (armed != 2)):
             m.d.sync += armed.eq(armed + 1)
         item_go = cmd_v & (armed == 2)
@@ -987,12 +1021,12 @@ class Engine(wiring.Component):
         p1_val = Signal(signed(ACC))
         with m.If(item_go):
             m.d.sync += pi.eq(pi + 1)
-            with m.If(pi + 1 == cmd.count):
+            with m.If(at_last):
                 m.d.sync += [cmd_v.eq(0), hpost.eq(0)]
         m.d.sync += [p0_v.eq(item_go), p0_h.eq(hpost), p0_bank.eq(cmd.bank), cand_h.eq(h_cur)]
         m.d.sync += [cand[b].eq(Array(banks[b])[pi[:3]]) for b in range(3)]
         m.d.sync += [
-            p0.i.eq(pi), p0.last.eq(pi + 1 == cmd.count), p0.dest.eq(cmd.dest),
+            p0.i.eq(pi), p0.last.eq(at_last), p0.dest.eq(cmd.dest),
             p0.leaky.eq(cmd.leaky), p0.shift.eq(cmd.shift), p0.done.eq(cmd.done), p0.newest.eq(cmd.newest),
             p0.haddr.eq(p_ring.base + (p_dyn.wptr << p_ring.stride) + pi),
             p0.saddr.eq(p_saddr),
@@ -1057,7 +1091,6 @@ class Engine(wiring.Component):
         p8, p8_v = stage(p7b, p7b_v, "p8")
         r8 = Signal(signed(24))
         sat8 = Signal()
-        neg8 = Signal()
         hi0 = {0: top0 & m18_0 & m16_0, 1: top0 & m18_0, 2: top0}
         hi1 = {0: top1 & m18_1 & m16_1, 1: top1 & m18_1, 2: top1}
         lo1 = {0: lo16, 1: lo16 & m16_1, 2: lo16 & m16_1 & m18_1}
@@ -1066,15 +1099,22 @@ class Engine(wiring.Component):
             for code in (0, 1, 2):
                 with m.Case(code):
                     m.d.comb += sat7b.eq(~(hi0[code] | hi1[code]) | (hi0[code] & lo1[code]))
-        m.d.sync += [r8.eq(r7b), sat8.eq(sat7b), neg8.eq(neg7b)]
+        m.d.sync += [r8.eq(r7b), sat8.eq(sat7b)]
 
+        # The saturation limit as a register beside sat8 (from the width and the sign
+        # at p7b), so the result is one LUT a bit from registers: it goes a chip's width
+        # to the RAMs and FIFOs, and the placer may put that crossing in any stage.
+        # (sat7b is 0 for a width code without a case, so the limit is never stale)
+        lim8 = Signal(signed(24))
+        with m.Switch(p7b.bits):
+            for code, bits in ((0, 16), (1, 18), (2, 24)):
+                lim = (1 << (bits - 1)) - 1
+                with m.Case(code):
+                    m.d.sync += lim8.eq(Mux(neg7b, -lim - 1, lim))
         res = Signal(signed(24))
-        m.d.comb += res.eq(r8)
-        for code, bits in ((0, 16), (1, 18), (2, 24)):
-            lim = (1 << (bits - 1)) - 1
-            with m.If(sat8 & (p8.bits == code)):
-                m.d.comb += res.eq(Mux(neg8, -lim - 1, lim))
-        m.d.comb += post_done_evt.eq(p8_v & p8.done & p8.last)
+        m.d.comb += res.eq(Mux(sat8, lim8, r8))
+        # (a register: the sample state machine is a long way from the post unit)
+        m.d.sync += post_done_evt.eq(p8_v & p8.done & p8.last)
 
         # H: one adder for the eight sums, in two stages: an item's sum is read at p8
         # and written back with its z added at p9 (the item after it is another lane).
@@ -1088,26 +1128,65 @@ class Engine(wiring.Component):
         m.d.comb += h_idx.eq(Mux(h_read, pi[:3], p8.i[:3]))
         m.d.sync += [p9_v.eq(p8_v), p9_acc.eq(p8_v & ((p8.dest == P.DST_ZQ) | (p8.dest == P.DST_H))),
                      p9_i.eq(p8.i[:3]), p9_res.eq(res), p9_h.eq(h_cur)]
+        # (the clear the clock after the read, from registers: nothing accumulates during
+        # an H post, and the next command's reads come later still)
+        h_clr = Signal()
+        h_clr_i = Signal(3)
+        m.d.sync += [h_clr.eq(item_go & cmd.clearacc), h_clr_i.eq(pi[:3])]
         for c in range(NC):
-            with m.If(item_go & cmd.clearacc & (pi == c)):
+            with m.If(h_clr & (h_clr_i == c)):
                 m.d.sync += hacc[c].eq(0)
             with m.Elif(p9_acc & (p9_i == c)):
                 m.d.sync += hacc[c].eq(p9_h + p9_res)
         # The FIFOs' write enables are registers, decoded a stage early: the post unit
         # sits by the block RAMs, the FIFOs by the sequencer, 4 ns of wire apart.
+        # The writes' enables, decoded from p7 into registers at p7b and copied once
+        # more at p8: the post unit sits a chip's width from the FIFOs and RAMs (4 ns
+        # of wire), so the hop that crosses carries no logic.
+        nq_w7b = Signal()
+        zq_w7b = Signal()
+        hist_we7b = Signal(len(hists))
+        sbw_we7b = Signal(2)
+        # (the history and stream-buffer writes' conditions, and the RAM select as a
+        # one-hot, are registers at p7 from p6's fields: no stage deeper than two LUTs,
+        # wherever the placer puts the chip crossing; a three-LUT decode got it inside)
+        hist_w7 = Signal()
+        sbw_w7 = Signal()
+        hist_sel7 = Signal(len(hists))
+        m.d.sync += [hist_w7.eq(p6_v & (p6.dest == P.DST_RING) & (p6.bits == 1)),
+                     sbw_w7.eq(p6_v & (p6.dest == P.DST_RING) & (p6.bits != 1)),
+                     hist_sel7.eq(Cat(*[p6.haddr[10:] == k for k in range(len(hists))]))]
+        m.d.sync += [nq_w7b.eq(p7_v & (p7.dest == P.DST_RING) & p7.newest),
+                     zq_w7b.eq(p7_v & (p7.dest == P.DST_ZQ)),
+                     hist_we7b.eq(Cat(*[hist_w7 & hist_sel7[k] for k in range(len(hists))])),
+                     sbw_we7b.eq(Cat(sbw_w7 & ~p7.half, sbw_w7 & p7.half))]
         nq_w8 = Signal()
         zq_w8 = Signal()
-        m.d.sync += [nq_w8.eq(p7b_v & (p7b.dest == P.DST_RING) & p7b.newest),
-                     zq_w8.eq(p7b_v & (p7b.dest == P.DST_ZQ))]
+        m.d.sync += [nq_w8.eq(nq_w7b), zq_w8.eq(zq_w7b), hist_we8.eq(hist_we7b), sbw_we8.eq(sbw_we7b)]
         m.d.comb += [nq.w_data.eq(res[:ACT]), nq.w_en.eq(nq_w8), zq.w_data.eq(res), zq.w_en.eq(zq_w8)]
+        # The history and stream-buffer write ports: the clear's write or the post unit's,
+        # chosen by `clearing` (a register; no post write comes while clearing), with the
+        # enables decoded a stage early into registers on both sides, so each port
+        # register is one LUT from registers (sharing the port's signals put the post
+        # unit's p8 cone in the select, five LUTs and a chip's width of wire from the RAMs).
+        # (hist_we8 and sbw_we8 come from the decode at p7 above)
+        for k, mem in enumerate(hists):
+            m.d.sync += [mem.w_addr.eq(Mux(clearing, clr_i, p8.haddr)[:10]),
+                         mem.w_data.eq(Mux(clearing, 0, res[:ACT])),
+                         mem.w_en.eq(Mux(clearing, clr_we8[k], hist_we8[k]))]
+        # The stream buffer's port through registers of the engine's own, like the
+        # history RAMs': the buffer sits by the PSRAM master, a chip's width from the
+        # post unit, and the result is saturated in the same clock. The write lands a
+        # clock later; the earliest read of it, a flush, comes with the next sample.
+        sbw_a9 = Signal.like(sbw_wp.addr)
+        sbw_d9 = Signal(32)
+        sbw_en9 = Signal(2)
+        m.d.sync += [sbw_a9.eq(Mux(clearing, clr_i, p8.saddr)),
+                     sbw_d9.eq(Mux(clearing, 0, Cat(res[:16], res[:16]))),
+                     sbw_en9.eq(Mux(clearing, Cat(clr_sbw, clr_sbw), sbw_we8))]
+        m.d.comb += [sbw_wp.addr.eq(sbw_a9), sbw_wp.data.eq(sbw_d9), sbw_wp.en.eq(sbw_en9)]
         with m.If(p8_v):
             with m.Switch(p8.dest):
-                with m.Case(P.DST_RING):
-                    with m.If(p8.bits == 1):
-                        m.d.comb += [hist_wp.addr.eq(p8.haddr), hist_wp.data.eq(res[:ACT]), hist_wp.en.eq(1)]
-                    with m.Else():
-                        m.d.comb += [sbw_wp.addr.eq(p8.saddr), sbw_wp.data.eq(Cat(res[:16], res[:16])),
-                                     sbw_wp.en.eq(Mux(p8.half, 0b10, 0b01))]
                 with m.Case(P.DST_X):
                     m.d.sync += x_reg.eq(res[:ACT])
                 with m.Case(P.DST_Y):

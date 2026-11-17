@@ -103,7 +103,6 @@ struct Ring {
     psram: bool,
     base: u32,
     stride: u32,
-    bits: u32,
     // PSRAM: the write stream and the first of `nread` read streams, as indices into the
     // builder's stream list; then (allocate) their numbers and the starting position.
     wstream: u32,
@@ -181,6 +180,23 @@ fn post(bank: u64, count: u32, shift: i32, dest: u64, ring: u32, leaky: bool, ne
         | field(done as u64, 24, 1)
 }
 
+/// The program word holding the input gain's shift: the input stage's post, the second segment's
+/// low word (a post is all in its low word). Written alone it changes atomically, as does the gain
+/// word; a level changes live with the two.
+pub const INPUT_POST_WORD: u32 = 2;
+
+/// The input stage's post with its gain's shift (`build` writes it so).
+pub fn input_post(shift: i32) -> u64 {
+    post(BANK_Z1, 1, shift, DST_X, 0, false, false, false, false) as u64
+}
+
+/// The output stage's post with its gain's shift, for a program of `n_segments` over `layers`
+/// layers: the last segment's low word, (its index, the word).
+pub fn output_post(n_segments: u32, layers: usize, shift: i32) -> (u32, u64) {
+    let bank = if (layers - 1) % 2 == 0 { BANK_Z0 } else { BANK_Z1 };
+    (2 * (n_segments - 1), post(bank, 1, shift, DST_OUT, 0, false, false, false, true) as u64)
+}
+
 fn encode_ring(r: &Ring) -> u64 {
     let f = |v: u32, lsb: u32| (v as u64) << lsb;
     f(r.base, 0)
@@ -207,11 +223,11 @@ fn encode_pos(s: &Stream) -> (u32, u32) {
 /// Builds the program for a network of `c` channels whose quantised weights are `q` (the
 /// file's order), writing every table through `out`. `psram_base` is a 32-bit word address.
 #[allow(clippy::too_many_arguments)]
-pub fn build<T: Tables>(c: usize, q: &[i32], fmt: &Formats, plan: &[LayerPlan], e: &Exponents, head_scale: f64,
+#[inline(never)] // (its tables are 3 KB of stack: the firmware's is 16 KB, so not inside a caller)
+pub fn build<T: Tables>(c: usize, q: &[i32], _fmt: &Formats, plan: &[LayerPlan], e: &Exponents, head_scale: f64,
                         gain_in_db: f64, gain_out_db: f64, burst_frames: u32, psram_base: u32,
                         out: &mut T) -> Result<Built, BuildError> {
     let layout = Layout::new(c);
-    let stride = (c as u32 - 1).next_power_of_two().trailing_zeros().max(if c > 1 { 1 } else { 0 });
     // (3 channels -> 4 words a frame, 8 -> 8; two 16-bit channels to a PSRAM word)
     let stride = if c <= 1 { 0 } else { 32 - (c as u32 - 1).leading_zeros() };
     let wpf = ((1u32 << stride) / 2).max(1);
@@ -222,7 +238,7 @@ pub fn build<T: Tables>(c: usize, q: &[i32], fmt: &Formats, plan: &[LayerPlan], 
     let mut n_streams = 0usize;
     for (l, p) in plan.iter().enumerate() {
         let frames = (p.kernel - 1) * p.dilation + 1;
-        let mut r = Ring { frames, psram: p.psram, stride, bits: p.hist_bits, ..Ring::default() };
+        let mut r = Ring { frames, psram: p.psram, stride, ..Ring::default() };
         if p.psram {
             r.wstream = n_streams as u32;
             if n_streams + p.kernel as usize > N_STREAMS {
@@ -242,7 +258,7 @@ pub fn build<T: Tables>(c: usize, q: &[i32], fmt: &Formats, plan: &[LayerPlan], 
         rings[l] = r;
     }
     let hs = plan.len();
-    rings[hs] = Ring { frames: HEAD_KERNEL as u32, stride, bits: 18, ..Ring::default() };
+    rings[hs] = Ring { frames: HEAD_KERNEL as u32, stride, ..Ring::default() };
     let n_rings = hs + 1;
 
     // Allocation (program.allocate).
@@ -324,7 +340,7 @@ pub fn build<T: Tables>(c: usize, q: &[i32], fmt: &Formats, plan: &[LayerPlan], 
     let mut conv_rows = [0u32; MAX_LAYERS];
     let mut mix_rows = [0u32; MAX_LAYERS];
     let mut l1x1_rows = [0u32; MAX_LAYERS];
-    let mut lanes = [0i32; COLUMNS];
+    let mut lanes: [i32; COLUMNS];
     for (l, p) in plan.iter().enumerate() {
         conv_rows[l] = row;
         for k in 0..p.kernel as usize {
@@ -423,7 +439,7 @@ pub fn build<T: Tables>(c: usize, q: &[i32], fmt: &Formats, plan: &[LayerPlan], 
 
     let last = plan.len() - 1;
     emit(mac(SRC_ADC, AUX_GAIN_IN, BANK_Z1, 1, 1, 0, 0, 0, true, false, true, 0), out)?;
-    emit(post(BANK_Z1, 1, gin_frac, DST_X, 0, false, false, false, false), out)?;
+    emit(input_post(gin_frac) as u128, out)?;
     conv_old(0, 0, &mut emit, out)?;
     conv_old(0, 1, &mut emit, out)?;
     emit(mac(SRC_X, r0, BANK_LIN, 1, 1, 0, 0, 0, true, true, false, 0), out)?;
@@ -449,6 +465,7 @@ pub fn build<T: Tables>(c: usize, q: &[i32], fmt: &Formats, plan: &[LayerPlan], 
     emit(post(hb, 1, e.y_shift, DST_Y, 0, false, false, false, false), out)?;
     let ob = zbank(last);
     emit(mac(SRC_Y, AUX_GAIN_OUT, ob, 1, 1, 0, 0, 0, true, true, true, 0), out)?;
+    // (the last segment: `output_post` says which word and what's in it)
     emit(post(ob, 1, gshift, DST_OUT, 0, false, false, false, true), out)?;
 
     for (i, r) in rings[..n_rings].iter().enumerate() {
@@ -474,19 +491,19 @@ pub fn build<T: Tables>(c: usize, q: &[i32], fmt: &Formats, plan: &[LayerPlan], 
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::namfile;
     use std::vec::Vec;
 
     /// Every table write, kept.
     #[derive(Default)]
-    struct Recorder {
-        rows: std::collections::BTreeMap<u32, [i32; COLUMNS]>,
-        aux: std::collections::BTreeMap<u32, i32>,
-        program: std::collections::BTreeMap<u32, u64>,
-        rings: std::collections::BTreeMap<u32, u64>,
-        pos: std::collections::BTreeMap<u32, u32>,
+    pub(crate) struct Recorder {
+        pub rows: std::collections::BTreeMap<u32, [i32; COLUMNS]>,
+        pub aux: std::collections::BTreeMap<u32, i32>,
+        pub program: std::collections::BTreeMap<u32, u64>,
+        pub rings: std::collections::BTreeMap<u32, u64>,
+        pub pos: std::collections::BTreeMap<u32, u32>,
     }
 
     impl Tables for Recorder {
@@ -511,17 +528,22 @@ mod tests {
         u32::from_le_bytes(b[i..i + 4].try_into().unwrap())
     }
 
-    /// `tools/dump_program.py`'s file against this crate's build of the same network.
-    fn check_against_golden(channels: usize) {
+    fn golden(channels: usize) -> Vec<u8> {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        let nam = std::fs::read(dir.join("../NeuralAmpModelerCore/example_models/A2.nam")).unwrap();
         let golden = std::fs::read(dir.join(format!("golden/a2_{channels}.bin"))).unwrap();
         assert_eq!(&golden[..4], b"NAMG");
         assert_eq!(u32_at(&golden, 4), 2, "golden file version");
+        golden
+    }
+
+    /// This crate's build of A2.nam's network of `channels`, with the golden file's burst and
+    /// PSRAM base, checked against `tools/dump_program.py`'s file.
+    fn build_and_check(channels: usize) {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let nam = std::fs::read(dir.join("../NeuralAmpModelerCore/example_models/A2.nam")).unwrap();
+        let golden = golden(channels);
         let g = |i: usize| u32_at(&golden, 8 + 4 * i);
-        let (g_channels, n_segments, n_rings, n_streams, n_rows, n_aux, psram_base, burst) =
-            (g(0), g(1), g(2), g(3), g(4), g(5), g(6), g(7));
-        assert_eq!(g_channels as usize, channels);
+        let (psram_base, burst) = (g(6), g(7));
 
         let nets = namfile::scan(&nam).unwrap();
         let net = *nets.found.iter().flatten().find(|n| n.channels == channels).unwrap();
@@ -535,6 +557,16 @@ mod tests {
         namfile::quantise(&nam, &net, &fmt, &plan, &e, &mut q).unwrap();
         let mut rec = Recorder::default();
         let built = build(channels, &q, &fmt, &plan, &e, head_scale, 0.0, 0.0, burst, psram_base, &mut rec).unwrap();
+        check_against_golden(channels, &rec, &built);
+    }
+
+    /// What a build wrote (at 0 dB in and out) against `tools/dump_program.py`'s file for A2.nam's
+    /// network of `channels`.
+    pub(crate) fn check_against_golden(channels: usize, rec: &Recorder, built: &Built) {
+        let golden = golden(channels);
+        let g = |i: usize| u32_at(&golden, 8 + 4 * i);
+        let (g_channels, n_segments, n_rings, n_streams, n_rows, n_aux) = (g(0), g(1), g(2), g(3), g(4), g(5));
+        assert_eq!(g_channels as usize, channels);
         assert_eq!((built.n_segments, built.n_rings, built.n_streams, built.n_rows),
                    (n_segments, n_rings, n_streams, n_rows));
         assert_eq!((built.wpf_log2, built.burst_log2, built.ring_log2), (g(8), g(9), g(10)));
@@ -574,11 +606,11 @@ mod tests {
 
     #[test]
     fn lite_matches_the_python_program() {
-        check_against_golden(3);
+        build_and_check(3);
     }
 
     #[test]
     fn full_matches_the_python_program() {
-        check_against_golden(8);
+        build_and_check(8);
     }
 }

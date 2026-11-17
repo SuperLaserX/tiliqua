@@ -3,8 +3,9 @@ audio path and the registers.
 
 Each input sample from the codec starts the engine, when it is enabled and
 idle (a sample arriving while it is still busy is an overrun: counted, and the
-previous output repeats). Its output goes to OUT0 and OUT1; OUT2 carries the
-dry input. With `bypass` the input goes straight to the outputs.
+previous output repeats). Its output goes through the tone stack and DC
+blocker (`nam/tone.py`, a couple of microseconds) to OUT0 and OUT1; OUT2
+carries the dry input. With `bypass` the input goes straight to the outputs.
 
 Registers (32-bit, byte addressed):
 
@@ -19,6 +20,13 @@ Registers (32-bit, byte addressed):
     0x10 status    busy (1), late (1), clocks of the last sample (16)
     0x14 stats     longest sample in clocks since last read (16), overruns (8), samples (8)
     0x18 meters    input peak (16), output peak (16), held since last read
+    0x1C tone      a tone stack coefficient (`nam/tone.py`): value (27, Q3.23), index (5:
+                   section * 5 + tap), into the bank not playing
+    0x20 tswap     (pulse) the bank written plays from the next sample; status's
+                   tone_pending until then
+    0x24 tap       the last input sample (16) and the output going out with it (16), for the
+                   scope: taken together as each input sample arrives; status's tap_count
+                   (8, wraps) counts them, and the CPU reads `tap` when it moves
 
 The tables are written while the engine is disabled; `clear` zeroes the
 block-RAM history (and the write pointers follow table writes), `prefill`
@@ -36,6 +44,7 @@ from tiliqua.dsp import ASQ
 
 from .engine import POS_BITS, Engine, RingEntry
 from .streams import PsramMaster, bus_signature
+from .tone import COEF_BITS, ToneStack
 
 N_CHANNELS = 4
 TAB_WMEM, TAB_AUX, TAB_PROG, TAB_RING, TAB_POS = range(5)
@@ -68,6 +77,19 @@ class NamPeripheral(wiring.Component):
         busy: csr.Field(csr.action.R, unsigned(1))
         late: csr.Field(csr.action.R, unsigned(1))
         clocks: csr.Field(csr.action.R, unsigned(16))
+        tone_pending: csr.Field(csr.action.R, unsigned(1))
+        tap_count: csr.Field(csr.action.R, unsigned(8))
+
+    class Tone(csr.Register, access="w"):
+        value: csr.Field(csr.action.W, unsigned(COEF_BITS))
+        index: csr.Field(csr.action.W, unsigned(5))
+
+    class TSwap(csr.Register, access="w"):
+        swap: csr.Field(csr.action.W, unsigned(1))
+
+    class Tap(csr.Register, access="r"):
+        dry: csr.Field(csr.action.R, unsigned(16))
+        wet: csr.Field(csr.action.R, unsigned(16))
 
     class Stats(csr.Register, access="r"):
         clocks_max: csr.Field(csr.action.R, unsigned(16))
@@ -92,6 +114,10 @@ class NamPeripheral(wiring.Component):
         self._status = regs.add("status", self.Status(), offset=0x10)
         self._stats = regs.add("stats", self.Stats(), offset=0x14)
         self._meters = regs.add("meters", self.Meters(), offset=0x18)
+        self._tone = regs.add("tone", self.Tone(), offset=0x1C)
+        self._tswap = regs.add("tswap", self.TSwap(), offset=0x20)
+        self._tap = regs.add("tap", self.Tap(), offset=0x24)
+        self.tone = ToneStack()
         self._bridge = csr.Bridge(regs.as_memory_map())
         super().__init__({
             "csr_bus": In(csr.Signature(addr_width=regs.addr_width, data_width=regs.data_width)),
@@ -108,6 +134,7 @@ class NamPeripheral(wiring.Component):
         m.submodules.bridge = self._bridge
         m.submodules.engine = eng = DomainRenamer({"sync": ed, "bus": "sync"})(self.engine)
         m.submodules.master = master = self.master
+        m.submodules.tone = tone = self.tone
         wiring.connect(m, wiring.flipped(self.csr_bus), self._bridge.bus)
         wiring.connect(m, master.bus, wiring.flipped(self.bus))
         wiring.connect(m, eng.req, master.req)
@@ -212,11 +239,19 @@ class NamPeripheral(wiring.Component):
                 m.d.comb += new_sample.eq(1)      # repeat the last output
             with m.Else():
                 m.d.comb += new_sample.eq(1)
+        # The engine's output through the tone stack and DC blocker; its result is the sample.
+        m.d.comb += [tone.x.eq(eng.out), tone.start.eq(done_ps.o)]
         with m.If(done_ps.o):
-            m.d.sync += [in_flight.eq(0), wet.eq(eng.out), samples.eq(samples + 1)]
-            m.d.comb += new_sample.eq(1)
+            m.d.sync += [in_flight.eq(0), samples.eq(samples + 1)]
             with m.If(eng.clocks > clocks_max):
                 m.d.sync += clocks_max.eq(eng.clocks)
+        with m.If(tone.done):
+            m.d.sync += wet.eq(tone.y)
+            m.d.comb += new_sample.eq(1)
+        tf = self._tone.f
+        m.d.comb += [tone.coef.index.eq(tf.index.w_data), tone.coef.value.eq(tf.value.w_data.as_signed()),
+                     tone.coef.en.eq(tf.value.w_stb),
+                     tone.swap.eq(self._tswap.f.swap.w_stb & self._tswap.f.swap.w_data)]
         with m.If(~enable):
             m.d.sync += in_flight.eq(0)
 
@@ -234,6 +269,15 @@ class NamPeripheral(wiring.Component):
         with m.If(self.o.valid & self.o.ready & ~new_sample):
             m.d.sync += pending_out.eq(0)
 
+        # The scope's tap: each input sample, with the output going out as it arrives.
+        tap_dry = Signal(16)
+        tap_wet = Signal(16)
+        tap_n = Signal(8)
+        with m.If(self.i.valid):
+            m.d.sync += [tap_dry.eq(self.i.payload[0].as_value()), tap_wet.eq(out), tap_n.eq(tap_n + 1)]
+        m.d.comb += [self._tap.f.dry.r_data.eq(tap_dry), self._tap.f.wet.r_data.eq(tap_wet),
+                     self._status.f.tap_count.r_data.eq(tap_n)]
+
         def peak(sig, value):
             mag = Signal(16)
             m.d.comb += mag.eq(Mux(value < 0, -value, value))
@@ -242,13 +286,13 @@ class NamPeripheral(wiring.Component):
 
         with m.If(self.i.valid):
             peak(in_peak, self.i.payload[0].as_value().as_signed())
-        with m.If(done_ps.o):
-            peak(out_peak, eng.out)
+        with m.If(tone.done):
+            peak(out_peak, tone.y)
 
         # ---- status ----------------------------------------------------------------------
         st = self._status.f
         m.d.comb += [st.busy.r_data.eq(busy_sync | in_flight), st.late.r_data.eq(late_sync),
-                     st.clocks.r_data.eq(eng.clocks)]
+                     st.clocks.r_data.eq(eng.clocks), st.tone_pending.r_data.eq(tone.swap_pending)]
         sf = self._stats.f
         m.d.comb += [sf.clocks_max.r_data.eq(clocks_max), sf.overruns.r_data.eq(overruns),
                      sf.samples.r_data.eq(samples)]

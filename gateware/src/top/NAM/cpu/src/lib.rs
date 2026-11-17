@@ -5,9 +5,17 @@
 
 #![cfg_attr(not(test), no_std)]
 
+pub mod browser;
+pub mod controls;
+pub mod disk;
+pub mod gate;
 pub mod geometry;
+pub mod layout;
+pub mod loader;
 pub mod namfile;
 pub mod nav;
 pub mod program;
 pub mod quant;
+pub mod scope;
 pub mod text;
+pub mod tone_tables;

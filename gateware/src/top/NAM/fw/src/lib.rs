@@ -19,6 +19,8 @@ pub mod glyphs;
 pub mod input;
 pub mod screen;
 pub mod theme;
+pub mod ui;
+pub mod usb;
 
 /// Stack high-water mark: the 32 KB block RAM holds data and stack, and
 /// nothing guards the stack's end.

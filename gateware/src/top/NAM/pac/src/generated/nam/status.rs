@@ -8,6 +8,10 @@ pub type BUSY_R = crate::BitReader;
 pub type LATE_R = crate::BitReader;
 #[doc = "Field `clocks` reader - clocks field"]
 pub type CLOCKS_R = crate::FieldReader<u16>;
+#[doc = "Field `tone_pending` reader - tone_pending field"]
+pub type TONE_PENDING_R = crate::BitReader;
+#[doc = "Field `tap_count` reader - tap_count field"]
+pub type TAP_COUNT_R = crate::FieldReader;
 impl R {
     #[doc = "Bit 0 - busy field"]
     #[inline(always)]
@@ -23,6 +27,16 @@ impl R {
     #[inline(always)]
     pub fn clocks(&self) -> CLOCKS_R {
         CLOCKS_R::new(((self.bits >> 2) & 0xffff) as u16)
+    }
+    #[doc = "Bit 18 - tone_pending field"]
+    #[inline(always)]
+    pub fn tone_pending(&self) -> TONE_PENDING_R {
+        TONE_PENDING_R::new(((self.bits >> 18) & 1) != 0)
+    }
+    #[doc = "Bits 19:26 - tap_count field"]
+    #[inline(always)]
+    pub fn tap_count(&self) -> TAP_COUNT_R {
+        TAP_COUNT_R::new(((self.bits >> 19) & 0xff) as u8)
     }
 }
 impl W {}

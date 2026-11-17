@@ -1,12 +1,22 @@
-//! The look: a dark slate ground, cool white text, an amber accent for what the
-//! encoder is on and for levels, red where something clips or is wrong.
+//! The looks. A theme is a ground colour, five colours drawn on it, and a bezel round the rim.
 //!
-//! The framebuffer's pixels are a 4-bit hue and a 4-bit intensity; the palette
-//! maps each pair to RGB. Each hue is one colour with the intensity a brightness
-//! ramp of it (intensity 0 is black).
+//! The framebuffer's pixels are a 4-bit hue and a 4-bit intensity; the palette maps each pair to
+//! RGB. Here every hue's intensities run from the theme's ground (intensity 0) to its full colour
+//! (15), so something drawn faint fades into the ground rather than into black, and the screen's
+//! clear and every erase (intensity 0) are the ground. The roles below (text, the accent, levels...)
+//! are the same in every theme; only the colours change, so switching is a palette write and a
+//! redraw for the bezel.
 
 use tiliqua_hal::dma_framebuffer::DMAFramebuffer;
+use tiliqua_hal::embedded_graphics::prelude::*;
 use tiliqua_lib::color::HI8;
+
+use nam_cpu::controls::THEMES;
+use nam_cpu::geometry::polar;
+use nam_cpu::layout::{rim_part, Arc, RIM as RIM_ARC};
+use nam_cpu::nav::Page;
+
+use crate::screen::paint_arc;
 
 pub const SLATE: u8 = 0;
 pub const ICE: u8 = 1;
@@ -14,32 +24,72 @@ pub const AMBER: u8 = 2;
 pub const TEAL: u8 = 3;
 pub const RED: u8 = 4;
 
-/// Full-intensity RGB of each hue (the unused ones are slate).
-const HUES: [(u8, u8, u8); 5] = [
-    (150, 170, 200),  // slate: structure, dim text
-    (236, 242, 255),  // ice: text
-    (255, 170, 50),   // amber: the accent
-    (70, 220, 190),   // teal: levels, good
-    (255, 70, 60),    // red: clipping, warnings
+type Rgb = (u8, u8, u8);
+
+/// How a theme dresses the rim.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Bezel {
+    /// A thin ring.
+    Plain,
+    /// Two rings, close.
+    Double,
+    /// A ring with a tick every 6 degrees and a longer one every 30, like a knob's skirt.
+    Ticks,
+    /// A ring that glows inward in the accent's colour.
+    Glow,
+}
+
+pub struct Theme {
+    pub ground: Rgb,
+    /// The full colours of slate (structure, dim text), ice (text), amber (the accent),
+    /// teal (levels, good) and red (warnings).
+    pub hues: [Rgb; 5],
+    pub bezel: Bezel,
+}
+
+/// In `nam_cpu::controls::THEMES`'s order.
+pub const ALL: [Theme; 6] = [
+    // SLATE: cool white on a blue-black ground, amber for what the encoder is on.
+    Theme { ground: (6, 8, 14), hues: [(150, 170, 200), (236, 242, 255), (255, 170, 50), (70, 220, 190), (255, 70, 60)],
+            bezel: Bezel::Plain },
+    // TWEED: cream and gold on a warm brown, like an old combo's panel.
+    Theme { ground: (26, 16, 8), hues: [(176, 146, 104), (246, 232, 200), (232, 172, 64), (156, 204, 96), (232, 76, 44)],
+            bezel: Bezel::Double },
+    // NEON: magenta and cyan on deep violet.
+    Theme { ground: (8, 3, 22), hues: [(130, 96, 210), (228, 222, 255), (255, 64, 204), (48, 232, 255), (255, 64, 96)],
+            bezel: Bezel::Glow },
+    // PHOSPHOR: a green screen.
+    Theme { ground: (2, 10, 4), hues: [(60, 140, 72), (150, 255, 160), (224, 255, 120), (80, 255, 128), (255, 150, 48)],
+            bezel: Bezel::Ticks },
+    // STAGE: white on black, red for what the encoder is on, yellow levels.
+    Theme { ground: (0, 0, 0), hues: [(150, 150, 150), (255, 255, 255), (255, 52, 40), (244, 230, 64), (255, 128, 0)],
+            bezel: Bezel::Ticks },
+    // DAYLIGHT: ink on paper, for a bright room.
+    Theme { ground: (232, 226, 212), hues: [(84, 90, 108), (20, 24, 32), (204, 88, 0), (0, 124, 104), (200, 30, 30)],
+            bezel: Bezel::Double },
 ];
 
+const _: () = assert!(ALL.len() == THEMES.len());
+
 fn ramp(i: u8) -> u32 {
-    // brightness in thousandths: mostly quadratic (perceptual), with a
-    // linear part so the low intensities stay visible
+    // how far from the ground, in thousandths: mostly quadratic (perceptual), with a linear
+    // part so the low intensities stay visible
     let t = i as u32;
     800 * t * t / 225 + 200 * t / 15
 }
 
-fn scale((r, g, b): (u8, u8, u8), k: u32) -> (u8, u8, u8) {
-    let s = |c: u8| (c as u32 * k / 1000).min(255) as u8;
-    (s(r), s(g), s(b))
+fn mix(ground: Rgb, color: Rgb, k: u32) -> Rgb {
+    let m = |g: u8, c: u8| (g as i32 + (c as i32 - g as i32) * k as i32 / 1000).clamp(0, 255) as u8;
+    (m(ground.0, color.0), m(ground.1, color.1), m(ground.2, color.2))
 }
 
-/// Writes the theme into the hardware palette.
-pub fn write_palette(d: &mut impl DMAFramebuffer) {
+/// Writes theme `t` into the hardware palette.
+pub fn write_palette(d: &mut impl DMAFramebuffer, t: usize) {
+    let theme = &ALL[t % ALL.len()];
     for hue in 0..16u8 {
+        let color = theme.hues.get(hue as usize).copied().unwrap_or(theme.hues[0]);
         for i in 0..16u8 {
-            let (r, g, b) = scale(HUES.get(hue as usize).copied().unwrap_or(HUES[0]), ramp(i));
+            let (r, g, b) = mix(theme.ground, color, ramp(i));
             d.set_palette_rgb(i, hue, r, g, b);
         }
     }
@@ -62,3 +112,52 @@ pub const LEVEL: HI8 = c(TEAL, 12);
 pub const LEVEL_HOT: HI8 = c(AMBER, 14);
 pub const WARN: HI8 = c(RED, 14);
 pub const GOOD: HI8 = c(TEAL, 14);
+
+/// The colour of the rim's ring, and of a page's part of it when not lit, in theme `t`.
+pub fn ring(t: usize) -> HI8 {
+    match ALL[t % ALL.len()].bezel {
+        Bezel::Plain => PANEL,
+        Bezel::Double | Bezel::Ticks => RIM,
+        Bezel::Glow => c(AMBER, 6),
+    }
+}
+
+/// The bezel of theme `t`, drawn after the screen clears, with `page`'s part of the rim lit
+/// (none for the switcher, which lights its own).
+pub fn bezel<D: DrawTarget<Color = HI8>>(d: &mut D, cx: i32, cy: i32, t: usize, page: Option<Page>) {
+    let theme = &ALL[t % ALL.len()];
+    let base = ring(t);
+    match theme.bezel {
+        Bezel::Plain => paint_arc(d, cx, cy, &RIM_ARC, base),
+        Bezel::Double => {
+            paint_arc(d, cx, cy, &RIM_ARC, base);
+            paint_arc(d, cx, cy, &Arc { radius: RIM_ARC.radius - 4, ..RIM_ARC }, PANEL);
+        }
+        Bezel::Ticks => {
+            paint_arc(d, cx, cy, &RIM_ARC, base);
+            for k in 0..60 {
+                let long = k % 5 == 0;
+                let turns = k as f32 / 60.0;
+                let (x0, y0) = polar((RIM_ARC.radius - if long { 8 } else { 5 }) as f32, turns);
+                let (x1, y1) = polar((RIM_ARC.radius - 1) as f32, turns);
+                d.draw_line_solid(cx + x0, cy + y0, cx + x1, cy + y1, 1, if long { RIM } else { PANEL });
+            }
+        }
+        Bezel::Glow => {
+            for (k, i) in [10u8, 6, 3, 2, 1].iter().enumerate() {
+                paint_arc(d, cx, cy, &Arc { radius: RIM_ARC.radius - k as i32, ..RIM_ARC }, c(AMBER, *i));
+            }
+        }
+    }
+    if let Some(p) = page {
+        paint_arc(d, cx, cy, &rim_part(p.index(), Page::ALL.len()), lit(t));
+    }
+}
+
+/// A page's part of the rim, lit.
+pub fn lit(t: usize) -> HI8 {
+    match ALL[t % ALL.len()].bezel {
+        Bezel::Glow => c(AMBER, 15),
+        _ => c(SLATE, 9),
+    }
+}
